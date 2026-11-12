@@ -13,10 +13,8 @@ import { NgOptimizedImage } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     NavbarComponent,
-    RouterLink,
     TestimonialsComponent,
     FooterComponent,
-    NgOptimizedImage,
   ],
 })
 export class HomeComponent{
