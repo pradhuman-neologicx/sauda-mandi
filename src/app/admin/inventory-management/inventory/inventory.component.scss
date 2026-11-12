@@ -1,0 +1,38 @@
+@use '../../sauda-management/sauda-management.component.scss' as *;
+
+.inv-filter-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.15fr 1fr 0.9fr auto;
+  gap: 12px;
+  align-items: end;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inv-span-2 {
+  grid-column: span 2;
+
+  @media (max-width: 560px) {
+    grid-column: span 1;
+  }
+}
+
+.alert-success-erp {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.text-pos {
+  color: #047857;
+}
+
+.text-neg {
+  color: #dc2626;
+}

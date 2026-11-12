@@ -1,0 +1,223 @@
+<div class="erp-page">
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Masters</div>
+      <h1 class="erp-title">Commodity Master</h1>
+      <p class="erp-subtitle">
+        Manage commodities available in Sauda Management
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Commodity</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Limit & Compact Right-Aligned Search -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select
+          class="limit-select"
+          [(ngModel)]="tableSize"
+          (ngModelChange)="onTableSizeChange()"
+        >
+          @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search Commodity..."
+          />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Commodity Name</th>
+            <th>Default Packaging UOM</th>
+            <th>Default Weight UOM</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredCommodities.length === 0) {
+            <tr>
+              <td colspan="6" class="empty-state">
+                <i class="fa-solid fa-boxes-stacked mb-2"></i>
+                <div>No commodities found.</div>
+              </td>
+            </tr>
+          } @else {
+            @for (
+              commodity of filteredCommodities
+                | paginate
+                  : {
+                      id: 'commodityPagination',
+                      itemsPerPage: itemsPerPageCount,
+                      currentPage: page,
+                      totalItems: filteredCommodities.length,
+                    };
+              track commodity.id;
+              let i = $index
+            ) {
+              <tr [class.inactive-row]="!commodity.isActive">
+                <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+                <td class="fw-semibold text-dark">{{ commodity.name }}</td>
+                <td>{{ commodity.defaultPackagingUom }}</td>
+                <td>{{ commodity.defaultWeightUom }}</td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="status-toggle-btn"
+                    [ngClass]="commodity.isActive ? 'is-active' : 'is-inactive'"
+                    (click)="toggleStatus(commodity)"
+                  >
+                    <span class="dot"></span>
+                    <span>{{ commodity.isActive ? 'Active' : 'Inactive' }}</span>
+                  </button>
+                </td>
+                <td class="text-center">
+                  <div class="action-group">
+                    <button
+                      type="button"
+                      class="icon-btn btn-edit"
+                      (click)="openEditModal(commodity)"
+                      title="Edit Commodity"
+                    >
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [ngClass]="commodity.isActive ? 'btn-void' : 'btn-activate'"
+                      (click)="toggleStatus(commodity)"
+                      [title]="commodity.isActive ? 'Deactivate' : 'Activate'"
+                    >
+                      <i
+                        class="fa-solid"
+                        [ngClass]="commodity.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"
+                      ></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredCommodities.length }} entries
+      </div>
+      <pagination-controls
+        id="commodityPagination"
+        (pageChange)="onTableDataChange($event)"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Commodity Modal -->
+@if (isFormOpen) {
+  <div class="modal-backdrop-erp" (click)="closeModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            {{ isEditMode ? 'Edit Commodity' : 'Add New Commodity' }}
+          </h3>
+          <p class="modal-sub-erp">Active commodities appear in Sauda Management</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="commodityForm" (ngSubmit)="submitForm()" class="modal-body-erp">
+        @if (formError) {
+          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Commodity Name <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="name"
+            class="erp-input"
+            placeholder="e.g. Apple"
+          />
+          @if (commodityForm.get('name')?.touched && commodityForm.get('name')?.invalid) {
+            <span class="field-err">Commodity name (min 2 chars) is required.</span>
+          }
+        </div>
+
+        <div class="form-grid-2 mt-3">
+          <div class="field-group">
+            <label>Default Packaging UOM <span class="req">*</span></label>
+            <select formControlName="defaultPackagingUom" class="erp-input">
+              @for (u of packagingUoms; track u) {
+                <option [value]="u">{{ u }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Default Weight UOM <span class="req">*</span></label>
+            <select formControlName="defaultWeightUom" class="erp-input">
+              @for (w of weightUoms; track w) {
+                <option [value]="w">{{ w }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check me-1"></i>
+            {{ isEditMode ? 'Update Commodity' : 'Add Commodity' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+

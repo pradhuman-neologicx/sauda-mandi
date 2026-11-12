@@ -1,0 +1,204 @@
+<footer
+  class="relative bg-[#FAF7F2] text-[#2A2118] overflow-hidden pt-20 border-t border-[#E8C0A0]/40"
+>
+  <!-- Background glow orbs -->
+  <div class="pointer-events-none absolute inset-0">
+    <div
+      class="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-[#C9714A]/8 blur-3xl"
+    ></div>
+    <div
+      class="absolute bottom-16 right-1/4 w-60 h-60 rounded-full bg-[#5BAF8E]/8 blur-3xl"
+    ></div>
+    <!-- Decorative letter -->
+    <span
+      class="absolute -top-16 right-4 font-serif text-[380px] font-light leading-none text-[#C9714A]/[0.06] select-none"
+      >c</span
+    >
+  </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- ── BANNER ── -->
+    <div
+      class="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-14"
+    >
+      <div>
+        <span
+          class="block text-[11px] font-medium tracking-[0.2em] uppercase text-[#5BAF8E] mb-3"
+        >
+          Begin Your Journey
+        </span>
+        <h2
+          class="font-serif text-3xl md:text-4xl lg:text-[44px] font-light leading-tight text-[#2A2118] max-w-lg"
+        >
+          Every family's story starts somewhere.
+        </h2>
+      </div>
+      <a
+        routerLink="/book-appointment"
+        class="group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#C9714A] to-[#5BAF8E] hover:opacity-90 text-white px-7 py-4 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:gap-5 whitespace-nowrap rounded-sm shadow-md shadow-[#C9714A]/20"
+      >
+        Book a Consultation
+        <i
+          class="fa-solid fa-arrow-right text-[11px] transition-transform duration-300 group-hover:translate-x-1"
+        ></i>
+      </a>
+    </div>
+
+    <!-- ── DIVIDER ── -->
+    <div
+      class="h-px bg-gradient-to-r from-[#E8C0A0] via-[#8ECFB8] to-[#E8C0A0] mb-14 opacity-60"
+    ></div>
+
+    <!-- ── MAIN GRID ── -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+      <!-- Brand Column -->
+      <div class="lg:col-span-1">
+        <div class="flex items-center mb-4">
+          <img
+            ngSrc="assets/logo.webp"
+            width="300"
+            height="160"
+            alt="Cradle Reproductive Health"
+            class="h-40 w-auto object-cover"
+          />
+        </div>
+        <!-- <p class="text-sm leading-[1.85] text-[#2A2118]/70 mb-7">
+          Highly specialised and compassionate care for your fertility journey.
+          We are dedicated to supporting you every step of the way.
+        </p> -->
+        <!-- Socials -->
+        <div class="flex gap-2.5">
+          @for (s of socials; track s) {
+            <a
+              [href]="s.href"
+              class="w-9 h-9 rounded-full border border-[#E8C0A0] bg-[#FDF0E8] flex items-center justify-center text-[#2A2118]/70 text-[13px] transition-all duration-250 hover:border-[#C9714A] hover:text-[#C9714A] hover:bg-[#C9714A]/50"
+            >
+              <i [class]="s.icon"></i>
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4
+          class="relative font-serif text-[13px] font-semibold tracking-[0.16em] uppercase text-[#1E5C45] pb-3 mb-7 after:absolute after:left-0 after:bottom-0 after:w-6 after:h-[1.5px] after:bg-[#C9714A] after:rounded"
+        >
+          Quick Links
+        </h4>
+        <ul class="space-y-3">
+          @for (link of quickLinks; track link) {
+            <li>
+              <a
+                [routerLink]="link.href"
+                class="group flex items-center gap-2.5 text-[13.5px] text-[#2A2118]/70 hover:text-[#2A2118] transition-all duration-200"
+              >
+                <span
+                  class="w-1 h-1 rounded-full bg-[#5BAF8E] opacity-50 shrink-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-200"
+                ></span>
+                {{ link.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Treatments -->
+      <div>
+        <h4
+          class="relative font-serif text-[13px] font-semibold tracking-[0.16em] uppercase text-[#1E5C45] pb-3 mb-7 after:absolute after:left-0 after:bottom-0 after:w-6 after:h-[1.5px] after:bg-[#C9714A] after:rounded"
+        >
+          Treatments
+        </h4>
+        <ul class="space-y-3">
+          @for (t of treatments; track t) {
+            <li>
+              <a
+                [routerLink]="t.href"
+                class="group flex items-center gap-2.5 text-[13.5px] text-[#2A2118]/70 hover:text-[#2A2118] transition-all duration-200"
+              >
+                <span
+                  class="w-1 h-1 rounded-full bg-[#5BAF8E] opacity-50 shrink-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-200"
+                ></span>
+                {{ t.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Contact Us -->
+      <div>
+        <h4
+          class="relative font-serif text-[13px] font-semibold tracking-[0.16em] uppercase text-[#1E5C45] pb-3 mb-7 after:absolute after:left-0 after:bottom-0 after:w-6 after:h-[1.5px] after:bg-[#C9714A] after:rounded"
+        >
+          Contact Us
+        </h4>
+        <div class="space-y-5">
+          @for (info of contactInfo; track info) {
+            <div class="flex items-start gap-3 group">
+              <div
+                class="w-10 h-10 rounded-full border border-[#E8C0A0] bg-[#FDF0E8] flex items-center justify-center text-[#5BAF8E] text-[15px] shrink-0 group-hover:bg-[#C9714A]/10 group-hover:border-[#C9714A]/50 transition-all duration-300"
+              >
+                <i [class]="info.icon"></i>
+              </div>
+              <div class="flex flex-col pt-1">
+                <span
+                  class="text-[10px] font-medium tracking-[0.15em] uppercase text-[#C9714A] mb-0.5"
+                  >{{ info.title }}</span
+                >
+                <a
+                  [href]="info.href"
+                  class="font-serif text-[15px] leading-tight text-[#2A2118] hover:text-[#5BAF8E] transition-colors whitespace-pre-line"
+                >
+                  {{ info.detail }}
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOTTOM BAR ── -->
+    <div
+      class="border-t border-[#E8C0A0]/50 py-6 flex flex-col md:flex-row justify-between items-center gap-4"
+    >
+      <p class="text-xs text-[#2A2118]/70 tracking-wide">
+        &copy; {{ currentYear }} Cradle Reproductive Health. All rights
+        reserved.
+      </p>
+      <div class="flex items-center gap-3 flex-wrap">
+        <a
+          routerLink="/privacy-policy"
+          class="text-xs text-[#2A2118]/70 hover:text-[#5BAF8E] transition-colors tracking-wide"
+          >Privacy Policy</a
+        >
+        <span class="text-xs text-[#2A2118]/70">·</span>
+        <a
+          routerLink="/terms-and-conditions"
+          class="text-xs text-[#2A2118]/70 hover:text-[#5BAF8E] transition-colors tracking-wide"
+          >Terms of Service</a
+        >
+        <p
+          class="group mb-0 text-xs text-[#2A2118]/70 hover:text-[#5BAF8E] transition-colors tracking-wide flex items-center"
+        >
+          Powered By :
+          <a
+            href="https://neologicx.com/"
+            target="_blank"
+            class="inline-flex items-center"
+          >
+            <img
+              ngSrc="assets/neo_logo.png"
+              width="100"
+              height="24"
+              alt="Neologicx"
+              class="h-6 w-auto opacity-80 group-hover:opacity-100 transition-opacity"
+            />
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>

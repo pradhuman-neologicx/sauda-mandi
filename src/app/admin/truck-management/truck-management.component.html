@@ -1,0 +1,689 @@
+<div class="erp-page">
+  @if (viewMode === 'listing') {
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <h1 class="erp-title">Truck Management</h1>
+      <p class="erp-subtitle">
+        Manage truck entries linked to Saudas
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Create Truck Entry</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 KPI Cards (matching prototype) -->
+  <div class="sauda-kpi-grid">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Truck Entries</div>
+      <div class="sauda-kpi-val">{{ activeTrucksList.length }}</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Purchase-linked</div>
+      <div class="sauda-kpi-val">{{ purchaseLinkedCount }}</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Sales-linked</div>
+      <div class="sauda-kpi-val">{{ salesLinkedCount }}</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Brokerage-linked</div>
+      <div class="sauda-kpi-val">{{ brokerageLinkedCount }}</div>
+    </div>
+  </div>
+
+  <!-- Truck Entry Listing Card -->
+  <div class="erp-card">
+    <div class="listing-card-top">
+      <div class="listing-header-row">
+        <h2 class="listing-card-title">Truck Entry Listing</h2>
+        <div class="table-size-selector">
+          <span>Show</span>
+          <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+            @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+            }
+          </select>
+          <span>entries</span>
+        </div>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="sauda-filter-grid">
+        <div class="filter-field">
+          <label>Search Truck Entry / Truck Number</label>
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm" class="erp-input" placeholder="Search..." />
+        </div>
+
+        <div class="filter-field">
+          <label>Linked Sauda</label>
+          <select name="linkedSaudaFilter" [(ngModel)]="linkedSaudaFilter" class="erp-input">
+            <option value="All">All Saudas</option>
+            @for (s of allSaudas; track s.id) {
+              <option [value]="s.id">{{ s.saudaNo }} ({{ s.partyName }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Sauda Type</label>
+          <select name="saudaTypeFilter" [(ngModel)]="saudaTypeFilter" class="erp-input">
+            <option value="All">All Types</option>
+            <option value="Purchase">Purchase</option>
+            <option value="Sales">Sales</option>
+            <option value="Brokerage">Brokerage</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Truck Entry Date</label>
+          <input type="date" name="entryDateFilter" [(ngModel)]="entryDateFilter" class="erp-input" />
+        </div>
+
+        <div class="filter-btn-col">
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+          </button>
+          @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+          }
+        </div>
+      </form>
+    </div>
+
+    <!-- Listing Table -->
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Truck Entry No.</th>
+            <th>Date</th>
+            <th>Truck Number</th>
+            <th>Sauda Number</th>
+            <th>Sauda Type</th>
+            <th>Commodities</th>
+            <th class="text-center">Record</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredTrucks.length === 0) {
+          <tr>
+            <td colspan="8" class="empty-state">
+              <i class="fa-solid fa-truck mb-2"></i>
+              <div>No truck entries match your search or filters.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          truck of filteredTrucks
+          | paginate
+          : {
+          id: 'truckPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredTrucks.length,
+          };
+          track truck.id
+          ) {
+          <tr [class.removed-row]="truck.status === 'Removed'">
+            <td>
+              <button type="button" class="sauda-no-link" (click)="openDetailsView(truck)">
+                {{ truck.entryNo }}
+              </button>
+            </td>
+            <td class="text-nowrap">{{ truck.dispatchDate }}</td>
+            <td class="fw-semibold text-dark">{{ truck.vehicleNo }}</td>
+            <td>{{ truck.saudaNo }}</td>
+            <td>{{ truck.saudaType }}</td>
+            <td>{{ truck.commodities }}</td>
+            <td class="text-center">
+              <span class="status-badge" [ngClass]="getRecordBadgeClass(truck.status)">
+                {{ truck.status === 'Removed' ? 'Removed' : 'Active' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <button type="button" class="view-link-btn" (click)="openDetailsView(truck)">
+                View
+              </button>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredTrucks.length }} entries
+      </div>
+      <pagination-controls id="truckPagination" (pageChange)="onTableDataChange($event)"
+        class="my-pagination"></pagination-controls>
+    </div>
+  </div>
+  } @else if (viewMode === 'details' && selectedTruck) {
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Screen 3 & 4: Truck Entry Details View with Tabs                   -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <div class="erp-header mb-2">
+    <div>
+      <h1 class="erp-title">{{ selectedTruck.entryNo }}</h1>
+      <p class="erp-subtitle">
+        Manage truck entries linked to Saudas
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Create Truck Entry</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="back-breadcrumb">
+    <button type="button" class="back-link-btn" (click)="backToListing()">
+      &larr; Back to Truck Listing
+    </button>
+  </div>
+
+  <!-- Summary Header Card -->
+  <div class="erp-card section-card mb-4">
+    <div class="details-top-row">
+      <div>
+        <h2 class="details-entry-title">{{ selectedTruck.entryNo }}</h2>
+        <p class="details-entry-sub">Linked Sauda: {{ selectedTruck.saudaNo }}</p>
+      </div>
+      <div class="details-top-actions">
+        <button type="button" class="btn-erp-ghost" [disabled]="selectedTruck.status === 'Removed'"
+          (click)="openEditForm(selectedTruck)">
+          Edit
+        </button>
+        <button type="button" class="btn-remove-outline" [disabled]="selectedTruck.status === 'Removed'"
+          (click)="openRemoveModal(selectedTruck)">
+          Remove Entry
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-meta-grid">
+      <div>
+        <div class="meta-label">Truck Number</div>
+        <div class="meta-val">{{ selectedTruck.vehicleNo }}</div>
+      </div>
+      <div>
+        <div class="meta-label">Truck Entry Date</div>
+        <div class="meta-val">{{ selectedTruck.dispatchDate }}</div>
+      </div>
+      <div>
+        <div class="meta-label">Sauda Number</div>
+        <div class="meta-val">{{ selectedTruck.saudaNo }}</div>
+      </div>
+      <div>
+        <div class="meta-label">Sauda Type</div>
+        <div class="meta-val">{{ selectedTruck.saudaType }}</div>
+      </div>
+    </div>
+
+    @if (selectedTruck.removalInfo) {
+    <div class="alert-erp alert-danger-erp mt-3">
+      <strong>Removed on {{ selectedTruck.removalInfo.removedAt }}</strong> by
+      {{ selectedTruck.removalInfo.removedBy }} — Reason: {{ selectedTruck.removalInfo.reason }}
+    </div>
+    }
+  </div>
+
+  <!-- 3 Tabs: Truck Details | Commodity Details | Revision History -->
+  <div class="erp-card">
+    <div class="erp-tabs-bar">
+      <button type="button" class="erp-tab-btn" [class.active]="activeDetailTab === 'details'"
+        (click)="activeDetailTab = 'details'">
+        Truck Details
+      </button>
+      <button type="button" class="erp-tab-btn" [class.active]="activeDetailTab === 'commodities'"
+        (click)="activeDetailTab = 'commodities'">
+        Commodity Details
+      </button>
+      <button type="button" class="erp-tab-btn" [class.active]="activeDetailTab === 'revisions'"
+        (click)="activeDetailTab = 'revisions'">
+        Revision History ({{ selectedTruck.revisions.length }})
+      </button>
+    </div>
+
+    <!-- Tab 1: Truck Details -->
+    @if (activeDetailTab === 'details') {
+    <div class="table-responsive">
+      <table class="erp-table field-val-table">
+        <thead>
+          <tr>
+            <th style="width: 38%">Field</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Truck Entry Number</td>
+            <td class="fw-semibold text-dark">{{ selectedTruck.entryNo }}</td>
+          </tr>
+          <tr>
+            <td>Truck Number</td>
+            <td class="fw-semibold text-dark">{{ selectedTruck.vehicleNo }}</td>
+          </tr>
+          <tr>
+            <td>Date</td>
+            <td>{{ selectedTruck.dispatchDate }}</td>
+          </tr>
+          <tr>
+            <td>Linked Sauda</td>
+            <td class="fw-semibold text-primary">{{ selectedTruck.saudaNo }}</td>
+          </tr>
+          <tr>
+            <td>Record</td>
+            <td>
+              <span class="status-badge" [ngClass]="getRecordBadgeClass(selectedTruck.status)">
+                {{ selectedTruck.status === 'Removed' ? 'Removed' : 'Active' }}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td>Transit Status</td>
+            <td>{{ selectedTruck.status }}</td>
+          </tr>
+          <tr>
+            <td>Transporter / Driver</td>
+            <td>
+              {{ selectedTruck.transporterName || '—' }}
+              @if (selectedTruck.driverName) {
+              &bull; {{ selectedTruck.driverName }}
+              @if (selectedTruck.driverPhone) {
+              ({{ selectedTruck.driverPhone }})
+              }
+              }
+            </td>
+          </tr>
+          <tr>
+            <td>Total Loaded Weight</td>
+            <td class="fw-semibold">{{ selectedTruck.loadedQtyMt | number: '1.0-3' }} MT</td>
+          </tr>
+          <tr>
+            <td>Remarks</td>
+            <td>{{ selectedTruck.remarks || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Tab 2: Commodity Details -->
+    @if (activeDetailTab === 'commodities') {
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Commodity</th>
+            <th>Packaging UOM</th>
+            <th class="text-end">Packaging Quantity</th>
+            <th>Weight UOM</th>
+            <th class="text-end">Actual Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of selectedTruck.commodityItems; track item.commodity) {
+          <tr>
+            <td class="fw-semibold text-dark">{{ item.commodity }}</td>
+            <td>{{ item.packagingUom }}</td>
+            <td class="text-end num">{{ item.packagingQty | number }}</td>
+            <td>{{ item.weightUom }}</td>
+            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Tab 3: Revision History -->
+    @if (activeDetailTab === 'revisions') {
+    <div class="p-4">
+      <div class="timeline-list">
+        @for (rev of selectedTruck.revisions.slice().reverse(); track rev.version) {
+        <div class="timeline-card">
+          <div class="timeline-head">
+            <div class="d-flex align-items-center gap-2">
+              <span class="rev-chip">v{{ rev.version }}</span>
+              <span class="fw-bold text-dark">{{ rev.action }}</span>
+            </div>
+            <span class="text-muted small">
+              {{ rev.changedBy }} &bull; {{ rev.changedAt }}
+            </span>
+          </div>
+          <div class="timeline-reason">
+            <strong>Reason:</strong> {{ rev.reason }}
+          </div>
+          @if (rev.changes.length > 0) {
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Previous Value</th>
+                <th>Updated Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (diff of rev.changes; track diff.field) {
+              <tr>
+                <td class="fw-semibold">{{ diff.field }}</td>
+                <td class="text-muted">{{ diff.oldValue }}</td>
+                <td class="text-primary fw-semibold">{{ diff.newValue }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          }
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  } @else {
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Screen 2: Create / Edit Truck Entry View                           -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <div class="erp-header mb-2">
+    <div>
+      <h1 class="erp-title">
+        {{ isEditMode ? 'Edit Truck Entry — ' + selectedTruck?.entryNo : 'Create Truck Entry' }}
+      </h1>
+      <p class="erp-subtitle">
+        Manage truck entries linked to Saudas
+      </p>
+    </div>
+  </div>
+
+  <div class="back-breadcrumb">
+    <button type="button" class="back-link-btn" (click)="backToListing()">
+      &larr; Back to Truck Listing
+    </button>
+  </div>
+
+  <form [formGroup]="truckForm" (ngSubmit)="submitTruckForm()" class="sauda-form-stack">
+    @if (formError) {
+    <div class="alert-erp alert-danger-erp">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
+    </div>
+    }
+
+    <!-- Section 1: Truck Entry Info (Entry No auto-generated on save) -->
+    <div class="erp-card section-card">
+      <h2 class="section-card-title">Truck Entry Details</h2>
+
+      <div class="form-grid-3">
+        <div class="field-group">
+          <label>Linked Sauda <span class="req">*</span></label>
+          <select formControlName="saudaId" class="erp-input">
+            <option value="">Select active Sauda...</option>
+            @for (s of eligibleSaudasForForm; track s.id) {
+            <option [value]="s.id">
+              {{ s.saudaNo }} ({{ s.saudaType }} — {{ s.partyName }})
+            </option>
+            }
+          </select>
+          @if (selectedLinkedSauda) {
+          <span class="field-hint text-primary fw-semibold">
+            Remaining Sauda Balance: {{ selectedSaudaRemainingMt | number: '1.0-3' }} MT
+            &bull; Commodities: {{ selectedLinkedSauda.commodity }}
+          </span>
+          }
+        </div>
+
+        <div class="field-group">
+          <label>Truck Entry Date <span class="req">*</span></label>
+          <input type="date" formControlName="dispatchDate" class="erp-input" />
+        </div>
+
+        <div class="field-group">
+          <label>Truck Number <span class="req">*</span></label>
+          <input type="text" formControlName="vehicleNo" class="erp-input text-uppercase"
+            placeholder="e.g. RJ07-GA-1234" />
+          @if (truckForm.get('vehicleNo')?.touched && truckForm.get('vehicleNo')?.invalid) {
+          <span class="field-err">Valid vehicle format required (e.g. RJ07-GA-1234).</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-grid-3 mt-3">
+        <div class="field-group">
+          <label>Transit Status <span class="req">*</span></label>
+          <select formControlName="status" class="erp-input">
+            @for (st of activeTruckStatuses; track st) {
+            <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Transporter Name</label>
+          <input type="text" formControlName="transporterName" class="erp-input"
+            placeholder="Optional transporter name" />
+        </div>
+
+        <div class="field-group">
+          <label>LR / Bilty No.</label>
+          <input type="text" formControlName="lrNo" class="erp-input text-uppercase" placeholder="Optional LR number" />
+        </div>
+      </div>
+
+      <div class="form-grid-3 mt-3">
+        <div class="field-group">
+          <label>Driver Name</label>
+          <input type="text" formControlName="driverName" class="erp-input" placeholder="Optional driver name" />
+        </div>
+
+        <div class="field-group">
+          <label>Driver Mobile (10-digit)</label>
+          <input type="text" maxlength="10" formControlName="driverPhone" class="erp-input"
+            placeholder="Optional 10-digit mobile" />
+          @if (truckForm.get('driverPhone')?.touched && truckForm.get('driverPhone')?.invalid) {
+          <span class="field-err">Enter a valid 10-digit Indian mobile number.</span>
+          }
+        </div>
+
+        <div class="field-group">
+          <label>Expected Arrival Date</label>
+          <input type="date" formControlName="expectedArrivalDate" class="erp-input" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Commodity Details -->
+    <div class="erp-card section-card">
+      <div class="section-head-row">
+        <h2 class="section-card-title mb-0">Commodity Details</h2>
+        <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addCommodityRow()">
+          <i class="fa-solid fa-plus me-1"></i> Add Commodity
+        </button>
+      </div>
+
+      <div formArrayName="commodityItems" class="commodity-rows-stack">
+        @for (row of commodityRows.controls; track $index; let idx = $index) {
+        <div [formGroupName]="idx" class="commodity-row-box">
+          <div class="field-group">
+            <label>Commodity <span class="req">*</span></label>
+            <select formControlName="commodity" class="erp-input">
+              <option value="">Select</option>
+              @for (c of selectedSaudaCommodities; track c.commodity) {
+              <option [value]="c.commodity">{{ c.commodity }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Packaging UOM <span class="req">*</span></label>
+            <select formControlName="packagingUom" class="erp-input">
+              @for (u of packagingUoms; track u) {
+              <option [value]="u">{{ u }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Packaging Qty <span class="req">*</span></label>
+            <input type="number" min="1" formControlName="packagingQty" class="erp-input" placeholder="0" />
+          </div>
+
+          <div class="field-group">
+            <label>Weight UOM <span class="req">*</span></label>
+            <select formControlName="weightUom" class="erp-input">
+              @for (w of weightUoms; track w) {
+              <option [value]="w">{{ w }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Actual Weight <span class="req">*</span></label>
+            <input type="number" step="0.1" min="0.1" formControlName="actualWeight" class="erp-input"
+              placeholder="0" />
+          </div>
+
+          <div class="remove-btn-wrap">
+            <button type="button" class="btn-remove-row" [disabled]="commodityRows.length <= 1"
+              (click)="removeCommodityRow(idx)">
+              Remove
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+
+      <div class="helper-note-box mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>
+          Only commodities present in the linked Sauda can be selected. Total loaded weight must
+          stay within the remaining Sauda balance.
+        </span>
+        <strong class="text-primary">
+          Entry Total: {{ formTotalWeightMt | number: '1.0-3' }} MT /
+          {{ selectedSaudaRemainingMt | number: '1.0-3' }} MT available
+        </strong>
+      </div>
+
+      @if (selectedLinkedSauda && formTotalWeightMt > selectedSaudaRemainingMt) {
+      <div class="alert-erp alert-danger-erp mt-2">
+        Loaded weight ({{ formTotalWeightMt | number: '1.0-3' }} MT) exceeds remaining Sauda
+        balance ({{ selectedSaudaRemainingMt | number: '1.0-3' }} MT).
+      </div>
+      }
+    </div>
+
+    <!-- Section 3: Remarks & Save -->
+    <div class="erp-card section-card">
+      <div class="field-group">
+        <label>Remarks</label>
+        <textarea rows="3" formControlName="remarks" class="erp-input" placeholder="Optional remarks"></textarea>
+      </div>
+
+      @if (isEditMode) {
+      <div class="field-group mt-3 revision-box">
+        <label>Reason for Revision <span class="req">*</span></label>
+        <input type="text" formControlName="revisionReason" class="erp-input"
+          placeholder="Mandatory: Explain why this truck entry is being modified (min 5 chars)" />
+        @if (truckForm.get('revisionReason')?.touched && truckForm.get('revisionReason')?.invalid) {
+        <span class="field-err">
+          Revision reason (min 5 characters) is mandatory when editing.
+        </span>
+        }
+      </div>
+      }
+
+      <div class="form-actions-left mt-4">
+        <button type="submit" class="btn-erp-primary">
+          {{ isEditMode ? 'Update Truck Entry' : 'Save Truck Entry' }}
+        </button>
+        <button type="button" class="btn-erp-ghost" (click)="backToListing()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </form>
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- Screen 5: Truck Removal Confirmation Modal                         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (isRemoveOpen && selectedTruck) {
+<div class="modal-backdrop-erp" (click)="closeRemoveModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp text-danger">
+          Remove Truck Entry — {{ selectedTruck.entryNo }}
+        </h3>
+        <p class="modal-sub-erp">
+          Removing releases {{ selectedTruck.loadedQtyMt | number: '1.0-3' }} MT back to Sauda
+          {{ selectedTruck.saudaNo }}.
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeRemoveModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="removeForm" (ngSubmit)="confirmRemoval()" class="modal-body-erp">
+      @if (selectedTruck.status === 'Delivered') {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <strong>Business Rule Block:</strong> Truck
+        <strong>{{ selectedTruck.vehicleNo }}</strong> is already marked
+        <strong>Delivered</strong>. Delivered truck entries cannot be removed.
+      </div>
+      } @else {
+      <div class="alert-erp alert-warning-erp mb-3">
+        Removing <strong>{{ selectedTruck.entryNo }}</strong> ({{ selectedTruck.vehicleNo }})
+        will restore <strong>{{ selectedTruck.loadedQtyMt | number: '1.0-3' }} MT</strong>
+        pending balance on <strong>{{ selectedTruck.saudaNo }}</strong>.
+      </div>
+      }
+
+      @if (removeError) {
+      <div class="alert-erp alert-danger-erp mb-3">{{ removeError }}</div>
+      }
+
+      <div class="field-group">
+        <label>Mandatory Removal Reason <span class="req">*</span></label>
+        <textarea rows="3" formControlName="reason" class="erp-input"
+          placeholder="State clear reason for truck removal (minimum 10 characters)..."></textarea>
+        @if (removeForm.get('reason')?.touched && removeForm.get('reason')?.invalid) {
+        <span class="field-err">Please enter at least 10 characters.</span>
+        }
+      </div>
+
+      <label class="confirm-check mt-3">
+        <input type="checkbox" formControlName="confirmed" />
+        <span>I confirm this truck entry should be marked as Removed.</span>
+      </label>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeRemoveModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-danger" [disabled]="selectedTruck.status === 'Delivered'">
+          <i class="fa-solid fa-trash-can me-1"></i> Confirm Removal
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

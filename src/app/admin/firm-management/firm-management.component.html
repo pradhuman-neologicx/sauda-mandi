@@ -1,0 +1,182 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Master Setup</div>
+      <h1 class="erp-title">Firm Management</h1>
+      <p class="erp-subtitle">
+        Add, edit, and activate/deactivate trading firms
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Firm</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+          @for (size of tableSizes; track size) {
+          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search by Firm Name..." />
+        </div>
+
+        <div class="filter-controls">
+
+
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+          </button>
+
+          @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firm Listing Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Firm Name</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 160px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredFirms.length === 0) {
+          <tr>
+            <td colspan="4" class="empty-state">
+              <i class="fa-solid fa-building mb-2"></i>
+              <div>No firms match your search or filter.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          firm of filteredFirms
+          | paginate
+          : {
+          id: 'firmPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredFirms.length,
+          };
+          track firm.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="!firm.isActive">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td class="fw-semibold text-dark">{{ firm.name }}</td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [ngClass]="firm.isActive ? 'is-active' : 'is-inactive'"
+                (click)="toggleStatus(firm)" [title]="firm.isActive ? 'Click to set Inactive' : 'Click to set Active'">
+                <span class="dot"></span>
+                <span>{{ firm.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(firm)" title="Edit Firm Name">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="icon-btn" [ngClass]="firm.isActive ? 'btn-void' : 'btn-activate'"
+                  (click)="toggleStatus(firm)" [title]="firm.isActive ? 'Deactivate Firm' : 'Activate Firm'">
+                  <i class="fa-solid" [ngClass]="firm.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredFirms.length }} entries
+      </div>
+      <pagination-controls id="firmPagination" (pageChange)="onTableDataChange($event)"
+        class="my-pagination"></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Firm Modal -->
+@if (isFormOpen) {
+<div class="modal-backdrop-erp" (click)="closeModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isEditMode ? 'Edit Firm — ' + selectedFirm?.id : 'Add New Firm' }}
+        </h3>
+        <p class="modal-sub-erp">
+          {{
+          isEditMode
+          ? 'Update the firm name below.'
+          : 'Enter the firm name to register it as Active.'
+          }}
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="firmForm" (ngSubmit)="submitFirmForm()" class="modal-body-erp">
+      @if (formError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
+      </div>
+      }
+
+      <div class="field-group">
+        <label>Firm Name <span class="req">*</span></label>
+        <input type="text" formControlName="name" class="erp-input" placeholder="e.g. Shree Ganesh Agro Mills"
+          autofocus />
+        @if (firmForm.get('name')?.touched && firmForm.get('name')?.invalid) {
+        <span class="field-err">
+          Firm name is required (minimum 2 characters).
+        </span>
+        }
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check me-1"></i>
+          {{ isEditMode ? 'Update Firm' : 'Add Firm' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

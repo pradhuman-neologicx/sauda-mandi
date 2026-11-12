@@ -1,0 +1,394 @@
+<div class="event-category-container p-4">
+  <!-- Header Section -->
+  <div
+    class="header-section d-flex justify-content-between align-items-center mb-4"
+    >
+    <div>
+      <h2 class="section-title">Event Category Management</h2>
+      <p class="text-muted small mb-0">Manage and organize your event types</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary-custom px-4">
+      <i class="fa-solid fa-plus me-2"></i> Add Category
+    </button>
+  </div>
+
+  <!-- Search and Filter Card -->
+  <div class="card p-3 shadow-sm mb-4 search-card border-0">
+    <div
+      class="d-flex justify-content-between align-items-center flex-wrap g-3"
+      >
+      <!-- Table Size -->
+      <div class="table-size-selector d-flex align-items-center">
+        <span class="me-2 text-muted fw-bold small">Show:</span>
+        <select
+          class="form-select form-select-sm"
+          (change)="onTableSizeChange($event)"
+          [(ngModel)]="tableSize"
+          style="width: 80px"
+          >
+          @for (size of tableSizes; track size) {
+            <option [value]="size">
+              {{ size }}
+            </option>
+          }
+        </select>
+        <span class="ms-2 text-muted fw-bold small">entries</span>
+      </div>
+
+      <!-- Search -->
+      <form
+        [formGroup]="searchForm"
+        (ngSubmit)="onSearch()"
+        class="d-flex align-items-center gap-2"
+        >
+        <div class="position-relative">
+          <input
+            type="text"
+            formControlName="searchQuery"
+            class="form-control form-control-sm ps-5"
+            placeholder="Search categories..."
+            style="min-width: 250px"
+            />
+          <i
+            class="fa-solid fa-magnifying-glass text-muted position-absolute search-icon"
+          ></i>
+        </div>
+        <button type="submit" class="btn btn-primary-custom btn-sm px-4">
+          Search
+        </button>
+        @if (showReset) {
+          <button
+            type="button"
+            (click)="resetSearch()"
+            class="btn btn-link btn-sm text-decoration-none"
+            >
+            Reset
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Table -->
+  <div class="card shadow-sm border-0 table-card overflow-hidden" [@fadeIn]>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark-custom">
+          <tr>
+            <th class="ps-4">S.No.</th>
+            <th>Category Name</th>
+            <th class="text-center">Status</th>
+            <th class="text-center pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+            cat of displayCategories
+            | paginate
+            : {
+            itemsPerPage:
+            tableSize === 'all' ? totalRecords : tableSize,
+            currentPage: page,
+            totalItems: totalRecords,
+            }; track
+            cat; let i = $index) {
+            <tr
+              >
+              <td class="ps-4">
+                {{
+                (page - 1) * (tableSize === "all" ? totalRecords : tableSize) +
+                i +
+                1
+                }}
+              </td>
+              <td class="fw-bold text-primary-custom">{{ cat.name }}</td>
+              <td class="text-center">
+                <span
+                  class="badge"
+                [ngClass]="{
+                  'bg-success-light text-success': cat.status === 'Active',
+                  'bg-danger-light text-danger': cat.status === 'Deactive',
+                }"
+                  >
+                  {{ cat.status }}
+                </span>
+              </td>
+              <td class="text-center pe-4">
+                <div class="d-flex justify-content-center gap-2">
+                  <button
+                    (click)="openViewModal(cat)"
+                    class="btn btn-icon btn-outline-warning"
+                    title="View Details"
+                    [disabled]="isLoading"
+                    >
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                  <button
+                    (click)="openUpdateModal(cat)"
+                    class="btn btn-icon btn-outline-primary"
+                    title="Edit"
+                    [disabled]="isLoading"
+                    >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button
+                    (click)="toggleStatus(cat)"
+                    class="btn btn-icon"
+                    [disabled]="isLoading"
+                  [ngClass]="
+                    cat.status === 'Active'
+                      ? 'btn-outline-danger'
+                      : 'btn-outline-success'
+                  "
+                    [title]="cat.status === 'Active' ? 'Deactivate' : 'Activate'"
+                    >
+                    <i
+                      class="fa-solid"
+                    [ngClass]="
+                      cat.status === 'Active' ? 'fa-ban' : 'fa-check-circle'
+                    "
+                    ></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          <!-- Empty State -->
+          @if (displayCategories.length === 0) {
+            <tr>
+              <td colspan="4" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="fa-solid fa-folder-open fa-3x mb-3 opacity-25"></i>
+                  <p class="mb-0">No categories found matching your criteria.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div
+      class="d-flex justify-content-between align-items-center p-3 table-footer border-top bg-light"
+      >
+      <div class="pagination-info text-muted small fw-bold">
+        Showing {{ showingStart }} to {{ showingEnd }} of
+        {{ totalRecords }} entries
+      </div>
+      <pagination-controls
+        (pageChange)="onTableDataChange($event)"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+@if (isCreateOpen) {
+  <div class="modal-overlay" [@fadeIn]>
+    <div class="modal-card" [@slideIn]>
+      <div class="modal-header-custom">
+        <h4 class="modal-heading">
+          <i class="fa-solid fa-plus-circle me-2"></i> Add New Category
+        </h4>
+        <button class="btn-close-modal" (click)="closeModal()">&times;</button>
+      </div>
+      <form
+        [formGroup]="createForm"
+        (ngSubmit)="onCreate()"
+        class="modal-body p-4"
+        >
+        <div class="mb-3">
+          <label class="form-label fw-bold">Category Name</label>
+          <input
+            type="text"
+            formControlName="name"
+            class="form-control"
+            placeholder="Enter Category Name"
+          [ngClass]="{
+            'is-invalid':
+              createForm.get('name')?.touched &&
+              createForm.get('name')?.invalid,
+          }"
+            />
+          <div class="invalid-feedback">
+            @if (createForm.get('name')?.errors?.['required']) {
+              <span
+                >Category name is required.</span
+                >
+              }
+              @if (createForm.get('name')?.errors?.['minlength']) {
+                <span
+                  >Name must be at least 3 characters.</span
+                  >
+                }
+              </div>
+            </div>
+            <div class="modal-footer-custom gap-2 mt-4">
+              <button
+                type="button"
+                class="btn btn-secondary-custom"
+                (click)="closeModal()"
+                >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary-custom px-4"
+                [disabled]="createForm.invalid || isLoading"
+                >
+                @if (!isLoading) {
+                  <span>Create Category</span>
+                }
+                @if (isLoading) {
+                  <span
+                    >Processing... <i class="fa-solid fa-spinner fa-spin ms-1"></i
+                  ></span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- UPDATE MODAL -->
+    @if (isUpdateOpen) {
+      <div class="modal-overlay" [@fadeIn]>
+        <div class="modal-card" [@slideIn]>
+          <div class="modal-header-custom">
+            <h4 class="modal-heading">
+              <i class="fa-solid fa-pen-to-square me-2"></i> Edit Category
+            </h4>
+            <button class="btn-close-modal" (click)="closeModal()">&times;</button>
+          </div>
+          <form
+            [formGroup]="updateForm"
+            (ngSubmit)="onUpdate()"
+            class="modal-body p-4"
+            >
+            <div class="mb-3">
+              <label class="form-label fw-bold">Category Name</label>
+              <input
+                type="text"
+                formControlName="name"
+                class="form-control"
+          [ngClass]="{
+            'is-invalid':
+              updateForm.get('name')?.touched &&
+              updateForm.get('name')?.invalid,
+          }"
+                />
+              <div class="invalid-feedback">
+                @if (updateForm.get('name')?.errors?.['required']) {
+                  <span
+                    >Category name is required.</span
+                    >
+                  }
+                  @if (updateForm.get('name')?.errors?.['minlength']) {
+                    <span
+                      >Name must be at least 3 characters.</span
+                      >
+                    }
+                  </div>
+                </div>
+                <div class="modal-footer-custom gap-2 mt-4">
+                  <button
+                    type="button"
+                    class="btn btn-secondary-custom"
+                    (click)="closeModal()"
+                    >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    class="btn btn-primary-custom px-4"
+                    [disabled]="updateForm.invalid || isLoading"
+                    >
+                    @if (!isLoading) {
+                      <span>Save Changes</span>
+                    }
+                    @if (isLoading) {
+                      <span
+                        >Saving... <i class="fa-solid fa-spinner fa-spin ms-1"></i
+                      ></span>
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        }
+
+        <!-- VIEW MODAL -->
+        @if (isViewOpen) {
+          <div class="modal-overlay" [@fadeIn]>
+            <div class="modal-card" [@slideIn]>
+              <div class="modal-header-custom view-header">
+                <h4 class="modal-heading">
+                  <i class="fa-solid fa-eye me-2"></i> Category Details
+                </h4>
+                <button class="btn-close-modal" (click)="closeModal()">&times;</button>
+              </div>
+              <div class="modal-body p-0">
+                <div class="view-details-container p-4">
+                  <div class="row g-4">
+                    <div class="col-md-12 border-bottom pb-3">
+                      <label class="form-label text-muted small text-uppercase fw-bold"
+                        >Category Name</label
+                        >
+                        <p class="mb-0 fw-bold fs-5 text-primary-custom">
+                          {{ selectedCategory?.name }}
+                        </p>
+                      </div>
+                      <div class="col-md-6 border-bottom pb-2">
+                        <label class="form-label text-muted small text-uppercase fw-bold"
+                          >Status</label
+                          >
+                          <div>
+                            <span
+                              class="badge"
+                [ngClass]="{
+                  'bg-success-light text-success':
+                    selectedCategory?.is_active === 1,
+                  'bg-danger-light text-danger':
+                    selectedCategory?.is_active === 0,
+                }"
+                              >
+                              {{ selectedCategory?.is_active === 1 ? "Active" : "Inactive" }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="col-md-6 border-bottom pb-2">
+                          <label class="form-label text-muted small text-uppercase fw-bold"
+                            >Created At</label
+                            >
+                            <p class="mb-0 fw-semibold">
+                              {{
+                              ($safeNavigationMigration(selectedCategory?.created_at) | date: "d MMMM, yyyy") || "N/A"
+                              }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer-custom gap-2 p-3 bg-light border-top">
+                        <button
+                          type="button"
+                          class="btn btn-secondary-custom px-4"
+                          (click)="closeModal()"
+                          >
+                          Close
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-primary-custom px-4"
+                          (click)="isViewOpen = false; openUpdateModal(selectedCategory)"
+                          >
+                          <i class="fa-solid fa-pen-to-square me-2"></i> Edit Category
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }

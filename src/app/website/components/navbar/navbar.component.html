@@ -1,0 +1,170 @@
+<!-- ── STICKY NAVBAR ── -->
+<nav class="navbar" [class.navbar--scrolled]="isScrolled || forceScrolled" [class.navbar--menu-open]="isMenuOpen">
+  <div class="navbar__container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- ── LEFT: LOGO ── -->
+    <a routerLink="/" class="navbar__logo" (click)="closeMenu()">
+      <img ngSrc="assets/logo.webp" width="180" height="50" priority alt="Cradle Reproductive Health" />
+    </a>
+
+    <!-- ── CENTER: NAV LINKS (Desktop) ── -->
+    <ul class="navbar__links">
+      <li>
+        <a routerLink="/" class="navbar__link">Home</a>
+      </li>
+
+      <!-- About Us Dropdown -->
+      <li class="navbar__dropdown" (mouseenter)="aboutDropdown = true" (mouseleave)="aboutDropdown = false">
+        <button class="navbar__link" [class.active]="aboutDropdown">
+          About Us
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="aboutDropdown"></i>
+        </button>
+        <div class="navbar__dropdown-menu" [class.open]="aboutDropdown">
+          <div class="navbar__dropdown-inner">
+            @for (item of aboutLinks; track item) {
+            <a [routerLink]="item.route" [fragment]="item.fragment" class="navbar__dropdown-link"
+              (click)="aboutDropdown = false">
+              <i class="fa-solid fa-chevron-right navbar__dropdown-arrow"></i>
+              {{ item.label }}
+            </a>
+            }
+          </div>
+        </div>
+      </li>
+
+      <li>
+        <a routerLink="/journey" class="navbar__link">Your Journey</a>
+      </li>
+      <!-- <li>
+      <a routerLink="/faq" class="navbar__link">FAQs</a>
+    </li> -->
+
+      <!-- Fertility Dropdown -->
+      <li class="navbar__dropdown" (mouseenter)="fertilityDropdown = true" (mouseleave)="fertilityDropdown = false">
+        <button class="navbar__link" [class.active]="fertilityDropdown">
+          Fertility
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="fertilityDropdown"></i>
+        </button>
+        <div class="navbar__dropdown-menu" [class.open]="fertilityDropdown">
+          <div class="navbar__dropdown-inner">
+            @for (item of treatmentCategories[0].links; track item) {
+            <a [routerLink]="item.route" class="navbar__dropdown-link" (click)="fertilityDropdown = false">
+              <i class="fa-solid fa-chevron-right navbar__dropdown-arrow"></i>
+              {{ item.label }}
+            </a>
+            }
+          </div>
+        </div>
+      </li>
+
+      <!-- Gynaecology Dropdown -->
+      <li class="navbar__dropdown" (mouseenter)="gynaecologyDropdown = true" (mouseleave)="gynaecologyDropdown = false">
+        <button class="navbar__link" [class.active]="gynaecologyDropdown">
+          Gynaecology
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="gynaecologyDropdown"></i>
+        </button>
+        <div class="navbar__dropdown-menu" [class.open]="gynaecologyDropdown">
+          <div class="navbar__dropdown-inner">
+            @for (item of treatmentCategories[1].links; track item) {
+            <a [routerLink]="item.route" class="navbar__dropdown-link" (click)="gynaecologyDropdown = false">
+              <i class="fa-solid fa-chevron-right navbar__dropdown-arrow"></i>
+              {{ item.label }}
+            </a>
+            }
+          </div>
+        </div>
+      </li>
+
+      <li>
+        <a routerLink="/pricing" class="navbar__link">Prices</a>
+      </li>
+      <li>
+        <a routerLink="/contact" class="navbar__link">Contact</a>
+      </li>
+    </ul>
+
+    <!-- ── RIGHT: CTA + MOBILE TOGGLE ── -->
+    <div class="navbar__actions">
+      <a routerLink="/book-appointment" class="navbar__cta" (click)="closeMenu()">
+        <i class="fa-solid fa-calendar-check"></i>
+        <span>Book Appointment</span>
+      </a>
+
+      <button class="navbar__hamburger" (click)="toggleMenu()" aria-label="Toggle menu">
+        <span class="navbar__hamburger-line" [class.open]="isMenuOpen"></span>
+        <span class="navbar__hamburger-line" [class.open]="isMenuOpen"></span>
+        <span class="navbar__hamburger-line" [class.open]="isMenuOpen"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── MOBILE MENU ── -->
+  <div class="navbar__mobile" [class.open]="isMenuOpen">
+    <div class="navbar__mobile-inner">
+      <a routerLink="/" class="navbar__mobile-link" (click)="closeMenu()">
+        <span><i class="fa-solid fa-house"></i> Home</span>
+      </a>
+
+      <!-- About Accordion -->
+      <div class="navbar__mobile-accordion">
+        <button class="navbar__mobile-link navbar__mobile-link--accordion" (click)="mobileAboutOpen = !mobileAboutOpen">
+          <span><i class="fa-solid fa-info-circle"></i> About</span>
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="mobileAboutOpen"></i>
+        </button>
+        <div class="navbar__mobile-sub" [class.open]="mobileAboutOpen">
+          @for (item of aboutLinks; track item) {
+          <a [routerLink]="item.route" [fragment]="item.fragment" class="navbar__mobile-sublink"
+            (click)="closeMenu()">{{ item.label }}</a>
+          }
+        </div>
+      </div>
+
+      <a routerLink="/journey" class="navbar__mobile-link" (click)="closeMenu()">
+        <span><i class="fa-solid fa-road"></i> Your Journey</span>
+      </a>
+      <!-- <a routerLink="/faq" class="navbar__mobile-link" (click)="closeMenu()">
+    <span><i class="fa-solid fa-circle-question"></i> FAQs</span>
+  </a> -->
+
+      <!-- Fertility Accordion -->
+      <div class="navbar__mobile-accordion">
+        <button class="navbar__mobile-link navbar__mobile-link--accordion"
+          (click)="mobileFertilityOpen = !mobileFertilityOpen">
+          <span><i class="fa-solid fa-baby"></i> Fertility</span>
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="mobileFertilityOpen"></i>
+        </button>
+        <div class="navbar__mobile-sub" [class.open]="mobileFertilityOpen">
+          @for (item of treatmentCategories[0].links; track item) {
+          <a [routerLink]="item.route" class="navbar__mobile-sublink" (click)="closeMenu()">{{ item.label }}</a>
+          }
+        </div>
+      </div>
+
+      <!-- Gynaecology Accordion -->
+      <div class="navbar__mobile-accordion">
+        <button class="navbar__mobile-link navbar__mobile-link--accordion"
+          (click)="mobileGynaecologyOpen = !mobileGynaecologyOpen">
+          <span><i class="fa-solid fa-venus"></i> Gynaecology</span>
+          <i class="fa-solid fa-chevron-down navbar__chevron" [class.rotated]="mobileGynaecologyOpen"></i>
+        </button>
+        <div class="navbar__mobile-sub" [class.open]="mobileGynaecologyOpen">
+          @for (item of treatmentCategories[1].links; track item) {
+          <a [routerLink]="item.route" class="navbar__mobile-sublink" (click)="closeMenu()">{{ item.label }}</a>
+          }
+        </div>
+      </div>
+
+      <a routerLink="/pricing" class="navbar__mobile-link" (click)="closeMenu()">
+        <span><i class="fa-solid fa-tag"></i> Prices</span>
+      </a>
+      <a routerLink="/contact" class="navbar__mobile-link" (click)="closeMenu()">
+        <span><i class="fa-solid fa-envelope"></i> Contact</span>
+      </a>
+
+      <!-- Mobile CTA -->
+      <a routerLink="/book-appointment" class="navbar__mobile-cta" (click)="closeMenu()">
+        <i class="fa-solid fa-calendar-check"></i>
+        Book an Appointment
+      </a>
+    </div>
+  </div>
+</nav>

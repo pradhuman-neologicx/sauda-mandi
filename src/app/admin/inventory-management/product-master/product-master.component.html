@@ -1,0 +1,293 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Inventory Management</div>
+      <h1 class="erp-title">Product Master</h1>
+      <p class="erp-subtitle">
+        Manage commodity &amp; packaging SKUs linked to Inventory Categories
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Product</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Limit & Compact Right-Aligned Search -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select
+          class="limit-select"
+          [(ngModel)]="tableSize"
+          (ngModelChange)="onTableSizeChange()"
+        >
+          @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search Product or Category..."
+          />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 75px">S.No.</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Sub Category</th>
+            <th>UOM (Pkg / Wt)</th>
+            <th class="text-end">Min Stock</th>
+            <th class="text-center" style="width: 130px">Status</th>
+            <th class="text-center" style="width: 170px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredProducts.length === 0) {
+            <tr>
+              <td colspan="8" class="empty-state">
+                <i class="fa-solid fa-box-open mb-2"></i>
+                <div>No products found.</div>
+              </td>
+            </tr>
+          } @else {
+            @for (
+              prod of filteredProducts
+                | paginate
+                  : {
+                      id: 'invProductPagination',
+                      itemsPerPage: itemsPerPageCount,
+                      currentPage: page,
+                      totalItems: filteredProducts.length,
+                    };
+              track prod.id;
+              let i = $index
+            ) {
+              <tr [class.inactive-row]="!prod.isActive">
+                <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+                <td class="fw-semibold text-dark">{{ prod.name }}</td>
+                <td>{{ getCategoryNameForSub(prod.subCategoryId) }}</td>
+                <td>{{ getSubCategoryName(prod.subCategoryId) }}</td>
+                <td>{{ prod.packagingUom }} / {{ prod.weightUom }}</td>
+                <td class="text-end num fw-semibold">{{ prod.minStock | number }}</td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="status-toggle-btn"
+                    [ngClass]="prod.isActive ? 'is-active' : 'is-inactive'"
+                    (click)="toggleStatus(prod)"
+                  >
+                    <span class="dot"></span>
+                    <span>{{ prod.isActive ? 'Active' : 'Inactive' }}</span>
+                  </button>
+                </td>
+                <td class="text-center">
+                  <div class="action-group">
+                    <button
+                      type="button"
+                      class="icon-btn btn-view"
+                      (click)="openViewModal(prod)"
+                      title="View Product"
+                    >
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn btn-edit"
+                      (click)="openEditModal(prod)"
+                      title="Edit Product"
+                    >
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [ngClass]="prod.isActive ? 'btn-void' : 'btn-activate'"
+                      (click)="toggleStatus(prod)"
+                      [title]="prod.isActive ? 'Deactivate' : 'Activate'"
+                    >
+                      <i
+                        class="fa-solid"
+                        [ngClass]="prod.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"
+                      ></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredProducts.length }} entries
+      </div>
+      <pagination-controls
+        id="invProductPagination"
+        (pageChange)="onTableDataChange($event)"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Product Modal -->
+@if (isFormOpen) {
+  <div class="modal-backdrop-erp" (click)="closeModals()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            {{ isEditMode ? 'Edit Product' : 'Add New Product' }}
+          </h3>
+          <p class="modal-sub-erp">Commodity or packaging item specification</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModals()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="productForm" (ngSubmit)="submitProduct()" class="modal-body-erp">
+        @if (formError) {
+          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Product Name <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="name"
+            class="erp-input"
+            placeholder="e.g. Kinnaur Royal Apple"
+          />
+        </div>
+
+        <div class="field-group mt-3">
+          <label>Sub Category <span class="req">*</span></label>
+          <select formControlName="subCategoryId" class="erp-input">
+            <option value="">Select Sub Category</option>
+            @for (sub of activeSubCategories; track sub.id) {
+              <option [value]="sub.id">
+                {{ getCategoryNameForSub(sub.id) }} &mdash; {{ sub.name }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="form-grid-3 mt-3">
+          <div class="field-group">
+            <label>Packaging UOM <span class="req">*</span></label>
+            <select formControlName="packagingUom" class="erp-input">
+              @for (u of packagingUoms; track u) {
+                <option [value]="u">{{ u }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Weight UOM <span class="req">*</span></label>
+            <select formControlName="weightUom" class="erp-input">
+              @for (w of weightUoms; track w) {
+                <option [value]="w">{{ w }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Min Stock <span class="req">*</span></label>
+            <input type="number" min="0" formControlName="minStock" class="erp-input" />
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeModals()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check me-1"></i>
+            {{ isEditMode ? 'Update Product' : 'Add Product' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- View Product Modal -->
+@if (isViewOpen && selectedProduct) {
+  <div class="modal-backdrop-erp" (click)="closeModals()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">{{ selectedProduct.name }}</h3>
+          <p class="modal-sub-erp">Product Master Specification</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModals()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Category</span>
+            <span class="detail-value">{{ getCategoryNameForSub(selectedProduct.subCategoryId) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Sub Category</span>
+            <span class="detail-value">{{ getSubCategoryName(selectedProduct.subCategoryId) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Default UOM</span>
+            <span class="detail-value">{{ selectedProduct.packagingUom }} / {{ selectedProduct.weightUom }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Min Stock Threshold</span>
+            <span class="detail-value">{{ selectedProduct.minStock | number }}</span>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-primary" (click)="closeModals()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,62 @@
+<section class="testimonials-section">
+  <div class="ts-header">
+    <div class="eyebrow-wrap">
+      <span class="ts-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Real Stories
+      </span>
+    </div>
+    <h2 class="ts-title">Lives We've Touched</h2>
+    <p class="ts-sub">
+      Thousands of families trust us on their journey to parenthood
+    </p>
+  </div>
+
+  <div class="ts-slider-outer">
+    <div class="ts-slider-inner">
+      <swiper-container #swiperRef [config]="swiperConfig" init="false" class="ts-swiper">
+        @for (t of testimonials; track t; let i = $index) {
+          <swiper-slide class="ts-slide">
+            <div class="ts-card" [class.peach-card]="i % 2 === 0" [class.pista-card]="i % 2 !== 0">
+              <div class="ts-card-accent"></div>
+              <div class="ts-blob"></div>
+              @if (t.badge) {
+                <span class="ts-badge" [class.badge-peach]="i % 2 === 0"
+                [class.badge-pista]="i % 2 !== 0">{{ t.badge }}</span>
+              }
+              <span class="quote-mark">"</span>
+              <div class="ts-rating">
+                @for (s of [1, 2, 3, 4, 5]; track s) {
+                  <span class="star"
+                    [style.background]="'linear-gradient(to right, #E8A030 ' + getStarFill(t.stars, s) + '%, #E5E7EB ' + getStarFill(t.stars, s) + '%)'">
+                  </span>
+                }
+              </div>
+              <p class="ts-text">{{ t.text }}</p>
+              <!-- <div class="ts-divider" [class.divider-peach]="i % 2 === 0" [class.divider-pista]="i % 2 !== 0"></div> -->
+            </div>
+          </swiper-slide>
+        }
+      </swiper-container>
+    </div>
+  </div>
+
+  <div class="ts-controls">
+    <button class="ts-btn" (click)="slide(-1)" aria-label="Previous">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M10 12L6 8l4-4" />
+      </svg>
+    </button>
+    <div class="ts-dots">
+      @for (t of testimonials; track t; let i = $index) {
+        <button class="ts-dot" [class.active]="activeIndex === i"
+        (click)="goToSlide(i)" [attr.aria-label]="'Go to slide ' + (i + 1)"></button>
+      }
+    </div>
+    <button class="ts-btn" (click)="slide(1)" aria-label="Next">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M6 4l4 4-4 4" />
+      </svg>
+    </button>
+  </div>
+</section>

@@ -1,0 +1,856 @@
+<div class="erp-page">
+  @if (viewMode === 'listing') {
+    <!-- Header -->
+    <div class="erp-header">
+      <div>
+        <h1 class="erp-title">Sauda Management</h1>
+        <p class="erp-subtitle">
+          Manage purchase, sales and brokerage agreements
+        </p>
+      </div>
+
+      <div class="erp-actions">
+        <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
+          <i class="fa-solid fa-plus"></i>
+          <span>Create Sauda</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 KPI Cards (matching prototype) -->
+    <div class="sauda-kpi-grid">
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Total Saudas</div>
+        <div class="sauda-kpi-val">{{ activeSaudasList.length }}</div>
+        <div class="sauda-kpi-sub">Including all types</div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Purchase</div>
+        <div class="sauda-kpi-val">{{ purchaseCount }}</div>
+        <div class="sauda-kpi-sub">Sauda records</div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Sales</div>
+        <div class="sauda-kpi-val">{{ salesCount }}</div>
+        <div class="sauda-kpi-sub">Sauda records</div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Brokerage</div>
+        <div class="sauda-kpi-val">{{ brokerageCount }}</div>
+        <div class="sauda-kpi-sub">Sauda records</div>
+      </div>
+    </div>
+
+    <!-- Sauda Listing Card -->
+    <div class="erp-card">
+      <div class="listing-card-top">
+        <div class="listing-header-row">
+          <h2 class="listing-card-title">Sauda Listing</h2>
+          <div class="table-size-selector">
+            <span>Show</span>
+            <select
+              class="limit-select"
+              [(ngModel)]="tableSize"
+              (ngModelChange)="onTableSizeChange()"
+            >
+              @for (size of tableSizes; track size) {
+                <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+              }
+            </select>
+            <span>entries</span>
+          </div>
+        </div>
+
+        <form (ngSubmit)="onSearch()" class="sauda-filter-grid">
+          <div class="filter-field">
+            <label>Search Sauda Number / Party</label>
+            <input
+              type="text"
+              name="searchTerm"
+              [(ngModel)]="searchTerm"
+              class="erp-input"
+              placeholder="Search records..."
+            />
+          </div>
+
+          <div class="filter-field">
+            <label>Sauda Type</label>
+            <select name="typeFilter" [(ngModel)]="typeFilter" class="erp-input">
+              <option value="All">All Types</option>
+              <option value="Purchase">Purchase</option>
+              <option value="Sales">Sales</option>
+              <option value="Brokerage">Brokerage</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label>Client Firm</label>
+            <select name="firmFilter" [(ngModel)]="firmFilter" class="erp-input">
+              <option value="All">All Firms</option>
+              @for (firmName of firmFilterOptions; track firmName) {
+                <option [value]="firmName">{{ firmName }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label>Voided records</label>
+            <select name="voidFilter" [(ngModel)]="voidFilter" class="erp-input">
+              <option value="exclude">Exclude Voided</option>
+              <option value="all">All Records</option>
+              <option value="only">Voided Only</option>
+            </select>
+          </div>
+
+          <div class="filter-btn-col">
+            <button type="submit" class="btn-erp-primary">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Search</span>
+            </button>
+            @if (showReset) {
+              <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+                <i class="fa-solid fa-rotate-left me-1"></i> Reset
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Sauda Number</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Client Firm</th>
+              <th>Party</th>
+              <th>Commodities</th>
+              <th class="text-end">Total Amount</th>
+              <th class="text-center">Record</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (filteredSaudas.length === 0) {
+              <tr>
+                <td colspan="9" class="empty-state">
+                  <i class="fa-solid fa-folder-open mb-2"></i>
+                  <div>No Sauda records match your search or filters.</div>
+                </td>
+              </tr>
+            } @else {
+              @for (
+                sauda of filteredSaudas
+                  | paginate
+                    : {
+                        id: 'saudaPagination',
+                        itemsPerPage: itemsPerPageCount,
+                        currentPage: page,
+                        totalItems: filteredSaudas.length,
+                      };
+                track sauda.id
+              ) {
+                <tr [class.voided-row]="sauda.status === 'Voided'">
+                  <td>
+                    <button
+                      type="button"
+                      class="sauda-no-link"
+                      (click)="openDetailsModal(sauda)"
+                    >
+                      {{ sauda.saudaNo }}
+                    </button>
+                  </td>
+                  <td class="text-nowrap">{{ sauda.saudaDate }}</td>
+                  <td>{{ sauda.saudaType }}</td>
+                  <td>{{ sauda.clientFirm }}</td>
+                  <td class="fw-semibold text-dark">{{ sauda.partyName }}</td>
+                  <td>{{ sauda.commodity }}</td>
+                  <td class="text-end num fw-semibold text-dark">
+                    {{ sauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                  </td>
+                  <td class="text-center">
+                    <span class="status-badge" [ngClass]="getRecordBadgeClass(sauda.status)">
+                      {{ sauda.status === 'Voided' ? 'Voided' : 'Active' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      type="button"
+                      class="view-link-btn"
+                      (click)="openDetailsModal(sauda)"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="table-footer">
+        <div class="pagination-info">
+          Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredSaudas.length }} entries
+        </div>
+        <pagination-controls
+          id="saudaPagination"
+          (pageChange)="onTableDataChange($event)"
+          class="my-pagination"
+        ></pagination-controls>
+      </div>
+    </div>
+  } @else {
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- Screen 2: Create / Edit Sauda Full View (matching screenshots)     -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="erp-header mb-2">
+      <div>
+        <h1 class="erp-title">
+          {{ isEditMode ? 'Edit Sauda — ' + selectedSauda?.saudaNo : 'Create Sauda' }}
+        </h1>
+        <p class="erp-subtitle">
+          Manage purchase, sales and brokerage agreements
+        </p>
+      </div>
+    </div>
+
+    <div class="back-breadcrumb">
+      <button type="button" class="back-link-btn" (click)="backToListing()">
+        &larr; Back to listing
+      </button>
+      <span class="text-muted mx-1">/</span>
+      <span class="text-dark fw-semibold">
+        {{ isEditMode ? 'Edit Sauda' : 'Create Sauda' }}
+      </span>
+    </div>
+
+    <form [formGroup]="saudaForm" (ngSubmit)="submitSaudaForm()" class="sauda-form-stack">
+      @if (formError) {
+        <div class="alert-erp alert-danger-erp">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
+        </div>
+      }
+
+      <!-- Section 1: Create Sauda Header Info -->
+      <div class="erp-card section-card">
+        <h2 class="section-card-title">
+          {{ isEditMode ? 'Sauda Agreement Details' : 'Create Sauda' }}
+        </h2>
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Sauda Type <span class="req">*</span></label>
+            <select formControlName="saudaType" class="erp-input">
+              @for (type of saudaTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Sauda Date <span class="req">*</span></label>
+            <input type="date" formControlName="saudaDate" class="erp-input" />
+          </div>
+        </div>
+
+        <div class="form-grid-3 mt-3">
+          <div class="field-group">
+            <label>Client Firm <span class="req">*</span></label>
+            <select formControlName="clientFirm" class="erp-input">
+              <option value="">Select Client Firm</option>
+              @for (firm of activeFirms; track firm.id) {
+                <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+            @if (saudaForm.get('clientFirm')?.touched && saudaForm.get('clientFirm')?.invalid) {
+              <span class="field-err">Client Firm is required.</span>
+            }
+          </div>
+
+          @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+            <div class="field-group">
+              <label>Seller <span class="req">*</span></label>
+              <select formControlName="sellerName" class="erp-input">
+                <option value="">Select Seller</option>
+                @for (s of sellerOptions; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+              @if (saudaForm.get('sellerName')?.touched && saudaForm.get('sellerName')?.invalid) {
+                <span class="field-err">Seller is required.</span>
+              }
+            </div>
+          }
+
+          @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+            <div class="field-group">
+              <label>Buyer <span class="req">*</span></label>
+              <select formControlName="buyerName" class="erp-input">
+                <option value="">Select Buyer</option>
+                @for (b of buyerOptions; track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+              @if (saudaForm.get('buyerName')?.touched && saudaForm.get('buyerName')?.invalid) {
+                <span class="field-err">Buyer is required.</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section 2: Commodity Details -->
+      <div class="erp-card section-card">
+        <div class="section-head-row">
+          <h2 class="section-card-title mb-0">Commodity Details</h2>
+          <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addCommodityRow()">
+            <i class="fa-solid fa-plus me-1"></i> Add Commodity
+          </button>
+        </div>
+
+        <div formArrayName="commodityItems" class="commodity-rows-stack">
+          @for (row of commodityRows.controls; track $index; let idx = $index) {
+            <div [formGroupName]="idx" class="commodity-row-box">
+              <div class="field-group">
+                <label>Commodity <span class="req">*</span></label>
+                <select formControlName="commodity" class="erp-input">
+                  <option value="">Select</option>
+                  @for (c of commodities; track c) {
+                    <option [value]="c">{{ c }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label>Packaging UOM <span class="req">*</span></label>
+                <select formControlName="packagingUom" class="erp-input">
+                  @for (u of packagingUoms; track u) {
+                    <option [value]="u">{{ u }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label>Packaging Qty <span class="req">*</span></label>
+                <input
+                  type="number"
+                  min="1"
+                  formControlName="packagingQty"
+                  class="erp-input"
+                  placeholder="0"
+                />
+              </div>
+
+              <div class="field-group">
+                <label>Weight UOM <span class="req">*</span></label>
+                <select formControlName="weightUom" class="erp-input">
+                  @for (w of weightUoms; track w) {
+                    <option [value]="w">{{ w }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label>Actual Weight <span class="req">*</span></label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  formControlName="actualWeight"
+                  class="erp-input"
+                  placeholder="0"
+                />
+              </div>
+
+              <div class="remove-btn-wrap">
+                <button
+                  type="button"
+                  class="btn-remove-row"
+                  [disabled]="commodityRows.length <= 1"
+                  (click)="removeCommodityRow(idx)"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="helper-note-box mt-3">
+          Each commodity can appear once per Sauda. Packaging quantity and actual weight are
+          mandatory. No commodity-wise rate or amount is calculated.
+        </div>
+      </div>
+
+      <!-- Section 3: Financial Details -->
+      <div class="erp-card section-card">
+        <h2 class="section-card-title">Financial Details</h2>
+
+        <div class="form-grid-3">
+          <div class="field-group">
+            <label>Total Sauda Amount (₹) <span class="req">*</span></label>
+            <input
+              type="number"
+              min="1"
+              formControlName="totalAmountInr"
+              class="erp-input"
+              placeholder="Enter total deal amount"
+            />
+            @if (saudaForm.get('totalAmountInr')?.touched && saudaForm.get('totalAmountInr')?.invalid) {
+              <span class="field-err">Enter a valid total Sauda amount.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Credit Terms -->
+      <div class="erp-card section-card">
+        <h2 class="section-card-title">Credit Terms</h2>
+
+        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+          <div class="form-grid-3 mb-3">
+            <div class="field-group">
+              <label>Seller Credit Period (Days)</label>
+              <input
+                type="number"
+                min="0"
+                formControlName="sellerCreditPeriodDays"
+                class="erp-input"
+                placeholder="Party default / enter days"
+              />
+            </div>
+
+            <div class="field-group">
+              <label>Seller Credit Start Date</label>
+              <input
+                type="date"
+                formControlName="sellerCreditStartDate"
+                class="erp-input"
+              />
+            </div>
+
+            <div class="field-group">
+              <label>Seller Due Date</label>
+              <input
+                type="text"
+                formControlName="sellerDueDate"
+                class="erp-input readonly-input"
+                placeholder="Calculated from start date"
+                readonly
+              />
+            </div>
+          </div>
+        }
+
+        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+          <div class="form-grid-3 mb-3">
+            <div class="field-group">
+              <label>Buyer Credit Period (Days)</label>
+              <input
+                type="number"
+                min="0"
+                formControlName="buyerCreditPeriodDays"
+                class="erp-input"
+                placeholder="Party default / enter days"
+              />
+            </div>
+
+            <div class="field-group">
+              <label>Buyer Credit Start Date</label>
+              <input
+                type="date"
+                formControlName="buyerCreditStartDate"
+                class="erp-input"
+              />
+            </div>
+
+            <div class="field-group">
+              <label>Buyer Due Date</label>
+              <input
+                type="text"
+                formControlName="buyerDueDate"
+                class="erp-input readonly-input"
+                placeholder="Calculated from start date"
+                readonly
+              />
+            </div>
+          </div>
+        }
+
+        <div class="helper-note-box">
+          Credit Start Date is user-selectable. Due date is calculated using calendar days. No
+          interest or charge is applied.
+        </div>
+      </div>
+
+      <!-- Section 5: Remarks & Save -->
+      <div class="erp-card section-card">
+        <div class="field-group">
+          <label>Remarks</label>
+          <textarea
+            rows="3"
+            formControlName="remarks"
+            class="erp-input"
+            placeholder="Optional remarks"
+          ></textarea>
+        </div>
+
+        @if (isEditMode) {
+          <div class="field-group mt-3 revision-box">
+            <label>Reason for Revision <span class="req">*</span></label>
+            <input
+              type="text"
+              formControlName="revisionReason"
+              class="erp-input"
+              placeholder="Mandatory: Explain why this Sauda agreement is being revised (min 5 chars)"
+            />
+            @if (saudaForm.get('revisionReason')?.touched && saudaForm.get('revisionReason')?.invalid) {
+              <span class="field-err">
+                Revision reason (min 5 characters) is mandatory when editing.
+              </span>
+            }
+          </div>
+        }
+
+        <div class="form-actions-left mt-4">
+          <button type="submit" class="btn-erp-primary">
+            {{ isEditMode ? 'Update Sauda' : 'Save Sauda' }}
+          </button>
+          <button type="button" class="btn-erp-ghost" (click)="backToListing()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- Screen 3: Sauda Details Modal                                      -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (isDetailsOpen && selectedSauda) {
+  <div class="modal-backdrop-erp" (click)="closeAllModals()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="modal-title-erp mb-0">{{ selectedSauda.saudaNo }}</h3>
+            <span class="status-badge" [ngClass]="getRecordBadgeClass(selectedSauda.status)">
+              {{ selectedSauda.status === 'Voided' ? 'Voided' : 'Active' }}
+            </span>
+            <span class="rev-chip">v{{ selectedSauda.currentVersion }}</span>
+          </div>
+          <p class="modal-sub-erp">
+            {{ selectedSauda.saudaType }} Agreement &bull; Dated {{ selectedSauda.saudaDate }}
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAllModals()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        @if (selectedSauda.voidInfo) {
+          <div class="alert-erp alert-danger-erp mb-3">
+            <strong>Voided on {{ selectedSauda.voidInfo.voidedAt }}</strong> by
+            {{ selectedSauda.voidInfo.voidedBy }} — Reason: {{ selectedSauda.voidInfo.reason }}
+          </div>
+        }
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Client Firm</span>
+            <span class="detail-value">{{ selectedSauda.clientFirm }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Party (Seller / Buyer)</span>
+            <span class="detail-value">{{ selectedSauda.partyName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Total Sauda Amount</span>
+            <span class="detail-value text-primary fw-bold">
+              {{ selectedSauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Weight Dispatched / Total</span>
+            <span class="detail-value">
+              {{ erpService.getDispatchedQtyMt(selectedSauda.id) | number: '1.0-2' }} MT /
+              {{ selectedSauda.quantityMt | number: '1.0-2' }} MT
+              (Pending: {{ erpService.getRemainingQtyMt(selectedSauda.id) | number: '1.0-2' }} MT)
+            </span>
+          </div>
+          @if (selectedSauda.sellerDueDate) {
+            <div class="detail-item">
+              <span class="detail-label">Seller Credit</span>
+              <span class="detail-value">
+                {{ selectedSauda.sellerCreditPeriodDays ?? 0 }} Days
+                (Start: {{ selectedSauda.sellerCreditStartDate }} &rarr; Due: {{ selectedSauda.sellerDueDate }})
+              </span>
+            </div>
+          }
+          @if (selectedSauda.buyerDueDate) {
+            <div class="detail-item">
+              <span class="detail-label">Buyer Credit</span>
+              <span class="detail-value">
+                {{ selectedSauda.buyerCreditPeriodDays ?? 0 }} Days
+                (Start: {{ selectedSauda.buyerCreditStartDate }} &rarr; Due: {{ selectedSauda.buyerDueDate }})
+              </span>
+            </div>
+          }
+          <div class="detail-item" style="grid-column: 1 / -1">
+            <span class="detail-label">Remarks</span>
+            <span class="detail-value">{{ selectedSauda.remarks || '—' }}</span>
+          </div>
+        </div>
+
+        <!-- Commodity Line Items -->
+        <div class="mt-4">
+          <h4 class="sub-section-title">Commodity Line Items ({{ selectedSauda.commodityItems.length }})</h4>
+          <div class="table-responsive border rounded-3">
+            <table class="erp-table">
+              <thead>
+                <tr>
+                  <th>Commodity</th>
+                  <th>Packaging UOM</th>
+                  <th class="text-end">Packaging Qty</th>
+                  <th>Weight UOM</th>
+                  <th class="text-end">Actual Weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of selectedSauda.commodityItems; track item.commodity) {
+                  <tr>
+                    <td class="fw-semibold text-dark">{{ item.commodity }}</td>
+                    <td>{{ item.packagingUom }}</td>
+                    <td class="text-end num">{{ item.packagingQty | number }}</td>
+                    <td>{{ item.weightUom }}</td>
+                    <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Linked Trucks -->
+        <div class="mt-4">
+          <h4 class="sub-section-title">Linked Truck Entries ({{ linkedTrucks.length }})</h4>
+          <div class="table-responsive border rounded-3">
+            <table class="erp-table">
+              <thead>
+                <tr>
+                  <th>Entry No.</th>
+                  <th>Vehicle No.</th>
+                  <th>Transporter</th>
+                  <th class="text-end">Loaded Qty</th>
+                  <th>Dispatch Date</th>
+                  <th class="text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (linkedTrucks.length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                      No truck entries linked to this Sauda yet.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (t of linkedTrucks; track t.id) {
+                    <tr>
+                      <td class="fw-semibold">{{ t.entryNo }}</td>
+                      <td>{{ t.vehicleNo }}</td>
+                      <td>{{ t.transporterName }}</td>
+                      <td class="text-end num fw-semibold">{{ t.loadedQtyMt | number: '1.0-2' }} MT</td>
+                      <td>{{ t.dispatchDate }}</td>
+                      <td class="text-center">
+                        <span class="status-badge badge-slate">{{ t.status }}</span>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button
+            type="button"
+            class="btn-erp-outline"
+            (click)="openRevisionModal(selectedSauda)"
+          >
+            <i class="fa-solid fa-clock-rotate-left me-1"></i> Revision History
+          </button>
+          @if (selectedSauda.status !== 'Voided') {
+            <button
+              type="button"
+              class="btn-erp-danger"
+              (click)="openVoidModal(selectedSauda)"
+            >
+              <i class="fa-solid fa-ban me-1"></i> Void Sauda
+            </button>
+            <button
+              type="button"
+              class="btn-erp-primary"
+              (click)="openEditForm(selectedSauda)"
+            >
+              <i class="fa-solid fa-pen-to-square me-1"></i> Edit Sauda
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- Screen 4: Sauda Revision History Modal                             -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (isRevisionOpen && selectedSauda) {
+  <div class="modal-backdrop-erp" (click)="closeAllModals()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            Revision History — {{ selectedSauda.saudaNo }}
+          </h3>
+          <p class="modal-sub-erp">
+            Complete audit trail of all contract changes ({{ selectedSauda.revisions.length }} versions)
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAllModals()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <div class="timeline-list">
+          @for (rev of selectedSauda.revisions.slice().reverse(); track rev.version) {
+            <div class="timeline-card">
+              <div class="timeline-head">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="rev-chip">v{{ rev.version }}</span>
+                  <span class="fw-bold text-dark">{{ rev.action }}</span>
+                </div>
+                <span class="text-muted small">
+                  {{ rev.changedBy }} &bull; {{ rev.changedAt }}
+                </span>
+              </div>
+              <div class="timeline-reason">
+                <strong>Reason:</strong> {{ rev.reason }}
+              </div>
+              @if (rev.changes.length > 0) {
+                <table class="diff-table">
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Previous Value</th>
+                      <th>Updated Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (diff of rev.changes; track diff.field) {
+                      <tr>
+                        <td class="fw-semibold">{{ diff.field }}</td>
+                        <td class="text-muted">{{ diff.oldValue }}</td>
+                        <td class="text-primary fw-semibold">{{ diff.newValue }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-primary" (click)="closeAllModals()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- Screen 5: Void Confirmation Modal                                  -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (isVoidOpen && selectedSauda) {
+  <div class="modal-backdrop-erp" (click)="closeAllModals()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp text-danger">
+            Void Sauda — {{ selectedSauda.saudaNo }}
+          </h3>
+          <p class="modal-sub-erp">
+            Voiding locks this contract permanently and keeps it in audit records.
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAllModals()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="voidForm" (ngSubmit)="confirmVoid()" class="modal-body-erp">
+        @if (linkedTrucks.length > 0) {
+          <div class="alert-erp alert-danger-erp mb-3">
+            <strong>Business Rule Block:</strong> {{ linkedTrucks.length }} active truck entry(s)
+            are linked to <strong>{{ selectedSauda.saudaNo }}</strong>. Remove active truck entries
+            first before voiding this Sauda.
+          </div>
+        } @else {
+          <div class="alert-erp alert-warning-erp mb-3">
+            You are about to void <strong>{{ selectedSauda.partyName }}</strong>'s contract for
+            <strong>{{ selectedSauda.commodity }}</strong>.
+            This action cannot be undone.
+          </div>
+        }
+
+        @if (voidError) {
+          <div class="alert-erp alert-danger-erp mb-3">{{ voidError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Mandatory Void Reason <span class="req">*</span></label>
+          <textarea
+            rows="3"
+            formControlName="reason"
+            class="erp-input"
+            placeholder="State clear reason for voiding (minimum 10 characters)..."
+          ></textarea>
+          @if (voidForm.get('reason')?.touched && voidForm.get('reason')?.invalid) {
+            <span class="field-err">Please enter at least 10 characters.</span>
+          }
+        </div>
+
+        <label class="confirm-check mt-3">
+          <input type="checkbox" formControlName="confirmed" />
+          <span>I confirm this Sauda contract should be permanently voided.</span>
+        </label>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeAllModals()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-erp-danger"
+            [disabled]="linkedTrucks.length > 0"
+          >
+            <i class="fa-solid fa-ban me-1"></i> Confirm Void Sauda
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

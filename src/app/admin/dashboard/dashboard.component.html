@@ -1,0 +1,264 @@
+<div class="erp-page">
+  <!-- Top Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Phase 1 Overview</div>
+      <h1 class="erp-title">Operations Dashboard</h1>
+      <p class="erp-subtitle">
+        Live summary of Sauda contracts and Truck movements (sample prototype data)
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <a
+        routerLink="/admin/sauda-management"
+        [queryParams]="{ action: 'create' }"
+        class="btn-erp-primary"
+      >
+        <i class="fa-solid fa-plus"></i>
+        <span>New Sauda</span>
+      </a>
+      <a
+        routerLink="/admin/truck-management"
+        [queryParams]="{ action: 'create' }"
+        class="btn-erp-outline"
+      >
+        <i class="fa-solid fa-truck-fast"></i>
+        <span>New Truck Entry</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Active Sauda Contracts</span>
+        <span class="kpi-icon icon-blue">
+          <i class="fa-solid fa-file-contract"></i>
+        </span>
+      </div>
+      <div class="kpi-value">{{ activeSaudaCount }}</div>
+      <div class="kpi-meta">
+        <span class="text-primary fw-semibold">{{ openOrPartialCount }}</span>
+        open / partial &bull; {{ totalContractedMt | number: '1.0-2' }} MT contracted
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Pending Balance Qty</span>
+        <span class="kpi-icon icon-amber">
+          <i class="fa-solid fa-scale-balanced"></i>
+        </span>
+      </div>
+      <div class="kpi-value">{{ totalPendingMt | number: '1.0-2' }} MT</div>
+      <div class="kpi-meta">
+        {{ totalDispatchedMt | number: '1.0-2' }} MT assigned to active trucks
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Active Truck Entries</span>
+        <span class="kpi-icon icon-green">
+          <i class="fa-solid fa-truck"></i>
+        </span>
+      </div>
+      <div class="kpi-value">{{ activeTruckCount }}</div>
+      <div class="kpi-meta">
+        <span class="text-warning fw-semibold">{{ inTransitTruckCount }}</span>
+        loaded / in-transit &bull; {{ voidOrRemovedCount }} void/removed audit logs
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Active Contract Value</span>
+        <span class="kpi-icon icon-navy">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
+        </span>
+      </div>
+      <div class="kpi-value">
+        {{ totalContractValueInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+      <div class="kpi-meta">Across Purchase &amp; Sale Saudas</div>
+    </div>
+  </div>
+
+  <!-- Commodity Summary -->
+  <div class="erp-card mb-4">
+    <div class="erp-card-header">
+      <div>
+        <h2 class="erp-card-title">Commodity Position Summary</h2>
+        <p class="erp-card-subtitle">
+          Contracted vs Dispatched vs Pending quantity by commodity
+        </p>
+      </div>
+      <span class="scope-pill">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        Scope: Sauda &amp; Truck Management Only
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Commodity</th>
+            <th class="text-center">Contracts</th>
+            <th class="text-end">Contracted (MT)</th>
+            <th class="text-end">Truck Assigned (MT)</th>
+            <th class="text-end">Pending Balance (MT)</th>
+            <th style="width: 220px">Fulfillment</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of commoditySummaries; track row.commodity) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ row.commodity }}</td>
+              <td class="text-center">{{ row.contracts }}</td>
+              <td class="text-end num">{{ row.totalMt | number: '1.0-2' }}</td>
+              <td class="text-end num text-success fw-semibold">
+                {{ row.dispatchedMt | number: '1.0-2' }}
+              </td>
+              <td class="text-end num text-primary fw-semibold">
+                {{ row.pendingMt | number: '1.0-2' }}
+              </td>
+              <td>
+                <div class="progress-wrap">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [style.width.%]="row.totalMt ? (row.dispatchedMt / row.totalMt) * 100 : 0"
+                    ></div>
+                  </div>
+                  <span class="progress-pct">
+                    {{
+                      row.totalMt
+                        ? ((row.dispatchedMt / row.totalMt) * 100 | number: '1.0-0')
+                        : 0
+                    }}%
+                  </span>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Tables Grid -->
+  <div class="tables-grid">
+    <!-- Recent Saudas -->
+    <div class="erp-card">
+      <div class="erp-card-header">
+        <div>
+          <h2 class="erp-card-title">Recent Sauda Contracts</h2>
+          <p class="erp-card-subtitle">Latest 5 contracts &amp; fulfillment status</p>
+        </div>
+        <a routerLink="/admin/sauda-management" class="link-action">
+          View All <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Sauda No.</th>
+              <th>Party</th>
+              <th>Commodity</th>
+              <th class="text-end">Pending / Total</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of saudas.slice(0, 5); track s.id) {
+              <tr>
+                <td>
+                  <div class="fw-bold text-primary">{{ s.saudaNo }}</div>
+                  <div class="sub-cell">{{ s.saudaType }} &bull; v{{ s.currentVersion }}</div>
+                </td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ s.partyName }}</div>
+                  <div class="sub-cell">{{ s.saudaDate }}</div>
+                </td>
+                <td>
+                  <div>{{ s.commodity }}</div>
+                  <div class="sub-cell">{{ s.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+                </td>
+                <td class="text-end num">
+                  <div class="fw-semibold">
+                    {{ erpService.getRemainingQtyMt(s.id) | number: '1.0-2' }} /
+                    {{ s.quantityMt | number: '1.0-2' }} MT
+                  </div>
+                  <div class="sub-cell">{{ getFulfillmentPercent(s) }}% assigned</div>
+                </td>
+                <td class="text-center">
+                  <span class="status-badge" [ngClass]="getSaudaBadgeClass(s.status)">
+                    {{ s.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Trucks -->
+    <div class="erp-card">
+      <div class="erp-card-header">
+        <div>
+          <h2 class="erp-card-title">Recent Truck Entries</h2>
+          <p class="erp-card-subtitle">Latest 5 dispatches &amp; placements</p>
+        </div>
+        <a routerLink="/admin/truck-management" class="link-action">
+          View All <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Entry / Vehicle</th>
+              <th>Linked Sauda</th>
+              <th class="text-end">Loaded Qty</th>
+              <th>Dispatch</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of trucks.slice(0, 5); track t.id) {
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ t.vehicleNo }}</div>
+                  <div class="sub-cell">{{ t.entryNo }} &bull; v{{ t.currentVersion }}</div>
+                </td>
+                <td>
+                  <div class="fw-semibold text-primary">{{ t.saudaNo }}</div>
+                  <div class="sub-cell">{{ t.transporterName }}</div>
+                </td>
+                <td class="text-end num fw-semibold">
+                  {{ t.loadedQtyMt | number: '1.0-2' }} MT
+                </td>
+                <td>
+                  <div>{{ t.dispatchDate }}</div>
+                  <div class="sub-cell">LR: {{ t.lrNo }}</div>
+                </td>
+                <td class="text-center">
+                  <span class="status-badge" [ngClass]="getTruckBadgeClass(t.status)">
+                    {{ t.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

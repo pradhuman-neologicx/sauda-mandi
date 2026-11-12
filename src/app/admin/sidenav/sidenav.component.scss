@@ -1,0 +1,253 @@
+// ── Navy ERP Sidenav Design System ──
+$navy-bg: #0f2442;
+$navy-surface: #163156;
+$navy-hover: rgba(255, 255, 255, 0.08);
+$active-bg: rgba(37, 99, 235, 0.24);
+$active-accent: #3b82f6;
+$text-main: #ffffff;
+$text-mute: #cbd5e1;
+$border-color: rgba(255, 255, 255, 0.1);
+$transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+:host {
+  display: block;
+  height: 100%;
+  background: $navy-bg;
+  color: $text-main;
+}
+
+.custom-scrollbar {
+  height: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0f2442 0%, #0b1b33 100%);
+}
+
+// ── Main Navigation List ──
+mat-nav-list {
+  padding: 14px 12px !important;
+  flex: 1;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+}
+
+.menu-item,
+.submenu-item {
+  height: 46px !important;
+  margin-bottom: 6px !important;
+  border-radius: 8px !important;
+  transition: $transition !important;
+  color: $text-mute !important;
+  position: relative;
+  overflow: hidden;
+
+  mat-icon {
+    color: $text-mute !important;
+    margin-right: 10px !important;
+    font-size: 20px;
+    transition: $transition;
+  }
+
+  span {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.15px;
+    color: $text-mute;
+  }
+
+  &:hover {
+    background: $navy-hover !important;
+    color: $text-main !important;
+
+    mat-icon,
+    span {
+      color: $text-main !important;
+    }
+  }
+}
+
+.active-link {
+  background: $active-bg !important;
+  color: $text-main !important;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    height: 70%;
+    width: 4px;
+    background: $active-accent !important;
+    border-radius: 0 4px 4px 0;
+  }
+
+  mat-icon,
+  span {
+    color: $text-main !important;
+  }
+}
+
+// ── Navy Expansion Panel (Masters Submenu) ──
+::ng-deep {
+  .dept-expansion-panel {
+    background: transparent !important;
+    box-shadow: none !important;
+    margin-bottom: 6px !important;
+
+    .mat-expansion-panel-header {
+      padding: 0 14px !important;
+      height: 46px !important;
+      border-radius: 8px !important;
+      background: transparent !important;
+      transition: $transition;
+
+      &:hover {
+        background: $navy-hover !important;
+      }
+
+      .mat-expansion-indicator::after {
+        color: $text-mute !important;
+      }
+
+      &.mat-expanded {
+        background: rgba(255, 255, 255, 0.06) !important;
+
+        .menu-text,
+        .mat-icon {
+          color: $text-main !important;
+        }
+      }
+    }
+
+    .mat-expansion-panel-body {
+      padding: 4px 0 4px 14px !important;
+    }
+  }
+}
+
+.menu-item-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  .mat-icon {
+    color: $text-mute;
+    margin-right: 10px !important;
+    font-size: 20px;
+    transition: $transition;
+  }
+
+  .menu-text {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: $text-mute;
+    transition: $transition;
+  }
+}
+
+.submenu-list {
+  padding: 0 !important;
+}
+
+.submenu-item {
+  height: 40px !important;
+  margin-bottom: 3px !important;
+  padding-left: 12px !important;
+
+  mat-icon {
+    font-size: 18px !important;
+  }
+
+  span {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+  }
+
+  &.selected-submenu {
+    background: $active-bg !important;
+    color: $text-main !important;
+
+    mat-icon,
+    span {
+      color: $text-main !important;
+      font-weight: 700 !important;
+    }
+  }
+}
+
+// ── Footer Section ──
+.sidenav-footer {
+  margin-top: auto;
+  padding: 14px 12px;
+  border-top: 1px solid $border-color;
+  background: rgba(11, 27, 51, 0.8);
+}
+
+.logout-btn {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  color: #ff5656 !important;
+  transition: $transition !important;
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+
+  mat-icon {
+    color: #ff5656 !important;
+    margin-right: 10px !important;
+    font-size: 20px;
+    transition: $transition;
+  }
+
+  span {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #ff5656;
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.16) !important;
+    color: #ffffff !important;
+
+    mat-icon,
+    span {
+      color: #ffffff !important;
+    }
+  }
+}
+
+// ── Collapsed View Adjustments ──
+.collapsed-state {
+  .sidenav-footer {
+    padding: 14px 8px;
+  }
+
+  .logout-btn,
+  .menu-item {
+    justify-content: center !important;
+    padding: 0 !important;
+
+    mat-icon {
+      margin-right: 0 !important;
+    }
+
+    span {
+      display: none;
+    }
+  }
+}

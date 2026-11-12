@@ -1,0 +1,236 @@
+<div class="erp-page">
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Masters</div>
+      <h1 class="erp-title">Buyer Master</h1>
+      <p class="erp-subtitle">
+        Manage buyers available in Sauda Management
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Buyer</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Limit & Compact Right-Aligned Search -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select
+          class="limit-select"
+          [(ngModel)]="tableSize"
+          (ngModelChange)="onTableSizeChange()"
+        >
+          @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search Buyer..."
+          />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Buyer Name</th>
+            <th>Mobile</th>
+            <th class="text-center">Default Credit (Days)</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredBuyers.length === 0) {
+            <tr>
+              <td colspan="6" class="empty-state">
+                <i class="fa-solid fa-users mb-2"></i>
+                <div>No buyers found.</div>
+              </td>
+            </tr>
+          } @else {
+            @for (
+              buyer of filteredBuyers
+                | paginate
+                  : {
+                      id: 'buyerPagination',
+                      itemsPerPage: itemsPerPageCount,
+                      currentPage: page,
+                      totalItems: filteredBuyers.length,
+                    };
+              track buyer.id;
+              let i = $index
+            ) {
+              <tr [class.inactive-row]="!buyer.isActive">
+                <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+                <td class="fw-semibold text-dark">{{ buyer.name }}</td>
+                <td>{{ buyer.phone || '—' }}</td>
+                <td class="text-center num">
+                  {{
+                    buyer.defaultCreditDays !== null
+                      ? buyer.defaultCreditDays + ' Days'
+                      : '—'
+                  }}
+                </td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="status-toggle-btn"
+                    [ngClass]="buyer.isActive ? 'is-active' : 'is-inactive'"
+                    (click)="toggleStatus(buyer)"
+                  >
+                    <span class="dot"></span>
+                    <span>{{ buyer.isActive ? 'Active' : 'Inactive' }}</span>
+                  </button>
+                </td>
+                <td class="text-center">
+                  <div class="action-group">
+                    <button
+                      type="button"
+                      class="icon-btn btn-edit"
+                      (click)="openEditModal(buyer)"
+                      title="Edit Buyer"
+                    >
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [ngClass]="buyer.isActive ? 'btn-void' : 'btn-activate'"
+                      (click)="toggleStatus(buyer)"
+                      [title]="buyer.isActive ? 'Deactivate' : 'Activate'"
+                    >
+                      <i
+                        class="fa-solid"
+                        [ngClass]="buyer.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"
+                      ></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredBuyers.length }} entries
+      </div>
+      <pagination-controls
+        id="buyerPagination"
+        (pageChange)="onTableDataChange($event)"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Buyer Modal -->
+@if (isFormOpen) {
+  <div class="modal-backdrop-erp" (click)="closeModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            {{ isEditMode ? 'Edit Buyer' : 'Add New Buyer' }}
+          </h3>
+          <p class="modal-sub-erp">Active buyers appear in Sauda Management</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="buyerForm" (ngSubmit)="submitForm()" class="modal-body-erp">
+        @if (formError) {
+          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Buyer Name <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="name"
+            class="erp-input"
+            placeholder="e.g. City Wholesale Market"
+          />
+          @if (buyerForm.get('name')?.touched && buyerForm.get('name')?.invalid) {
+            <span class="field-err">Buyer name (min 2 chars) is required.</span>
+          }
+        </div>
+
+        <div class="form-grid-2 mt-3">
+          <div class="field-group">
+            <label>Mobile Number</label>
+            <input
+              type="text"
+              maxlength="10"
+              formControlName="phone"
+              class="erp-input"
+              placeholder="10-digit mobile"
+            />
+            @if (buyerForm.get('phone')?.touched && buyerForm.get('phone')?.invalid) {
+              <span class="field-err">Enter valid 10-digit mobile number.</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Default Credit Period (Days)</label>
+            <input
+              type="number"
+              min="0"
+              formControlName="defaultCreditDays"
+              class="erp-input"
+              placeholder="e.g. 7"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check me-1"></i>
+            {{ isEditMode ? 'Update Buyer' : 'Add Buyer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+

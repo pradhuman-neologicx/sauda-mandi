@@ -1,0 +1,523 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Inventory Management</div>
+      <h1 class="erp-title">Warehouse Stock</h1>
+      <p class="erp-subtitle">
+        Product-wise stock synced automatically with Product Master &amp; Truck dispatches
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAdjustModal()">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>Stock In / Adjust</span>
+      </button>
+    </div>
+  </div>
+
+  @if (actionMessage) {
+    <div class="alert-erp alert-success-erp mb-3">
+      <i class="fa-solid fa-circle-check me-2"></i>{{ actionMessage }}
+    </div>
+  }
+
+  <!-- KPI Cards -->
+  <div class="sauda-kpi-grid">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Active Stock SKUs</div>
+      <div class="sauda-kpi-val">{{ inventoryList.length }}</div>
+      <div class="sauda-kpi-sub">Product &times; Client Firm lots</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Net Weight</div>
+      <div class="sauda-kpi-val">{{ totalWeightMt | number: '1.2-2' }} MT</div>
+      <div class="sauda-kpi-sub">Live warehouse weight</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Packaging Units</div>
+      <div class="sauda-kpi-val">{{ totalUnits | number }}</div>
+      <div class="sauda-kpi-sub">Crates, boxes, bags &amp; sacks</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Low / Out Alerts</div>
+      <div class="sauda-kpi-val" [class.text-amber]="lowStockCount > 0">
+        {{ lowStockCount }}
+      </div>
+      <div class="sauda-kpi-sub">At or below min threshold</div>
+    </div>
+  </div>
+
+  <!-- Stock Listing Card -->
+  <div class="erp-card">
+    <div class="listing-card-top">
+      <div class="listing-header-row">
+        <h2 class="listing-card-title">Inventory Stock Listing</h2>
+        <div class="table-size-selector">
+          <span>Show</span>
+          <select
+            class="limit-select"
+            [(ngModel)]="tableSize"
+            (ngModelChange)="onTableSizeChange()"
+          >
+            @for (size of tableSizes; track size) {
+              <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+            }
+          </select>
+          <span>entries</span>
+        </div>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="inv-filter-grid">
+        <div class="filter-field">
+          <label>Search</label>
+          <input
+            type="text"
+            class="erp-input"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Product, commodity or ref..."
+          />
+        </div>
+
+        <div class="filter-field">
+          <label>Category</label>
+          <select
+            class="erp-input"
+            name="categoryFilter"
+            [(ngModel)]="categoryFilter"
+            (ngModelChange)="onCategoryFilterChange()"
+          >
+            <option value="All">All Categories</option>
+            @for (cat of categories; track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Product</label>
+          <select
+            class="erp-input"
+            name="productFilter"
+            [(ngModel)]="productFilter"
+            (ngModelChange)="onSearch()"
+          >
+            <option value="All">All Products</option>
+            @for (prod of filteredProductsForFilter; track prod.id) {
+              <option [value]="prod.id">{{ prod.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Client Firm</label>
+          <select
+            class="erp-input"
+            name="firmFilter"
+            [(ngModel)]="firmFilter"
+            (ngModelChange)="onSearch()"
+          >
+            <option value="All">All Firms</option>
+            @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Stock Status</label>
+          <select
+            class="erp-input"
+            name="statusFilter"
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="onSearch()"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Healthy">Healthy</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+
+        <div class="filter-btn-col">
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+          </button>
+          @if (showReset) {
+            <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Client Firm</th>
+            <th class="text-end">Available Units</th>
+            <th class="text-end">Available Weight</th>
+            <th class="text-end">Min Threshold</th>
+            <th>Last Updated</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+            item of filteredList
+              | paginate
+                : {
+                    itemsPerPage: pageSize,
+                    currentPage: page,
+                  };
+            track item.id
+          ) {
+            <tr>
+              <td>
+                <div class="fw-semibold text-dark">
+                  {{ item.productName || item.commodity }}
+                </div>
+                <div class="sub-cell">Commodity: {{ item.commodity }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">
+                  {{ item.categoryName || 'Uncategorized' }}
+                </div>
+                <div class="sub-cell">{{ item.subCategoryName || '—' }}</div>
+              </td>
+              <td>{{ item.clientFirm }}</td>
+              <td class="text-end num fw-semibold">
+                {{ item.availableUnits | number }} {{ item.packagingUom }}
+              </td>
+              <td class="text-end num fw-semibold">
+                {{ item.availableWeightMt | number: '1.2-3' }} MT
+              </td>
+              <td class="text-end num">
+                {{ item.minThresholdMt | number: '1.1-2' }} MT
+              </td>
+              <td class="num">{{ item.lastUpdated }}</td>
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusBadgeClass(getStockStatus(item))"
+                >
+                  {{ getStockStatus(item) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="action-group">
+                  <button
+                    type="button"
+                    class="icon-btn btn-edit"
+                    title="Stock In / Out Adjust"
+                    (click)="openAdjustModal(item)"
+                  >
+                    <i class="fa-solid fa-plus-minus"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn btn-history"
+                    title="Movement History"
+                    (click)="openHistoryModal(item)"
+                  >
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="empty-state">
+                <i class="fa-solid fa-warehouse mb-2"></i>
+                <div>No inventory records match the selected filters.</div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ filteredList.length }} of {{ inventoryList.length }} stock record(s)
+      </div>
+      <pagination-controls
+        (pageChange)="page = $event"
+        previousLabel="Prev"
+        nextLabel="Next"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- Stock In / Adjust Modal -->
+@if (showAdjustModal) {
+  <div class="modal-backdrop-erp" (click)="closeAdjustModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Stock In / Stock Adjustment</h3>
+          <p class="modal-sub-erp">
+            Select from Product Master to adjust warehouse balance
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAdjustModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitAdjustment()" class="modal-body-erp">
+        @if (formError) {
+          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Movement Action <span class="req">*</span></label>
+            <select
+              class="erp-input"
+              name="action"
+              [(ngModel)]="adjustForm.action"
+            >
+              <option value="Stock In">Stock In (+)</option>
+              <option value="Stock Out">Stock Out (-)</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Client Firm <span class="req">*</span></label>
+            <select
+              class="erp-input"
+              name="clientFirm"
+              [(ngModel)]="adjustForm.clientFirm"
+            >
+              @for (firm of firms; track firm.id) {
+                <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Filter by Category</label>
+            <select
+              class="erp-input"
+              name="modalCategoryId"
+              [(ngModel)]="modalCategoryId"
+              (ngModelChange)="onModalCategoryChange()"
+            >
+              <option value="All">All Categories</option>
+              @for (cat of activeCategories; track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Product <span class="req">*</span></label>
+            <select
+              class="erp-input"
+              name="productId"
+              [(ngModel)]="adjustForm.productId"
+              (ngModelChange)="onModalProductChange($event)"
+            >
+              @for (prod of filteredProductsForModal; track prod.id) {
+                <option [value]="prod.id">
+                  {{ prod.name }} ({{ getCategoryNameForProduct(prod) }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>
+              Packaging Units ({{ adjustForm.packagingUom }}) <span class="req">*</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              class="erp-input"
+              name="units"
+              [(ngModel)]="adjustForm.units"
+              placeholder="e.g. 50"
+            />
+          </div>
+
+          <div class="field-group">
+            <label>Weight (MT) <span class="req">*</span></label>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="erp-input"
+              name="weightMt"
+              [(ngModel)]="adjustForm.weightMt"
+              placeholder="e.g. 2.5"
+            />
+          </div>
+
+          <div class="field-group">
+            <label>Packaging UOM</label>
+            <select
+              class="erp-input"
+              name="packagingUom"
+              [(ngModel)]="adjustForm.packagingUom"
+            >
+              @for (u of packagingUoms; track u) {
+                <option [value]="u">{{ u }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Min Threshold (MT)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              class="erp-input"
+              name="minThresholdMt"
+              [(ngModel)]="adjustForm.minThresholdMt"
+            />
+          </div>
+
+          <div class="field-group inv-span-2">
+            <label>Reference No.</label>
+            <input
+              type="text"
+              class="erp-input"
+              name="referenceNo"
+              [(ngModel)]="adjustForm.referenceNo"
+              placeholder="e.g. GRN-2026-005 or OPENING-STK"
+            />
+          </div>
+
+          <div class="field-group inv-span-2">
+            <label>Remarks</label>
+            <textarea
+              rows="2"
+              class="erp-input"
+              name="remarks"
+              [(ngModel)]="adjustForm.remarks"
+              placeholder="Reason or warehouse lot details..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeAdjustModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check"></i>
+            <span>Save Stock Movement</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Movement History Modal -->
+@if (selectedHistoryItem) {
+  <div class="modal-backdrop-erp" (click)="closeHistoryModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            Stock Movement Ledger &bull;
+            {{ selectedHistoryItem.productName || selectedHistoryItem.commodity }}
+          </h3>
+          <p class="modal-sub-erp">
+            {{ selectedHistoryItem.categoryName || 'Uncategorized' }}
+            &bull; {{ selectedHistoryItem.subCategoryName || '—' }}
+            &bull; {{ selectedHistoryItem.clientFirm }}
+            &bull; Current:
+            {{ selectedHistoryItem.availableUnits | number }}
+            {{ selectedHistoryItem.packagingUom }} /
+            {{ selectedHistoryItem.availableWeightMt | number: '1.2-3' }} MT
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeHistoryModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Action</th>
+                <th>Reference</th>
+                <th class="text-end">Units Change</th>
+                <th class="text-end">Weight Change</th>
+                <th>Remarks</th>
+                <th>Done By</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (log of selectedHistoryItem.logs; track log.id) {
+                <tr>
+                  <td class="num">{{ log.date }}</td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      [ngClass]="
+                        log.action === 'Stock In'
+                          ? 'badge-green'
+                          : log.action === 'Stock Out'
+                            ? 'badge-amber'
+                            : 'badge-blue'
+                      "
+                    >
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="fw-semibold text-dark">{{ log.referenceNo }}</td>
+                  <td
+                    class="text-end num fw-semibold"
+                    [ngClass]="log.unitsChange >= 0 ? 'text-pos' : 'text-neg'"
+                  >
+                    {{ log.unitsChange >= 0 ? '+' : '' }}{{ log.unitsChange }}
+                  </td>
+                  <td
+                    class="text-end num fw-semibold"
+                    [ngClass]="log.weightMtChange >= 0 ? 'text-pos' : 'text-neg'"
+                  >
+                    {{ log.weightMtChange >= 0 ? '+' : ''
+                    }}{{ log.weightMtChange | number: '1.2-3' }} MT
+                  </td>
+                  <td>{{ log.remarks }}</td>
+                  <td>{{ log.doneBy }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="empty-state">No movement logs yet.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeHistoryModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
