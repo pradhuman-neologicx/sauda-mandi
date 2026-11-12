@@ -26,36 +26,12 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
-        path: 'masters',
+        path: 'party-ledger',
         canActivate: [AuthGuard],
         loadComponent: () =>
-          import('./masters/masters.component').then(
-            (c) => c.MastersComponent,
+          import('./party-ledger/party-ledger.component').then(
+            (c) => c.PartyLedgerComponent,
           ),
-        children: [
-          { path: '', redirectTo: 'seller', pathMatch: 'full' },
-          {
-            path: 'seller',
-            loadComponent: () =>
-              import('./masters/seller/seller.component').then(
-                (c) => c.SellerComponent,
-              ),
-          },
-          {
-            path: 'buyer',
-            loadComponent: () =>
-              import('./masters/buyer/buyer.component').then(
-                (c) => c.BuyerComponent,
-              ),
-          },
-          {
-            path: 'commodity',
-            loadComponent: () =>
-              import('./masters/commodity/commodity.component').then(
-                (c) => c.CommodityComponent,
-              ),
-          },
-        ],
       },
       {
         path: 'sauda-management',

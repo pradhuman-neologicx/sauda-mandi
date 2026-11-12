@@ -1,0 +1,719 @@
+<div class="erp-page">
+  @if (!selectedStatementParty) {
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb"> Accounts</div>
+      <h1 class="erp-title">Party Ledger</h1>
+      <p class="erp-subtitle">
+        Seller &amp; Buyer accounts — track total payables, receivables, pending balances &amp; transactions
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-outline" (click)="openAddPartyModal()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add Party</span>
+      </button>
+      <button type="button" class="btn-erp-primary" (click)="openPaymentModal()">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+        <span>Record Payment / Receipt</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 KPI Cards -->
+  <div class="sauda-kpi-grid">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Pending Payable</div>
+      <div class="sauda-kpi-val text-payable">
+        {{ totalPendingPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+      <div class="sauda-kpi-sub">
+        {{ payablePartiesCount }} seller(s) &bull; Paid:
+        {{ totalPaidInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Pending Receivable</div>
+      <div class="sauda-kpi-val text-receivable">
+        {{ totalPendingReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+      <div class="sauda-kpi-sub">
+        {{ receivablePartiesCount }} buyer(s) &bull; Received:
+        {{ totalReceivedInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Net Account Position</div>
+      <div class="sauda-kpi-val" [ngClass]="netOverallPositionInr >= 0 ? 'text-receivable' : 'text-payable'">
+        {{ abs(netOverallPositionInr) | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+      <div class="sauda-kpi-sub">
+        @if (netOverallPositionInr > 0) {
+        Net Receivable Balance
+        } @else if (netOverallPositionInr < 0) { Net Payable Balance } @else { All accounts settled } </div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Active Parties &amp; Entries</div>
+        <div class="sauda-kpi-val">{{ allPartySummaries.length }}</div>
+        <div class="sauda-kpi-sub">
+          {{ allTransactions.length }} recorded Sauda &amp; payment entries
+        </div>
+      </div>
+    </div>
+
+    <!-- Listing Card -->
+    <div class="erp-card">
+      <div class="listing-card-top">
+        <div class="listing-header-row">
+          <div class="ledger-tabs-row">
+            <button type="button" class="tab-pill-btn" [class.active]="viewTab === 'parties'"
+              (click)="setTab('parties')">
+              Party Balances ({{ filteredSummaries.length }})
+            </button>
+            <button type="button" class="tab-pill-btn" [class.active]="viewTab === 'transactions'"
+              (click)="setTab('transactions')">
+              All Transactions ({{ filteredTransactions.length }})
+            </button>
+          </div>
+
+          <div class="table-size-selector">
+            <span>Show</span>
+            <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+              @for (size of tableSizes; track size) {
+              <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+              }
+            </select>
+            <span>entries</span>
+          </div>
+        </div>
+
+        <form (ngSubmit)="onSearch()" class="ledger-filter-grid">
+          <div class="filter-field">
+            <label>Search Party / Ref No.</label>
+            <input type="text" class="erp-input" name="searchTerm" [(ngModel)]="searchTerm"
+              placeholder="Party name, phone, Sauda or UTR..." />
+          </div>
+
+          <div class="filter-field">
+            <label>Party Role</label>
+            <select class="erp-input" name="roleFilter" [(ngModel)]="roleFilter" (ngModelChange)="onSearch()">
+              <option value="All">All Parties</option>
+              <option value="Seller">Sellers (Payable)</option>
+              <option value="Buyer">Buyers (Receivable)</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label>Balance Status</label>
+            <select class="erp-input" name="balanceFilter" [(ngModel)]="balanceFilter" (ngModelChange)="onSearch()">
+              <option value="All">All Balances</option>
+              <option value="Payable Pending">Payable Pending</option>
+              <option value="Receivable Pending">Receivable Pending</option>
+              <option value="Settled">Settled (Nil)</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label>Client Firm</label>
+            <select class="erp-input" name="firmFilter" [(ngModel)]="firmFilter" (ngModelChange)="onSearch()">
+              <option value="All">All Firms</option>
+              @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-btn-col">
+            <button type="submit" class="btn-erp-primary">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Search</span>
+            </button>
+            @if (showReset) {
+            <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            }
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab 1: Party Balances Summary Table -->
+      @if (viewTab === 'parties') {
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Party Name</th>
+              <th>Role</th>
+              <th class="text-end">Total Payable / Paid</th>
+              <th class="text-end">Payable Pending</th>
+              <th class="text-end">Total Receivable / Recd</th>
+              <th class="text-end">Receivable Pending</th>
+              <th class="text-end">Net Balance</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (
+            party of filteredSummaries
+            | paginate
+            : {
+            id: 'ledgerPartiesPag',
+            itemsPerPage: pageSize,
+            currentPage: page,
+            };
+            track party.partyKey
+            ) {
+            <tr>
+              <td>
+                <button type="button" class="view-link-btn" (click)="openStatement(party)">
+                  {{ party.partyName }}
+                </button>
+                <div class="sub-cell">
+                  @if (party.phone) {
+                  {{ party.phone }} &bull;
+                  }
+                  {{ party.txnCount }} txn(s)
+                  @if (party.defaultCreditDays !== null) {
+                  &bull; {{ party.defaultCreditDays }}d credit
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="
+                        party.partyRole === 'Seller'
+                          ? 'badge-blue'
+                          : party.partyRole === 'Buyer'
+                            ? 'badge-green'
+                            : 'badge-amber'
+                      ">
+                  {{ party.partyRole }}
+                </span>
+              </td>
+              <td class="text-end num">
+                <div>{{ party.totalPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+                <div class="sub-cell">
+                  Paid: {{ party.totalPaidInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </div>
+              </td>
+              <td class="text-end num fw-bold">
+                @if (party.pendingPayableInr > 0) {
+                <span class="text-payable">
+                  {{ party.pendingPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </span>
+                @if (party.overduePayableCount > 0) {
+                <div class="sub-cell text-payable">Overdue</div>
+                }
+                } @else {
+                <span class="text-muted">—</span>
+                }
+              </td>
+              <td class="text-end num">
+                <div>{{ party.totalReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+                <div class="sub-cell">
+                  Recd: {{ party.totalReceivedInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </div>
+              </td>
+              <td class="text-end num fw-bold">
+                @if (party.pendingReceivableInr > 0) {
+                <span class="text-receivable">
+                  {{ party.pendingReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </span>
+                @if (party.overdueReceivableCount > 0) {
+                <div class="sub-cell text-payable">Overdue</div>
+                }
+                } @else {
+                <span class="text-muted">—</span>
+                }
+              </td>
+              <td class="text-end">
+                @if (party.netBalanceInr > 0) {
+                <span class="status-badge badge-green">
+                  {{ party.netBalanceInr | currency: 'INR' : 'symbol' : '1.0-0' }} Dr (Rec)
+                </span>
+                } @else if (party.netBalanceInr < 0) { <span class="status-badge badge-red">
+                  {{ abs(party.netBalanceInr) | currency: 'INR' : 'symbol' : '1.0-0' }} Cr (Pay)
+                  </span>
+                  } @else {
+                  <span class="status-badge badge-slate">Settled</span>
+                  }
+              </td>
+              <td class="text-center">
+                <div class="action-group">
+                  <button type="button" class="icon-btn btn-view" title="View Party Statement"
+                    (click)="openStatement(party)">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                  </button>
+                  <button type="button" class="icon-btn btn-edit" title="Record Payment / Receipt"
+                    (click)="openPaymentModal(party)">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">
+                <i class="fa-solid fa-book-open mb-2"></i>
+                <div>No party ledger records match your filters.</div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="pagination-info">
+          Showing {{ filteredSummaries.length }} of {{ allPartySummaries.length }} party account(s)
+        </div>
+        <pagination-controls id="ledgerPartiesPag" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+          class="my-pagination"></pagination-controls>
+      </div>
+      } @else {
+      <!-- Tab 2: All Transactions Daybook -->
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Ref / Sauda No.</th>
+              <th>Party</th>
+              <th>Client Firm</th>
+              <th>Entry Type</th>
+              <th>Mode / Due Date</th>
+              <th class="text-end">Amount</th>
+              <th>Ledger Effect</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (
+            txn of filteredTransactions
+            | paginate
+            : {
+            id: 'ledgerTxnPag',
+            itemsPerPage: pageSize,
+            currentPage: txnPage,
+            };
+            track txn.id
+            ) {
+            <tr>
+              <td class="num">{{ txn.date }}</td>
+              <td class="fw-semibold text-dark">{{ txn.referenceNo }}</td>
+              <td>
+                <span class="fw-semibold">{{ txn.partyName }}</span>
+                <div class="sub-cell">{{ txn.partyRole }}</div>
+              </td>
+              <td>{{ txn.clientFirm }}</td>
+              <td>{{ txn.entryType }}</td>
+              <td class="num">{{ txn.modeOrCredit }}</td>
+              <td class="text-end num fw-bold">
+                {{ txn.amountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="
+                        txn.flowLabel === 'Payable (+)'
+                          ? 'badge-red'
+                          : txn.flowLabel === 'Receivable (+)'
+                            ? 'badge-blue'
+                            : txn.flowLabel === 'Paid (-)'
+                              ? 'badge-amber'
+                              : 'badge-green'
+                      ">
+                  {{ txn.flowLabel }}
+                </span>
+              </td>
+              <td>{{ txn.remarks }}</td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="9" class="empty-state">
+                <i class="fa-solid fa-receipt mb-2"></i>
+                <div>No transactions found for the selected filters.</div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="pagination-info">
+          Showing {{ filteredTransactions.length }} transaction(s)
+        </div>
+        <pagination-controls id="ledgerTxnPag" (pageChange)="txnPage = $event" previousLabel="Prev" nextLabel="Next"
+          class="my-pagination"></pagination-controls>
+      </div>
+      }
+    </div>
+    } @else {
+    <!-- Individual Party Statement Detail View -->
+    <div class="erp-header">
+      <div>
+        <button type="button" class="back-link-btn mb-2" (click)="backToListing()">
+          <i class="fa-solid fa-arrow-left me-1"></i> Back to Party Ledger
+        </button>
+        <h1 class="erp-title">{{ selectedStatementParty.partyName }}</h1>
+        <p class="erp-subtitle">
+          Role: {{ selectedStatementParty.partyRole }}
+          @if (selectedStatementParty.phone) {
+          &bull; {{ selectedStatementParty.phone }}
+          }
+          @if (selectedStatementParty.defaultCreditDays !== null) {
+          &bull; Default Credit: {{ selectedStatementParty.defaultCreditDays }} Days
+          }
+        </p>
+      </div>
+
+      <div class="erp-actions">
+        <button type="button" class="btn-erp-primary" (click)="openPaymentModal(selectedStatementParty)">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
+          <span>Record Payment / Receipt</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sauda-kpi-grid">
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Total Purchases (Payable)</div>
+        <div class="sauda-kpi-val">
+          {{ selectedStatementParty.totalPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+        <div class="sauda-kpi-sub">
+          Paid: {{ selectedStatementParty.totalPaidInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Pending Payable</div>
+        <div class="sauda-kpi-val text-payable">
+          {{ selectedStatementParty.pendingPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+        <div class="sauda-kpi-sub">Outstanding payable amount</div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Total Sales (Receivable)</div>
+        <div class="sauda-kpi-val">
+          {{ selectedStatementParty.totalReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+        <div class="sauda-kpi-sub">
+          Recd: {{ selectedStatementParty.totalReceivedInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+      </div>
+
+      <div class="sauda-kpi-card">
+        <div class="sauda-kpi-label">Pending Receivable</div>
+        <div class="sauda-kpi-val text-receivable">
+          {{ selectedStatementParty.pendingReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </div>
+        <div class="sauda-kpi-sub">Outstanding receivable amount</div>
+      </div>
+    </div>
+
+    <div class="erp-card">
+      <div class="listing-card-top">
+        <div class="listing-header-row mb-0">
+          <h2 class="listing-card-title">
+            Account Statement ({{ selectedStatementParty.statement.length }} entries)
+          </h2>
+          <div>
+            @if (selectedStatementParty.netBalanceInr > 0) {
+            <span class="status-badge badge-green">
+              Net Closing:
+              {{ selectedStatementParty.netBalanceInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+              Receivable
+            </span>
+            } @else if (selectedStatementParty.netBalanceInr < 0) { <span class="status-badge badge-red">
+              Net Closing:
+              {{ abs(selectedStatementParty.netBalanceInr) | currency: 'INR' : 'symbol' : '1.0-0' }}
+              Payable
+              </span>
+              } @else {
+              <span class="status-badge badge-slate">Net Closing: Settled</span>
+              }
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reference</th>
+              <th>Client Firm</th>
+              <th>Particulars / Type</th>
+              <th>Mode / Due Date</th>
+              <th class="text-end">Payable (+)</th>
+              <th class="text-end">Paid (-)</th>
+              <th class="text-end">Receivable (+)</th>
+              <th class="text-end">Received (-)</th>
+              <th class="text-end">Running Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of selectedStatementParty.statement; track row.id) {
+            <tr>
+              <td class="num">{{ row.date }}</td>
+              <td class="fw-semibold text-dark">{{ row.referenceNo }}</td>
+              <td>{{ row.clientFirm }}</td>
+              <td>
+                <div class="fw-semibold">{{ row.entryType }}</div>
+                <div class="sub-cell">{{ row.remarks }}</div>
+              </td>
+              <td class="num">
+                <div>{{ row.paymentMode }}</div>
+                @if (row.dueDate && row.dueDate !== '—') {
+                <div class="sub-cell" [class.text-payable]="row.isOverdue">
+                  Due: {{ row.dueDate }}
+                  @if (row.isOverdue) {
+                  (Overdue)
+                  }
+                </div>
+                }
+              </td>
+              <td class="text-end num text-payable">
+                {{
+                row.payableAmountInr > 0
+                ? (row.payableAmountInr | currency: 'INR' : 'symbol' : '1.0-0')
+                : '—'
+                }}
+              </td>
+              <td class="text-end num fw-semibold">
+                {{
+                row.paidAmountInr > 0
+                ? (row.paidAmountInr | currency: 'INR' : 'symbol' : '1.0-0')
+                : '—'
+                }}
+              </td>
+              <td class="text-end num text-receivable">
+                {{
+                row.receivableAmountInr > 0
+                ? (row.receivableAmountInr | currency: 'INR' : 'symbol' : '1.0-0')
+                : '—'
+                }}
+              </td>
+              <td class="text-end num fw-semibold">
+                {{
+                row.receivedAmountInr > 0
+                ? (row.receivedAmountInr | currency: 'INR' : 'symbol' : '1.0-0')
+                : '—'
+                }}
+              </td>
+              <td class="text-end num fw-bold">
+                @if (row.runningNetInr > 0) {
+                <span class="text-receivable">
+                  {{ row.runningNetInr | currency: 'INR' : 'symbol' : '1.0-0' }} Dr
+                </span>
+                } @else if (row.runningNetInr < 0) { <span class="text-payable">
+                  {{ abs(row.runningNetInr) | currency: 'INR' : 'symbol' : '1.0-0' }} Cr
+                  </span>
+                  } @else {
+                  <span class="text-muted">Settled</span>
+                  }
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="10" class="empty-state">
+                No transactions recorded for this party yet.
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Record Payment / Receipt Modal -->
+  @if (showPaymentModal) {
+  <div class="modal-backdrop-erp" (click)="closePaymentModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Record Payment / Receipt</h3>
+          <p class="modal-sub-erp">
+            Update party payable or receivable balance
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closePaymentModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitPayment()" class="modal-body-erp">
+        @if (paymentError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ paymentError }}</div>
+        }
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Transaction Type <span class="req">*</span></label>
+            <select class="erp-input" name="entryKind" [ngModel]="paymentForm.entryKind"
+              (ngModelChange)="onPaymentTypeChange($event)">
+              <option value="Payment Paid">Payment Paid (To Seller)</option>
+              <option value="Payment Received">Payment Received (From Buyer)</option>
+              <option value="Rebate / Adjustment">Rebate / Claim Adjustment</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Transaction Date <span class="req">*</span></label>
+            <input type="date" class="erp-input" name="date" [(ngModel)]="paymentForm.date" />
+          </div>
+
+          <div class="field-group">
+            <label>Party <span class="req">*</span></label>
+            <select class="erp-input" name="partyName" [ngModel]="paymentForm.partyName"
+              (ngModelChange)="paymentForm.partyName = $event; onPaymentPartyChange($event)">
+              <option value="">Select Party</option>
+              @for (opt of partyDropdownOptions; track opt.name) {
+              <option [value]="opt.name">{{ opt.name }} ({{ opt.role }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Client Firm <span class="req">*</span></label>
+            <select class="erp-input" name="clientFirm" [(ngModel)]="paymentForm.clientFirm">
+              @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+          @if (paymentForm.entryKind === 'Rebate / Adjustment') {
+          <div class="field-group ledger-span-2">
+            <label>Adjust Against <span class="req">*</span></label>
+            <select class="erp-input" name="ledgerSide" [(ngModel)]="paymentForm.ledgerSide">
+              <option value="Payable">Payable Balance (Reduce Payable)</option>
+              <option value="Receivable">Receivable Balance (Reduce Receivable)</option>
+            </select>
+          </div>
+          }
+
+          <div class="field-group">
+            <label>Amount (INR) <span class="req">*</span></label>
+            <input type="number" min="1" class="erp-input" name="amountInr" [(ngModel)]="paymentForm.amountInr"
+              placeholder="e.g. 50000" />
+          </div>
+
+          <div class="field-group">
+            <label>Payment Mode</label>
+            <select class="erp-input" name="paymentMode" [(ngModel)]="paymentForm.paymentMode">
+              @for (m of paymentModes; track m) {
+              <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Linked Sauda (Optional)</label>
+            <select class="erp-input" name="saudaNo" [(ngModel)]="paymentForm.saudaNo">
+              <option value="">On-Account / General</option>
+              @for (s of saudaOptionsForPayment; track s.id) {
+              <option [value]="s.saudaNo">
+                {{ s.saudaNo }} ({{ s.commodity }} - ₹{{ s.totalAmountInr | number }})
+              </option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Reference / UTR / Cheque No.</label>
+            <input type="text" class="erp-input" name="referenceNo" [(ngModel)]="paymentForm.referenceNo"
+              placeholder="e.g. UTR-261112004" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Remarks</label>
+            <textarea rows="2" class="erp-input" name="remarks" [(ngModel)]="paymentForm.remarks"
+              placeholder="Narration or settlement note..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closePaymentModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check"></i>
+            <span>Save Entry</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- Add Party Modal -->
+  @if (showAddPartyModal) {
+  <div class="modal-backdrop-erp" (click)="closeAddPartyModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Add Seller / Buyer Party</h3>
+          <p class="modal-sub-erp">
+            New parties become available in Sauda Management &amp; Party Ledger
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAddPartyModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitNewParty()" class="modal-body-erp">
+        @if (partyError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ partyError }}</div>
+        }
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Party Role <span class="req">*</span></label>
+            <select class="erp-input" name="role" [(ngModel)]="newPartyForm.role">
+              <option value="Seller">Seller (Supplier)</option>
+              <option value="Buyer">Buyer (Customer)</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Default Credit Days</label>
+            <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+              [(ngModel)]="newPartyForm.defaultCreditDays" placeholder="e.g. 15" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Party Name <span class="req">*</span></label>
+            <input type="text" class="erp-input" name="name" [(ngModel)]="newPartyForm.name"
+              placeholder="e.g. Goyal Cold Storage" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Contact Phone</label>
+            <input type="text" maxlength="10" class="erp-input" name="phone" [(ngModel)]="newPartyForm.phone"
+              placeholder="10-digit mobile number" />
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeAddPartyModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check"></i>
+            <span>Add Party</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }

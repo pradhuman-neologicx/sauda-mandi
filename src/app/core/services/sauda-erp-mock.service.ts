@@ -197,6 +197,25 @@ export interface InvProductRecord {
   updatedAt: string;
 }
 
+export type PaymentMode = 'RTGS / NEFT' | 'Cheque' | 'UPI' | 'Cash' | 'Adjustment';
+
+export interface LedgerSettlementRecord {
+  id: string;
+  date: string;
+  partyName: string;
+  partyRole: 'Seller' | 'Buyer';
+  clientFirm: string;
+  entryKind: 'Payment Paid' | 'Payment Received' | 'Rebate / Adjustment';
+  ledgerSide: 'Payable' | 'Receivable';
+  amountInr: number;
+  paymentMode: PaymentMode;
+  referenceNo: string;
+  saudaNo?: string;
+  remarks: string;
+  recordedBy: string;
+  createdAt: string;
+}
+
 export interface ActionResult {
   ok: boolean;
   message: string;
@@ -1217,6 +1236,57 @@ export class SaudaErpMockService {
     },
   ];
 
+  private readonly initialLedgerSettlements: LedgerSettlementRecord[] = [
+    {
+      id: 'TXN-2026-0001',
+      date: '2026-11-06',
+      partyName: 'Sharma Fruits',
+      partyRole: 'Seller',
+      clientFirm: 'Desert Fresh Traders',
+      entryKind: 'Payment Paid',
+      ledgerSide: 'Payable',
+      amountInr: 60000,
+      paymentMode: 'RTGS / NEFT',
+      referenceNo: 'UTR-2611068841',
+      saudaNo: 'SAU-2026-0001',
+      remarks: 'Part payment released after initial Apple crate receipts',
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-06 16:30',
+    },
+    {
+      id: 'TXN-2026-0002',
+      date: '2026-11-08',
+      partyName: 'City Wholesale Market',
+      partyRole: 'Buyer',
+      clientFirm: 'Desert Fresh Traders',
+      entryKind: 'Payment Received',
+      ledgerSide: 'Receivable',
+      amountInr: 45000,
+      paymentMode: 'RTGS / NEFT',
+      referenceNo: 'NEFT-994021',
+      saudaNo: 'SAU-2026-0002',
+      remarks: 'Part receipt against Potato lot dispatch',
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-08 14:15',
+    },
+    {
+      id: 'TXN-2026-0003',
+      date: '2026-11-09',
+      partyName: 'Om Traders',
+      partyRole: 'Seller',
+      clientFirm: 'Rajasthan Agro',
+      entryKind: 'Payment Paid',
+      ledgerSide: 'Payable',
+      amountInr: 25000,
+      paymentMode: 'Cheque',
+      referenceNo: 'CHQ-408112',
+      saudaNo: 'SAU-2026-0004',
+      remarks: 'Booking advance paid for Onion Purchase Sauda',
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-09 12:10',
+    },
+  ];
+
   private saudasSubject = new BehaviorSubject<SaudaRecord[]>(this.initialSaudas);
   private trucksSubject = new BehaviorSubject<TruckEntryRecord[]>(
     this.initialTrucks,
@@ -1243,6 +1313,9 @@ export class SaudaErpMockService {
   private invProductsSubject = new BehaviorSubject<InvProductRecord[]>(
     this.initialInvProducts,
   );
+  private ledgerSettlementsSubject = new BehaviorSubject<LedgerSettlementRecord[]>(
+    this.initialLedgerSettlements,
+  );
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -1254,6 +1327,7 @@ export class SaudaErpMockService {
   readonly invCategories$ = this.invCategoriesSubject.asObservable();
   readonly invSubCategories$ = this.invSubCategoriesSubject.asObservable();
   readonly invProducts$ = this.invProductsSubject.asObservable();
+  readonly ledgerSettlements$ = this.ledgerSettlementsSubject.asObservable();
 
   constructor() {
     this.recomputeAllSaudaStatuses();
@@ -2905,6 +2979,64 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `${existing.name} marked as ${nextActive ? 'Active' : 'Inactive'}.`,
+    };
+  }
+
+  // ── Party Ledger Operations ──
+
+  recordLedgerSettlement(payload: {
+    date: string;
+    partyName: string;
+    partyRole: 'Seller' | 'Buyer';
+    clientFirm: string;
+    entryKind: 'Payment Paid' | 'Payment Received' | 'Rebate / Adjustment';
+    ledgerSide: 'Payable' | 'Receivable';
+    amountInr: number;
+    paymentMode: PaymentMode;
+    referenceNo: string;
+    saudaNo?: string;
+    remarks: string;
+  }): ActionResult {
+    if (!payload.partyName || !payload.clientFirm || !payload.date) {
+      return {
+        ok: false,
+        message: 'Date, Party Name, and Client Firm are required.',
+      };
+    }
+    if (Number(payload.amountInr) <= 0) {
+      return {
+        ok: false,
+        message: 'Amount must be greater than zero.',
+      };
+    }
+    const nextNum = this.ledgerSettlementsSubject.value.length + 1;
+    const now = this.formatTimestamp();
+    const record: LedgerSettlementRecord = {
+      id: `TXN-2026-${String(nextNum).padStart(4, '0')}`,
+      date: payload.date,
+      partyName: payload.partyName,
+      partyRole: payload.partyRole,
+      clientFirm: payload.clientFirm,
+      entryKind: payload.entryKind,
+      ledgerSide: payload.ledgerSide,
+      amountInr: Number(payload.amountInr),
+      paymentMode: payload.paymentMode,
+      referenceNo: (payload.referenceNo || '').trim() || `REF-${String(nextNum).padStart(4, '0')}`,
+      saudaNo: payload.saudaNo || '',
+      remarks:
+        (payload.remarks || '').trim() ||
+        `${payload.entryKind} recorded for ${payload.partyName}`,
+      recordedBy: 'Sauda Admin',
+      createdAt: now,
+    };
+
+    this.ledgerSettlementsSubject.next([
+      record,
+      ...this.ledgerSettlementsSubject.value,
+    ]);
+    return {
+      ok: true,
+      message: `${payload.entryKind} of ₹${Number(payload.amountInr).toLocaleString('en-IN')} recorded for ${payload.partyName}.`,
     };
   }
 

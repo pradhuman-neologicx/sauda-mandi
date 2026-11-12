@@ -54,44 +54,6 @@ export class SidenavComponent implements OnInit {
       },
       {
         index: 3,
-        icon: 'tune',
-        label: 'Masters',
-        route: '/admin/masters',
-        subItems: [
-          {
-            index: 31,
-            icon: 'storefront',
-            label: 'Seller Master',
-            route: '/admin/masters/seller',
-          },
-          {
-            index: 32,
-            icon: 'groups',
-            label: 'Buyer Master',
-            route: '/admin/masters/buyer',
-          },
-          {
-            index: 33,
-            icon: 'inventory_2',
-            label: 'Commodity Master',
-            route: '/admin/masters/commodity',
-          },
-        ],
-      },
-      {
-        index: 4,
-        icon: 'receipt_long',
-        label: 'Sauda Management',
-        route: '/admin/sauda-management',
-      },
-      {
-        index: 5,
-        icon: 'local_shipping',
-        label: 'Truck Management',
-        route: '/admin/truck-management',
-      },
-      {
-        index: 6,
         icon: 'inventory_2',
         label: 'Inventory Management',
         route: '/admin/inventory-management',
@@ -116,11 +78,28 @@ export class SidenavComponent implements OnInit {
           },
         ],
       },
+     
+      {
+        index: 4,
+        icon: 'receipt_long',
+        label: 'Sauda Management',
+        route: '/admin/sauda-management',
+      },
+      {
+        index: 5,
+        icon: 'local_shipping',
+        label: 'Truck Management',
+        route: '/admin/truck-management',
+      },
+       {
+        index: 6,
+        icon: 'account_balance_wallet',
+        label: 'Party Ledger',
+        route: '/admin/party-ledger',
+      },
     ];
 
-    if (this.router.url.startsWith('/admin/masters')) {
-      this.expandedSubmenu = '/admin/masters';
-    } else if (this.router.url.startsWith('/admin/inventory-management')) {
+    if (this.router.url.startsWith('/admin/inventory-management')) {
       this.expandedSubmenu = '/admin/inventory-management';
     }
   }

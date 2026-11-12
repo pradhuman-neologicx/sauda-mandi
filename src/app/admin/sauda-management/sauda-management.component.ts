@@ -15,8 +15,10 @@ import { takeUntil } from 'rxjs/operators';
 import {
   BuyerRecord,
   CommodityLineItem,
-  CommodityRecord,
   FirmRecord,
+  InvCategoryRecord,
+  InvProductRecord,
+  InvSubCategoryRecord,
   PackagingUom,
   SaudaErpMockService,
   SaudaRecord,
@@ -26,6 +28,14 @@ import {
   WeightUom,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
+
+export interface InventoryCommodityOption {
+  value: string;
+  label: string;
+  categoryName: string;
+  packagingUom: PackagingUom;
+  weightUom: WeightUom;
+}
 
 @Component({
   standalone: true,
@@ -51,7 +61,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   activeFirms: FirmRecord[] = [];
   activeSellers: SellerRecord[] = [];
   activeBuyers: BuyerRecord[] = [];
-  activeCommodities: CommodityRecord[] = [];
+  inventoryCommodityOptions: InventoryCommodityOption[] = [];
 
   // Listing Filters (applied on Search click)
   searchTerm = '';
@@ -114,31 +124,47 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       this.erpService.firms$,
       this.erpService.sellers$,
       this.erpService.buyers$,
-      this.erpService.commodities$,
+      this.erpService.invProducts$,
+      this.erpService.invSubCategories$,
+      this.erpService.invCategories$,
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([saudas, firms, sellers, buyers, commodities]) => {
-        this.allSaudas = saudas;
-        this.activeFirms = firms.filter((f) => f.isActive);
-        this.activeSellers = sellers.filter((s) => s.isActive);
-        this.activeBuyers = buyers.filter((b) => b.isActive);
-        this.activeCommodities = commodities.filter((c) => c.isActive);
+      .subscribe(
+        ([
+          saudas,
+          firms,
+          sellers,
+          buyers,
+          invProducts,
+          invSubCategories,
+          invCategories,
+        ]) => {
+          this.allSaudas = saudas;
+          this.activeFirms = firms.filter((f) => f.isActive);
+          this.activeSellers = sellers.filter((s) => s.isActive);
+          this.activeBuyers = buyers.filter((b) => b.isActive);
 
-        this.sellerOptions = this.activeSellers.map((s) => s.name);
-        this.buyerOptions = this.activeBuyers.map((b) => b.name);
-        this.commodities = this.activeCommodities.map((c) => c.name);
+          this.sellerOptions = this.activeSellers.map((s) => s.name);
+          this.buyerOptions = this.activeBuyers.map((b) => b.name);
 
-        this.applyFilters();
-        if (this.selectedSauda) {
-          this.selectedSauda =
-            saudas.find((s) => s.id === this.selectedSauda!.id) || null;
+          this.buildInventoryCommodityOptions(
+            invProducts,
+            invSubCategories,
+            invCategories,
+          );
+
+          this.applyFilters();
           if (this.selectedSauda) {
-            this.linkedTrucks = this.erpService.getAllTrucksForSauda(
-              this.selectedSauda.id,
-            );
+            this.selectedSauda =
+              saudas.find((s) => s.id === this.selectedSauda!.id) || null;
+            if (this.selectedSauda) {
+              this.linkedTrucks = this.erpService.getAllTrucksForSauda(
+                this.selectedSauda.id,
+              );
+            }
           }
-        }
-      });
+        },
+      );
 
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
@@ -224,6 +250,64 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
 
   get commodityRows(): FormArray {
     return this.saudaForm.get('commodityItems') as FormArray;
+  }
+
+  private buildInventoryCommodityOptions(
+    invProducts: InvProductRecord[],
+    invSubCategories: InvSubCategoryRecord[],
+    invCategories: InvCategoryRecord[],
+  ): void {
+    const subMap = new Map(invSubCategories.map((s) => [s.id, s]));
+    const catMap = new Map(invCategories.map((c) => [c.id, c]));
+
+    const options: InventoryCommodityOption[] = [];
+    for (const prod of invProducts) {
+      if (!prod.isActive) continue;
+      const sub = subMap.get(prod.subCategoryId);
+      const cat = sub ? catMap.get(sub.categoryId) : undefined;
+      if (cat && !cat.isActive) continue;
+      if (cat && cat.name.toLowerCase().includes('packaging')) continue;
+
+      const value = (prod.commodityName || prod.name).trim();
+      const catName = cat?.name || 'Inventory';
+      const label =
+        prod.commodityName && prod.commodityName !== prod.name
+          ? `${prod.commodityName} — ${prod.name} (${catName})`
+          : `${prod.name} (${catName})`;
+
+      options.push({
+        value,
+        label,
+        categoryName: catName,
+        packagingUom: prod.packagingUom,
+        weightUom: prod.weightUom,
+      });
+    }
+
+    this.inventoryCommodityOptions = options;
+    this.commodities = options.map((o) => o.value);
+  }
+
+  onCommoditySelected(index: number): void {
+    const row = this.commodityRows.at(index);
+    if (!row) return;
+    const val = (row.get('commodity')?.value || '').trim();
+    const match = this.inventoryCommodityOptions.find((o) => o.value === val);
+    if (match) {
+      row.patchValue(
+        {
+          packagingUom: match.packagingUom,
+          weightUom: match.weightUom,
+        },
+        { emitEvent: false },
+      );
+    }
+  }
+
+  hasOptionForCommodity(value: string): boolean {
+    return (
+      !value || this.inventoryCommodityOptions.some((o) => o.value === value)
+    );
   }
 
   addCommodityRow(): void {

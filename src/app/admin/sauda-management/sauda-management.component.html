@@ -320,10 +320,19 @@
             <div [formGroupName]="idx" class="commodity-row-box">
               <div class="field-group">
                 <label>Commodity <span class="req">*</span></label>
-                <select formControlName="commodity" class="erp-input">
+                <select
+                  formControlName="commodity"
+                  class="erp-input"
+                  (change)="onCommoditySelected(idx)"
+                >
                   <option value="">Select</option>
-                  @for (c of commodities; track c) {
-                    <option [value]="c">{{ c }}</option>
+                  @for (opt of inventoryCommodityOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                  @if (!hasOptionForCommodity(row.get('commodity')?.value)) {
+                    <option [value]="row.get('commodity')?.value">
+                      {{ row.get('commodity')?.value }}
+                    </option>
                   }
                 </select>
               </div>

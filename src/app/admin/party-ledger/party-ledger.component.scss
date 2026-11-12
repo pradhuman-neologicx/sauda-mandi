@@ -1,0 +1,65 @@
+@use '../sauda-management/sauda-management.component.scss' as *;
+
+.ledger-filter-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.95fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+
+  @media (max-width: 1120px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ledger-tabs-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-pill-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #93c5fd;
+  }
+}
+
+.text-payable {
+  color: #dc2626;
+}
+
+.text-receivable {
+  color: #047857;
+}
+
+.ledger-span-2 {
+  grid-column: span 2;
+
+  @media (max-width: 560px) {
+    grid-column: span 1;
+  }
+}
+
+.erp-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
