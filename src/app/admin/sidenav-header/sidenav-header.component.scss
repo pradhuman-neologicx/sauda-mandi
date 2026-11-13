@@ -44,11 +44,11 @@ $transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .admin-theme-logo {
-    height: 52px;
+    // height: 52px;
     width: auto;
-    object-fit: contain;
+    object-fit: cover;
    
-    padding: 4px 10px;
+    // padding: 4px 10px;
     border-radius: 8px;
   }
 }

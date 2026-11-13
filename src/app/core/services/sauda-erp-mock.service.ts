@@ -113,6 +113,7 @@ export interface SellerRecord {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   defaultCreditDays: number | null;
   isActive: boolean;
   createdAt: string;
@@ -123,6 +124,7 @@ export interface BuyerRecord {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   defaultCreditDays: number | null;
   isActive: boolean;
   createdAt: string;
@@ -257,26 +259,26 @@ export class SaudaErpMockService {
       saudaDate: '2026-11-04',
       saudaType: 'Purchase',
       clientFirm: 'Desert Fresh Traders',
-      sellerName: 'Sharma Fruits',
+      sellerName: 'Sharma Grain Traders',
       buyerName: '',
-      partyName: 'Sharma Fruits',
+      partyName: 'Sharma Grain Traders',
       commodityItems: [
         {
-          commodity: 'Apple',
-          packagingUom: 'Crate',
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
           packagingQty: 150,
-          weightUom: 'KG',
-          actualWeight: 3000,
+          weightUom: 'Quintal',
+          actualWeight: 30,
         },
         {
-          commodity: 'Orange',
-          packagingUom: 'Box',
+          commodity: 'Jowar',
+          packagingUom: 'Bag',
           packagingQty: 100,
-          weightUom: 'KG',
-          actualWeight: 2000,
+          weightUom: 'Quintal',
+          actualWeight: 20,
         },
       ],
-      commodity: 'Apple, Orange',
+      commodity: 'Bajra, Jowar',
       quantityMt: 5,
       totalAmountInr: 150000,
       sellerCreditPeriodDays: 15,
@@ -285,7 +287,7 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Mixed cold-storage lot, standard crates',
+      remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags',
       status: 'Partial',
       currentVersion: 2,
       createdBy: 'Sauda Admin',
@@ -299,7 +301,7 @@ export class SaudaErpMockService {
           action: 'Created',
           reason: 'Initial Sauda contract booked in mandi session',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Apple (3000 KG)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (30 Quintal)' },
             { field: 'Total Amount', oldValue: '-', newValue: '₹1,20,000' },
           ],
         },
@@ -308,12 +310,12 @@ export class SaudaErpMockService {
           changedAt: '2026-11-06 14:30',
           changedBy: 'Sauda Admin',
           action: 'Updated',
-          reason: 'Added Orange lot and revised total agreement value',
+          reason: 'Added Jowar lot and revised total agreement value',
           changes: [
             {
               field: 'Commodities',
-              oldValue: 'Apple',
-              newValue: 'Apple, Orange',
+              oldValue: 'Bajra',
+              newValue: 'Bajra, Jowar',
             },
             {
               field: 'Total Amount',
@@ -335,23 +337,23 @@ export class SaudaErpMockService {
       partyName: 'City Wholesale Market',
       commodityItems: [
         {
-          commodity: 'Potato',
+          commodity: 'Wheat',
           packagingUom: 'Bag',
           packagingQty: 100,
-          weightUom: 'KG',
-          actualWeight: 5000,
+          weightUom: 'Quintal',
+          actualWeight: 50,
         },
       ],
-      commodity: 'Potato',
+      commodity: 'Wheat',
       quantityMt: 5,
-      totalAmountInr: 95000,
+      totalAmountInr: 125000,
       sellerCreditPeriodDays: null,
       sellerCreditStartDate: '',
       sellerDueDate: '',
       buyerCreditPeriodDays: 7,
       buyerCreditStartDate: '2026-11-05',
       buyerDueDate: '2026-11-12',
-      remarks: '50 kg gunny packing',
+      remarks: 'Lokwan Sharbati Wheat, machine-cleaned 50kg bags',
       status: 'Completed',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
@@ -363,10 +365,10 @@ export class SaudaErpMockService {
           changedAt: '2026-11-05 11:40',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Direct wholesale sale contract confirmed',
+          reason: 'Direct wholesale grain sale contract confirmed',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Potato (5000 KG)' },
-            { field: 'Total Amount', oldValue: '-', newValue: '₹95,000' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (50 Quintal)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹1,25,000' },
           ],
         },
       ],
@@ -382,14 +384,14 @@ export class SaudaErpMockService {
       partyName: 'Jai Kisan Suppliers / Fresh Mart',
       commodityItems: [
         {
-          commodity: 'Apple',
-          packagingUom: 'Box',
-          packagingQty: 500,
-          weightUom: 'KG',
-          actualWeight: 10000,
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
+          packagingQty: 200,
+          weightUom: 'Quintal',
+          actualWeight: 100,
         },
       ],
-      commodity: 'Apple',
+      commodity: 'Bajra',
       quantityMt: 10,
       totalAmountInr: 250000,
       sellerCreditPeriodDays: 10,
@@ -398,7 +400,7 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: 15,
       buyerCreditStartDate: '2026-11-06',
       buyerDueDate: '2026-11-21',
-      remarks: 'Brokerage agreement settled cleanly',
+      remarks: 'Brokerage agreement settled for Desi Hybrid Bajra lot',
       status: 'Partial',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
@@ -412,7 +414,7 @@ export class SaudaErpMockService {
           action: 'Created',
           reason: 'Brokerage agreement finalized',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Apple (10000 KG)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (100 Quintal)' },
             { field: 'Total Amount', oldValue: '-', newValue: '₹2,50,000' },
           ],
         },
@@ -429,23 +431,23 @@ export class SaudaErpMockService {
       partyName: 'Om Traders',
       commodityItems: [
         {
-          commodity: 'Onion',
+          commodity: 'Maize',
           packagingUom: 'Sack',
           packagingQty: 100,
-          weightUom: 'KG',
-          actualWeight: 5000,
+          weightUom: 'Quintal',
+          actualWeight: 50,
         },
       ],
-      commodity: 'Onion',
+      commodity: 'Maize',
       quantityMt: 5,
-      totalAmountInr: 75000,
+      totalAmountInr: 95000,
       sellerCreditPeriodDays: 30,
       sellerCreditStartDate: '2026-11-07',
       sellerDueDate: '2026-12-07',
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Awaiting truck placement',
+      remarks: 'Yellow Field Maize purchase, awaiting truck placement',
       status: 'Open',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
@@ -457,10 +459,10 @@ export class SaudaErpMockService {
           changedAt: '2026-11-07 16:05',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'New onion purchase order received',
+          reason: 'New Yellow Maize purchase order received',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Onion (5000 KG)' },
-            { field: 'Total Amount', oldValue: '-', newValue: '₹75,000' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Maize (50 Quintal)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹95,000' },
           ],
         },
       ],
@@ -476,16 +478,16 @@ export class SaudaErpMockService {
       partyName: 'Kota Krishi Traders',
       commodityItems: [
         {
-          commodity: 'Soybean',
+          commodity: 'Ragi',
           packagingUom: 'Bag',
           packagingQty: 120,
-          weightUom: 'KG',
-          actualWeight: 6000,
+          weightUom: 'Quintal',
+          actualWeight: 60,
         },
       ],
-      commodity: 'Soybean',
+      commodity: 'Ragi',
       quantityMt: 6,
-      totalAmountInr: 270000,
+      totalAmountInr: 210000,
       sellerCreditPeriodDays: 7,
       sellerCreditStartDate: '2026-11-03',
       sellerDueDate: '2026-11-10',
@@ -509,10 +511,10 @@ export class SaudaErpMockService {
           changedAt: '2026-11-03 11:00',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Initial Soybean Sauda entry',
+          reason: 'Initial Ragi Sauda entry',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Soybean (6000 KG)' },
-            { field: 'Total Amount', oldValue: '-', newValue: '₹2,70,000' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Ragi (60 Quintal)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹2,10,000' },
           ],
         },
         {
@@ -541,15 +543,15 @@ export class SaudaErpMockService {
       lrNo: 'LR-88412',
       commodityItems: [
         {
-          commodity: 'Apple',
-          packagingUom: 'Crate',
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
           packagingQty: 40,
-          weightUom: 'KG',
-          actualWeight: 480,
+          weightUom: 'Quintal',
+          actualWeight: 8,
         },
       ],
-      commodities: 'Apple',
-      loadedQtyMt: 0.48,
+      commodities: 'Bajra',
+      loadedQtyMt: 0.8,
       freightRatePerMt: 1150,
       advancePaid: 0,
       dispatchDate: '2026-11-05',
@@ -569,7 +571,7 @@ export class SaudaErpMockService {
           reason: 'Initial truck entry linked to SAU-2026-0001',
           changes: [
             { field: 'Truck Number', oldValue: '-', newValue: 'RJ07-GA-1234' },
-            { field: 'Commodities', oldValue: '-', newValue: 'Apple (480 KG)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (8 Quintal)' },
           ],
         },
       ],
@@ -587,21 +589,21 @@ export class SaudaErpMockService {
       lrNo: 'LR-88445',
       commodityItems: [
         {
-          commodity: 'Apple',
-          packagingUom: 'Crate',
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
           packagingQty: 50,
-          weightUom: 'KG',
-          actualWeight: 1000,
+          weightUom: 'Quintal',
+          actualWeight: 10,
         },
         {
-          commodity: 'Orange',
-          packagingUom: 'Box',
+          commodity: 'Jowar',
+          packagingUom: 'Bag',
           packagingQty: 50,
-          weightUom: 'KG',
-          actualWeight: 1000,
+          weightUom: 'Quintal',
+          actualWeight: 10,
         },
       ],
-      commodities: 'Apple, Orange',
+      commodities: 'Bajra, Jowar',
       loadedQtyMt: 2,
       freightRatePerMt: 1200,
       advancePaid: 1000,
@@ -621,7 +623,7 @@ export class SaudaErpMockService {
           action: 'Created',
           reason: 'Scheduled second truck for SAU-2026-0001',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Apple' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra' },
             { field: 'Weight (MT)', oldValue: '-', newValue: '1 MT' },
           ],
         },
@@ -630,12 +632,12 @@ export class SaudaErpMockService {
           changedAt: '2026-11-06 17:45',
           changedBy: 'Sauda Admin',
           action: 'Updated',
-          reason: 'Added Orange crates and updated weighment',
+          reason: 'Added Jowar bags and updated weighment',
           changes: [
             {
               field: 'Commodities',
-              oldValue: 'Apple',
-              newValue: 'Apple, Orange',
+              oldValue: 'Bajra',
+              newValue: 'Bajra, Jowar',
             },
             { field: 'Weight (MT)', oldValue: '1 MT', newValue: '2 MT' },
           ],
@@ -655,14 +657,14 @@ export class SaudaErpMockService {
       lrNo: 'LR-88491',
       commodityItems: [
         {
-          commodity: 'Potato',
+          commodity: 'Wheat',
           packagingUom: 'Bag',
           packagingQty: 100,
-          weightUom: 'KG',
-          actualWeight: 5000,
+          weightUom: 'Quintal',
+          actualWeight: 50,
         },
       ],
-      commodities: 'Potato',
+      commodities: 'Wheat',
       loadedQtyMt: 5,
       freightRatePerMt: 1350,
       advancePaid: 3000,
@@ -682,7 +684,7 @@ export class SaudaErpMockService {
           action: 'Created',
           reason: 'Full lot dispatch for City Wholesale Market',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Potato (5000 KG)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (50 Quintal)' },
             { field: 'Status', oldValue: '-', newValue: 'Delivered' },
           ],
         },
@@ -701,14 +703,14 @@ export class SaudaErpMockService {
       lrNo: 'LR-88510',
       commodityItems: [
         {
-          commodity: 'Apple',
-          packagingUom: 'Box',
-          packagingQty: 200,
-          weightUom: 'KG',
-          actualWeight: 4000,
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
+          packagingQty: 80,
+          weightUom: 'Quintal',
+          actualWeight: 40,
         },
       ],
-      commodities: 'Apple',
+      commodities: 'Bajra',
       loadedQtyMt: 4,
       freightRatePerMt: 980,
       advancePaid: 1500,
@@ -726,9 +728,9 @@ export class SaudaErpMockService {
           changedAt: '2026-11-08 18:10',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Brokerage Apple loading completed',
+          reason: 'Brokerage Bajra loading completed',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Apple (4000 KG)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
             { field: 'Status', oldValue: '-', newValue: 'In Transit' },
           ],
         },
@@ -777,8 +779,9 @@ export class SaudaErpMockService {
   private readonly initialSellers: SellerRecord[] = [
     {
       id: 'SEL-001',
-      name: 'Sharma Fruits',
+      name: 'Sharma Grain Traders',
       phone: '9829100112',
+      email: 'sharma.grains@gmail.com',
       defaultCreditDays: 15,
       isActive: true,
       createdAt: '2026-11-01 10:00',
@@ -788,6 +791,7 @@ export class SaudaErpMockService {
       id: 'SEL-002',
       name: 'Jai Kisan Suppliers',
       phone: '9828033445',
+      email: 'jaikisan.agro@gmail.com',
       defaultCreditDays: 10,
       isActive: true,
       createdAt: '2026-11-02 11:20',
@@ -797,6 +801,7 @@ export class SaudaErpMockService {
       id: 'SEL-003',
       name: 'Om Traders',
       phone: '9414122334',
+      email: 'omtraders.mandi@gmail.com',
       defaultCreditDays: 30,
       isActive: true,
       createdAt: '2026-11-03 09:45',
@@ -806,6 +811,7 @@ export class SaudaErpMockService {
       id: 'SEL-004',
       name: 'Kota Krishi Traders',
       phone: '9784511223',
+      email: 'kotakrishi@yahoo.com',
       defaultCreditDays: 7,
       isActive: true,
       createdAt: '2026-11-04 12:15',
@@ -815,6 +821,7 @@ export class SaudaErpMockService {
       id: 'SEL-005',
       name: 'Bikaner Agro Farms',
       phone: '9929055667',
+      email: 'bikaner.agro@gmail.com',
       defaultCreditDays: null,
       isActive: false,
       createdAt: '2026-11-05 16:00',
@@ -827,6 +834,7 @@ export class SaudaErpMockService {
       id: 'BUY-001',
       name: 'City Wholesale Market',
       phone: '9829200441',
+      email: 'citywholesale@gmail.com',
       defaultCreditDays: 7,
       isActive: true,
       createdAt: '2026-11-01 10:30',
@@ -836,6 +844,7 @@ export class SaudaErpMockService {
       id: 'BUY-002',
       name: 'Fresh Mart',
       phone: '9828199887',
+      email: 'freshmart.orders@gmail.com',
       defaultCreditDays: 15,
       isActive: true,
       createdAt: '2026-11-02 14:10',
@@ -845,6 +854,7 @@ export class SaudaErpMockService {
       id: 'BUY-003',
       name: 'Metro Fresh Retail',
       phone: '9950177889',
+      email: 'metrofresh@retail.in',
       defaultCreditDays: 14,
       isActive: true,
       createdAt: '2026-11-03 11:00',
@@ -854,6 +864,7 @@ export class SaudaErpMockService {
       id: 'BUY-004',
       name: 'Jaipur Mandi Traders',
       phone: '9799011220',
+      email: 'jaipurmandi@gmail.com',
       defaultCreditDays: 10,
       isActive: true,
       createdAt: '2026-11-04 15:20',
@@ -863,6 +874,7 @@ export class SaudaErpMockService {
       id: 'BUY-005',
       name: 'Bharat Cold Storage',
       phone: '9414288990',
+      email: 'bharatcoldstorage@gmail.com',
       defaultCreditDays: null,
       isActive: false,
       createdAt: '2026-11-05 17:05',
@@ -873,52 +885,52 @@ export class SaudaErpMockService {
   private readonly initialCommodities: CommodityRecord[] = [
     {
       id: 'CMD-001',
-      name: 'Apple',
-      defaultPackagingUom: 'Crate',
-      defaultWeightUom: 'KG',
+      name: 'Bajra',
+      defaultPackagingUom: 'Bag',
+      defaultWeightUom: 'Quintal',
       isActive: true,
       createdAt: '2026-11-01 09:00',
       updatedAt: '2026-11-01 09:00',
     },
     {
       id: 'CMD-002',
-      name: 'Orange',
-      defaultPackagingUom: 'Box',
-      defaultWeightUom: 'KG',
+      name: 'Jowar',
+      defaultPackagingUom: 'Bag',
+      defaultWeightUom: 'Quintal',
       isActive: true,
       createdAt: '2026-11-01 09:05',
       updatedAt: '2026-11-01 09:05',
     },
     {
       id: 'CMD-003',
-      name: 'Potato',
+      name: 'Wheat',
       defaultPackagingUom: 'Bag',
-      defaultWeightUom: 'KG',
+      defaultWeightUom: 'Quintal',
       isActive: true,
       createdAt: '2026-11-01 09:10',
       updatedAt: '2026-11-01 09:10',
     },
     {
       id: 'CMD-004',
-      name: 'Onion',
+      name: 'Maize',
       defaultPackagingUom: 'Sack',
-      defaultWeightUom: 'KG',
+      defaultWeightUom: 'Quintal',
       isActive: true,
       createdAt: '2026-11-01 09:15',
       updatedAt: '2026-11-01 09:15',
     },
     {
       id: 'CMD-005',
-      name: 'Tomato',
-      defaultPackagingUom: 'Crate',
-      defaultWeightUom: 'KG',
+      name: 'Ragi',
+      defaultPackagingUom: 'Bag',
+      defaultWeightUom: 'Quintal',
       isActive: true,
       createdAt: '2026-11-02 10:00',
       updatedAt: '2026-11-02 10:00',
     },
     {
       id: 'CMD-006',
-      name: 'Soybean',
+      name: 'Kangni',
       defaultPackagingUom: 'Bag',
       defaultWeightUom: 'Quintal',
       isActive: true,
@@ -927,7 +939,7 @@ export class SaudaErpMockService {
     },
     {
       id: 'CMD-007',
-      name: 'Wheat',
+      name: 'Sanwa',
       defaultPackagingUom: 'Bag',
       defaultWeightUom: 'Quintal',
       isActive: true,
@@ -940,15 +952,15 @@ export class SaudaErpMockService {
     {
       id: 'INV-001',
       productId: 'PRD-001',
-      productName: 'Kinnaur Royal Apple',
+      productName: 'Desi Hybrid Bajra',
       categoryId: 'CAT-001',
-      categoryName: 'Fresh Fruits',
-      subCategoryName: 'Apple Varieties',
-      commodity: 'Apple',
+      categoryName: 'Millets (Shree Anna)',
+      subCategoryName: 'Major Millets (Bajra, Jowar, Ragi)',
+      commodity: 'Bajra',
       clientFirm: 'Desert Fresh Traders',
-      packagingUom: 'Crate',
+      packagingUom: 'Bag',
       availableUnits: 190,
-      availableWeightMt: 3.48,
+      availableWeightMt: 3.8,
       minThresholdMt: 2,
       lastUpdated: '2026-11-06 17:45',
       logs: [
@@ -958,8 +970,8 @@ export class SaudaErpMockService {
           action: 'Stock In',
           referenceNo: 'TRK-2026-0001',
           unitsChange: 40,
-          weightMtChange: 0.48,
-          remarks: 'Inward receipt against SAU-2026-0001 (Sharma Fruits)',
+          weightMtChange: 0.8,
+          remarks: 'Inward receipt against SAU-2026-0001 (Sharma Grain Traders)',
           doneBy: 'Sauda Admin',
         },
         {
@@ -969,7 +981,7 @@ export class SaudaErpMockService {
           referenceNo: 'TRK-2026-0002',
           unitsChange: 150,
           weightMtChange: 3,
-          remarks: 'Cold-storage inward lot against SAU-2026-0001',
+          remarks: 'Mandi warehouse inward lot against SAU-2026-0001',
           doneBy: 'Sauda Admin',
         },
       ],
@@ -977,13 +989,13 @@ export class SaudaErpMockService {
     {
       id: 'INV-002',
       productId: 'PRD-002',
-      productName: 'Nagpur Mandarin Orange',
+      productName: 'Maldandi White Jowar',
       categoryId: 'CAT-001',
-      categoryName: 'Fresh Fruits',
-      subCategoryName: 'Citrus Fruits',
-      commodity: 'Orange',
+      categoryName: 'Millets (Shree Anna)',
+      subCategoryName: 'Major Millets (Bajra, Jowar, Ragi)',
+      commodity: 'Jowar',
       clientFirm: 'Desert Fresh Traders',
-      packagingUom: 'Box',
+      packagingUom: 'Bag',
       availableUnits: 50,
       availableWeightMt: 1,
       minThresholdMt: 1.5,
@@ -996,7 +1008,7 @@ export class SaudaErpMockService {
           referenceNo: 'TRK-2026-0002',
           unitsChange: 50,
           weightMtChange: 1,
-          remarks: 'Inward boxes received from SAU-2026-0001',
+          remarks: 'Inward bags received from SAU-2026-0001',
           doneBy: 'Sauda Admin',
         },
       ],
@@ -1004,11 +1016,11 @@ export class SaudaErpMockService {
     {
       id: 'INV-003',
       productId: 'PRD-003',
-      productName: 'Jyoti Table Potato',
+      productName: 'Lokwan Sharbati Wheat',
       categoryId: 'CAT-002',
-      categoryName: 'Vegetables',
-      subCategoryName: 'Root & Bulb Vegetables',
-      commodity: 'Potato',
+      categoryName: 'Food Grains & Cereals',
+      subCategoryName: 'Wheat & Barley',
+      commodity: 'Wheat',
       clientFirm: 'Desert Fresh Traders',
       packagingUom: 'Bag',
       availableUnits: 0,
@@ -1041,13 +1053,13 @@ export class SaudaErpMockService {
     {
       id: 'INV-004',
       productId: 'PRD-001',
-      productName: 'Kinnaur Royal Apple',
+      productName: 'Desi Hybrid Bajra',
       categoryId: 'CAT-001',
-      categoryName: 'Fresh Fruits',
-      subCategoryName: 'Apple Varieties',
-      commodity: 'Apple',
+      categoryName: 'Millets (Shree Anna)',
+      subCategoryName: 'Major Millets (Bajra, Jowar, Ragi)',
+      commodity: 'Bajra',
       clientFirm: 'Rajasthan Agro',
-      packagingUom: 'Box',
+      packagingUom: 'Bag',
       availableUnits: 200,
       availableWeightMt: 4,
       minThresholdMt: 2,
@@ -1068,11 +1080,11 @@ export class SaudaErpMockService {
     {
       id: 'INV-005',
       productId: 'PRD-004',
-      productName: 'Nashik Red Onion',
+      productName: 'Yellow Field Maize',
       categoryId: 'CAT-002',
-      categoryName: 'Vegetables',
-      subCategoryName: 'Root & Bulb Vegetables',
-      commodity: 'Onion',
+      categoryName: 'Food Grains & Cereals',
+      subCategoryName: 'Corn & Maize',
+      commodity: 'Maize',
       clientFirm: 'Rajasthan Agro',
       packagingUom: 'Sack',
       availableUnits: 120,
@@ -1087,7 +1099,7 @@ export class SaudaErpMockService {
           referenceNo: 'OPENING-STK',
           unitsChange: 120,
           weightMtChange: 6,
-          remarks: 'Nashik Red Onion warehouse reserve',
+          remarks: 'Yellow Field Maize warehouse reserve',
           doneBy: 'Sauda Admin',
         },
       ],
@@ -1097,21 +1109,21 @@ export class SaudaErpMockService {
   private readonly initialInvCategories: InvCategoryRecord[] = [
     {
       id: 'CAT-001',
-      name: 'Fresh Fruits',
+      name: 'Millets (Shree Anna)',
       isActive: true,
       createdAt: '2026-11-01 09:00',
       updatedAt: '2026-11-01 09:00',
     },
     {
       id: 'CAT-002',
-      name: 'Vegetables',
+      name: 'Food Grains & Cereals',
       isActive: true,
       createdAt: '2026-11-01 09:10',
       updatedAt: '2026-11-01 09:10',
     },
     {
       id: 'CAT-003',
-      name: 'Grains & Oilseeds',
+      name: 'Pulses & Legumes',
       isActive: true,
       createdAt: '2026-11-02 10:00',
       updatedAt: '2026-11-02 10:00',
@@ -1128,7 +1140,7 @@ export class SaudaErpMockService {
   private readonly initialInvSubCategories: InvSubCategoryRecord[] = [
     {
       id: 'SUB-001',
-      name: 'Apple Varieties',
+      name: 'Major Millets (Bajra, Jowar, Ragi)',
       categoryId: 'CAT-001',
       isActive: true,
       createdAt: '2026-11-01 09:20',
@@ -1136,7 +1148,7 @@ export class SaudaErpMockService {
     },
     {
       id: 'SUB-002',
-      name: 'Citrus Fruits',
+      name: 'Minor Millets (Kangni, Sanwa, Kutki)',
       categoryId: 'CAT-001',
       isActive: true,
       createdAt: '2026-11-01 09:25',
@@ -1144,7 +1156,7 @@ export class SaudaErpMockService {
     },
     {
       id: 'SUB-003',
-      name: 'Root & Bulb Vegetables',
+      name: 'Wheat & Barley',
       categoryId: 'CAT-002',
       isActive: true,
       createdAt: '2026-11-01 09:30',
@@ -1152,15 +1164,15 @@ export class SaudaErpMockService {
     },
     {
       id: 'SUB-004',
-      name: 'Wheat & Pulses',
-      categoryId: 'CAT-003',
+      name: 'Corn & Maize',
+      categoryId: 'CAT-002',
       isActive: true,
       createdAt: '2026-11-02 10:15',
       updatedAt: '2026-11-02 10:15',
     },
     {
       id: 'SUB-005',
-      name: 'Crates & Boxes',
+      name: 'Gunny & PP Bags',
       categoryId: 'CAT-004',
       isActive: true,
       createdAt: '2026-11-02 10:40',
@@ -1168,7 +1180,7 @@ export class SaudaErpMockService {
     },
     {
       id: 'SUB-006',
-      name: 'Gunny & PP Bags',
+      name: 'Jute Sacks',
       categoryId: 'CAT-004',
       isActive: true,
       createdAt: '2026-11-02 10:45',
@@ -1179,85 +1191,98 @@ export class SaudaErpMockService {
   private readonly initialInvProducts: InvProductRecord[] = [
     {
       id: 'PRD-001',
-      name: 'Kinnaur Royal Apple',
-      commodityName: 'Apple',
+      name: 'Desi Hybrid Bajra',
+      commodityName: 'Bajra',
       subCategoryId: 'SUB-001',
-      packagingUom: 'Crate',
-      weightUom: 'KG',
-      minStock: 50,
+      packagingUom: 'Bag',
+      weightUom: 'Quintal',
+      minStock: 100,
       isActive: true,
       createdAt: '2026-11-03 10:00',
       updatedAt: '2026-11-03 10:00',
     },
     {
       id: 'PRD-002',
-      name: 'Nagpur Mandarin Orange',
-      commodityName: 'Orange',
-      subCategoryId: 'SUB-002',
-      packagingUom: 'Box',
-      weightUom: 'KG',
-      minStock: 40,
+      name: 'Maldandi White Jowar',
+      commodityName: 'Jowar',
+      subCategoryId: 'SUB-001',
+      packagingUom: 'Bag',
+      weightUom: 'Quintal',
+      minStock: 80,
       isActive: true,
       createdAt: '2026-11-03 10:15',
       updatedAt: '2026-11-03 10:15',
     },
     {
       id: 'PRD-003',
-      name: 'Jyoti Table Potato',
-      commodityName: 'Potato',
+      name: 'Lokwan Sharbati Wheat',
+      commodityName: 'Wheat',
       subCategoryId: 'SUB-003',
       packagingUom: 'Bag',
-      weightUom: 'KG',
-      minStock: 60,
+      weightUom: 'Quintal',
+      minStock: 150,
       isActive: true,
       createdAt: '2026-11-03 10:30',
       updatedAt: '2026-11-03 10:30',
     },
     {
       id: 'PRD-004',
-      name: 'Nashik Red Onion',
-      commodityName: 'Onion',
-      subCategoryId: 'SUB-003',
+      name: 'Yellow Field Maize',
+      commodityName: 'Maize',
+      subCategoryId: 'SUB-004',
       packagingUom: 'Sack',
-      weightUom: 'KG',
-      minStock: 80,
+      weightUom: 'Quintal',
+      minStock: 120,
       isActive: true,
       createdAt: '2026-11-03 10:45',
       updatedAt: '2026-11-03 10:45',
     },
     {
       id: 'PRD-005',
-      name: 'Lokwan FAQ Wheat',
-      commodityName: 'Wheat',
-      subCategoryId: 'SUB-004',
+      name: 'Mandya Organic Ragi',
+      commodityName: 'Ragi',
+      subCategoryId: 'SUB-001',
       packagingUom: 'Bag',
       weightUom: 'Quintal',
-      minStock: 100,
+      minStock: 60,
       isActive: true,
       createdAt: '2026-11-04 11:00',
       updatedAt: '2026-11-04 11:00',
     },
     {
       id: 'PRD-006',
-      name: '20 Kg Wooden Apple Crate',
-      subCategoryId: 'SUB-005',
-      packagingUom: 'Crate',
-      weightUom: 'KG',
-      minStock: 200,
+      name: 'Kangni Foxtail Millet',
+      commodityName: 'Kangni',
+      subCategoryId: 'SUB-002',
+      packagingUom: 'Bag',
+      weightUom: 'Quintal',
+      minStock: 50,
       isActive: true,
       createdAt: '2026-11-04 11:15',
       updatedAt: '2026-11-04 11:15',
     },
     {
       id: 'PRD-007',
-      name: '50 Kg Jute Gunny Sack',
-      subCategoryId: 'SUB-006',
-      packagingUom: 'Sack',
-      weightUom: 'KG',
-      minStock: 250,
-      isActive: false,
+      name: 'Sanwa Barnyard Millet',
+      commodityName: 'Sanwa',
+      subCategoryId: 'SUB-002',
+      packagingUom: 'Bag',
+      weightUom: 'Quintal',
+      minStock: 40,
+      isActive: true,
       createdAt: '2026-11-04 11:30',
-      updatedAt: '2026-11-06 09:00',
+      updatedAt: '2026-11-04 11:30',
+    },
+    {
+      id: 'PRD-008',
+      name: '50 Kg PP Woven Grain Bag',
+      subCategoryId: 'SUB-005',
+      packagingUom: 'Bag',
+      weightUom: 'KG',
+      minStock: 500,
+      isActive: true,
+      createdAt: '2026-11-04 11:45',
+      updatedAt: '2026-11-04 11:45',
     },
   ];
 
@@ -1265,7 +1290,7 @@ export class SaudaErpMockService {
     {
       id: 'TXN-2026-0001',
       date: '2026-11-06',
-      partyName: 'Sharma Fruits',
+      partyName: 'Sharma Grain Traders',
       partyRole: 'Seller',
       clientFirm: 'Desert Fresh Traders',
       entryKind: 'Payment Paid',
@@ -1274,7 +1299,7 @@ export class SaudaErpMockService {
       paymentMode: 'RTGS / NEFT',
       referenceNo: 'UTR-2611068841',
       saudaNo: 'SAU-2026-0001',
-      remarks: 'Part payment released after initial Apple crate receipts',
+      remarks: 'Part payment released after initial Bajra bag receipts',
       recordedBy: 'Sauda Admin',
       createdAt: '2026-11-06 16:30',
     },
@@ -1290,7 +1315,7 @@ export class SaudaErpMockService {
       paymentMode: 'RTGS / NEFT',
       referenceNo: 'NEFT-994021',
       saudaNo: 'SAU-2026-0002',
-      remarks: 'Part receipt against Potato lot dispatch',
+      remarks: 'Part receipt against Wheat lot dispatch',
       recordedBy: 'Sauda Admin',
       createdAt: '2026-11-08 14:15',
     },
@@ -1306,7 +1331,7 @@ export class SaudaErpMockService {
       paymentMode: 'Cheque',
       referenceNo: 'CHQ-408112',
       saudaNo: 'SAU-2026-0004',
-      remarks: 'Booking advance paid for Onion Purchase Sauda',
+      remarks: 'Booking advance paid for Maize Purchase Sauda',
       recordedBy: 'Sauda Admin',
       createdAt: '2026-11-09 12:10',
     },
@@ -2199,7 +2224,8 @@ export class SaudaErpMockService {
   createSeller(
     name: string,
     phone: string,
-    defaultCreditDays: number | null,
+    email: string = '',
+    defaultCreditDays: number | null = null,
   ): ActionResult {
     const trimmed = (name || '').trim();
     if (trimmed.length < 2) {
@@ -2218,6 +2244,7 @@ export class SaudaErpMockService {
       id: `SEL-${String(nextNum).padStart(3, '0')}`,
       name: trimmed,
       phone: (phone || '').trim(),
+      email: (email || '').trim().toLowerCase(),
       defaultCreditDays:
         defaultCreditDays !== null && defaultCreditDays !== undefined
           ? Number(defaultCreditDays)
@@ -2234,7 +2261,8 @@ export class SaudaErpMockService {
     id: string,
     name: string,
     phone: string,
-    defaultCreditDays: number | null,
+    email: string = '',
+    defaultCreditDays: number | null = null,
   ): ActionResult {
     const existing = this.sellersSubject.value.find((s) => s.id === id);
     if (!existing) return { ok: false, message: 'Seller not found.' };
@@ -2249,6 +2277,7 @@ export class SaudaErpMockService {
     ) {
       return { ok: false, message: `Seller "${trimmed}" already exists.` };
     }
+    const oldName = existing.name;
     const now = this.formatTimestamp();
     this.sellersSubject.next(
       this.sellersSubject.value.map((s) =>
@@ -2257,6 +2286,7 @@ export class SaudaErpMockService {
               ...s,
               name: trimmed,
               phone: (phone || '').trim(),
+              email: (email || '').trim().toLowerCase(),
               defaultCreditDays:
                 defaultCreditDays !== null && defaultCreditDays !== undefined
                   ? Number(defaultCreditDays)
@@ -2266,6 +2296,38 @@ export class SaudaErpMockService {
           : s,
       ),
     );
+    if (oldName !== trimmed) {
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((sau) => {
+          if (sau.sellerName === oldName) {
+            const nextParty = sau.saudaType === 'Purchase' ? trimmed : sau.partyName.replace(oldName, trimmed);
+            return { ...sau, sellerName: trimmed, partyName: nextParty };
+          }
+          return sau;
+        }),
+      );
+      this.ledgerSettlementsSubject.next(
+        this.ledgerSettlementsSubject.value.map((st: LedgerSettlementRecord) =>
+          st.partyName === oldName ? { ...st, partyName: trimmed } : st,
+        ),
+      );
+    }
+    if (oldName !== trimmed) {
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((sau) => {
+          if (sau.sellerName === oldName) {
+            const nextParty = sau.saudaType === 'Purchase' ? trimmed : sau.partyName.replace(oldName, trimmed);
+            return { ...sau, sellerName: trimmed, partyName: nextParty };
+          }
+          return sau;
+        }),
+      );
+      this.ledgerSettlementsSubject.next(
+        this.ledgerSettlementsSubject.value.map((st: LedgerSettlementRecord) =>
+          st.partyName === oldName ? { ...st, partyName: trimmed } : st,
+        ),
+      );
+    }
     return { ok: true, message: `Seller "${trimmed}" updated successfully.` };
   }
 
@@ -2290,7 +2352,8 @@ export class SaudaErpMockService {
   createBuyer(
     name: string,
     phone: string,
-    defaultCreditDays: number | null,
+    email: string = '',
+    defaultCreditDays: number | null = null,
   ): ActionResult {
     const trimmed = (name || '').trim();
     if (trimmed.length < 2) {
@@ -2309,6 +2372,7 @@ export class SaudaErpMockService {
       id: `BUY-${String(nextNum).padStart(3, '0')}`,
       name: trimmed,
       phone: (phone || '').trim(),
+      email: (email || '').trim().toLowerCase(),
       defaultCreditDays:
         defaultCreditDays !== null && defaultCreditDays !== undefined
           ? Number(defaultCreditDays)
@@ -2325,7 +2389,8 @@ export class SaudaErpMockService {
     id: string,
     name: string,
     phone: string,
-    defaultCreditDays: number | null,
+    email: string = '',
+    defaultCreditDays: number | null = null,
   ): ActionResult {
     const existing = this.buyersSubject.value.find((b) => b.id === id);
     if (!existing) return { ok: false, message: 'Buyer not found.' };
@@ -2340,6 +2405,7 @@ export class SaudaErpMockService {
     ) {
       return { ok: false, message: `Buyer "${trimmed}" already exists.` };
     }
+    const oldName = existing.name;
     const now = this.formatTimestamp();
     this.buyersSubject.next(
       this.buyersSubject.value.map((b) =>
@@ -2348,6 +2414,7 @@ export class SaudaErpMockService {
               ...b,
               name: trimmed,
               phone: (phone || '').trim(),
+              email: (email || '').trim().toLowerCase(),
               defaultCreditDays:
                 defaultCreditDays !== null && defaultCreditDays !== undefined
                   ? Number(defaultCreditDays)
@@ -2357,6 +2424,38 @@ export class SaudaErpMockService {
           : b,
       ),
     );
+    if (oldName !== trimmed) {
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((sau) => {
+          if (sau.buyerName === oldName) {
+            const nextParty = sau.saudaType === 'Sales' ? trimmed : sau.partyName.replace(oldName, trimmed);
+            return { ...sau, buyerName: trimmed, partyName: nextParty };
+          }
+          return sau;
+        }),
+      );
+      this.ledgerSettlementsSubject.next(
+        this.ledgerSettlementsSubject.value.map((st: LedgerSettlementRecord) =>
+          st.partyName === oldName ? { ...st, partyName: trimmed } : st,
+        ),
+      );
+    }
+    if (oldName !== trimmed) {
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((sau) => {
+          if (sau.buyerName === oldName) {
+            const nextParty = sau.saudaType === 'Sales' ? trimmed : sau.partyName.replace(oldName, trimmed);
+            return { ...sau, buyerName: trimmed, partyName: nextParty };
+          }
+          return sau;
+        }),
+      );
+      this.ledgerSettlementsSubject.next(
+        this.ledgerSettlementsSubject.value.map((st: LedgerSettlementRecord) =>
+          st.partyName === oldName ? { ...st, partyName: trimmed } : st,
+        ),
+      );
+    }
     return { ok: true, message: `Buyer "${trimmed}" updated successfully.` };
   }
 

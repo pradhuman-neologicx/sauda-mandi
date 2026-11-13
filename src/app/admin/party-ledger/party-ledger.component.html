@@ -178,6 +178,9 @@
                   @if (party.phone) {
                   {{ party.phone }} &bull;
                   }
+                  @if (party.email) {
+                  {{ party.email }} &bull;
+                  }
                   {{ party.txnCount }} txn(s)
                   @if (party.defaultCreditDays !== null) {
                   &bull; {{ party.defaultCreditDays }}d credit
@@ -248,6 +251,10 @@
                   <button type="button" class="icon-btn btn-view" title="View Party Statement"
                     (click)="openStatement(party)">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
+                  </button>
+                  <button type="button" class="icon-btn btn-edit" title="Edit Party Details"
+                    (click)="openEditPartyModal(party)">
+                    <i class="fa-solid fa-pen-to-square"></i>
                   </button>
                   <button type="button" class="icon-btn btn-edit" title="Record Payment / Receipt"
                     (click)="openPaymentModal(party)">
@@ -365,6 +372,9 @@
           @if (selectedStatementParty.phone) {
           &bull; {{ selectedStatementParty.phone }}
           }
+          @if (selectedStatementParty.email) {
+          &bull; {{ selectedStatementParty.email }}
+          }
           @if (selectedStatementParty.defaultCreditDays !== null) {
           &bull; Default Credit: {{ selectedStatementParty.defaultCreditDays }} Days
           }
@@ -372,6 +382,10 @@
       </div>
 
       <div class="erp-actions">
+        <button type="button" class="btn-erp-outline" (click)="openEditPartyModal(selectedStatementParty)">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>Edit Party</span>
+        </button>
         <button type="button" class="btn-erp-primary" (click)="openPaymentModal(selectedStatementParty)">
           <i class="fa-solid fa-indian-rupee-sign"></i>
           <span>Record Payment / Receipt</span>
@@ -697,10 +711,16 @@
               placeholder="e.g. Goyal Cold Storage" />
           </div>
 
-          <div class="field-group ledger-span-2">
+          <div class="field-group">
             <label>Contact Phone</label>
             <input type="text" maxlength="10" class="erp-input" name="phone" [(ngModel)]="newPartyForm.phone"
               placeholder="10-digit mobile number" />
+          </div>
+
+          <div class="field-group">
+            <label>Email Address</label>
+            <input type="email" class="erp-input" name="email" [(ngModel)]="newPartyForm.email"
+              placeholder="e.g. contact@party.com" />
           </div>
         </div>
 
@@ -711,6 +731,72 @@
           <button type="submit" class="btn-erp-primary">
             <i class="fa-solid fa-check"></i>
             <span>Add Party</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- Edit Party Modal -->
+  @if (showEditPartyModal) {
+  <div class="modal-backdrop-erp" (click)="closeEditPartyModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Edit Party Details</h3>
+          <p class="modal-sub-erp">
+            Update contact details, credit terms, and email for {{ editPartyForm.name }}
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeEditPartyModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitEditParty()" class="modal-body-erp">
+        @if (editPartyError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ editPartyError }}</div>
+        }
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Party Role</label>
+            <input type="text" class="erp-input" [value]="editPartyForm.role" disabled />
+          </div>
+
+          <div class="field-group">
+            <label>Default Credit Days</label>
+            <input type="number" min="0" class="erp-input" name="editDefaultCreditDays"
+              [(ngModel)]="editPartyForm.defaultCreditDays" placeholder="e.g. 15" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Party Name <span class="req">*</span></label>
+            <input type="text" class="erp-input" name="editName" [(ngModel)]="editPartyForm.name"
+              placeholder="Party legal / trade name" />
+          </div>
+
+          <div class="field-group">
+            <label>Contact Phone</label>
+            <input type="text" maxlength="10" class="erp-input" name="editPhone" [(ngModel)]="editPartyForm.phone"
+              placeholder="10-digit mobile number" />
+          </div>
+
+          <div class="field-group">
+            <label>Email Address</label>
+            <input type="email" class="erp-input" name="editEmail" [(ngModel)]="editPartyForm.email"
+              placeholder="e.g. contact@party.com" />
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeEditPartyModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check"></i>
+            <span>Update Party</span>
           </button>
         </div>
       </form>

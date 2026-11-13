@@ -37,6 +37,9 @@ export interface PartyLedgerSummary {
   partyName: string;
   partyRole: 'Seller' | 'Buyer' | 'Both';
   phone: string;
+  email: string;
+  sellerId?: string;
+  buyerId?: string;
   defaultCreditDays: number | null;
   totalPayableInr: number;
   totalPaidInr: number;
@@ -159,11 +162,32 @@ export class PartyLedgerComponent implements OnInit {
     role: 'Seller' | 'Buyer';
     name: string;
     phone: string;
+    email: string;
     defaultCreditDays: number | null;
   } = {
     role: 'Seller',
     name: '',
     phone: '',
+    email: '',
+    defaultCreditDays: 15,
+  };
+
+  // Edit Party Modal
+  showEditPartyModal = false;
+  editPartyError = '';
+  editPartyForm: {
+    sellerId?: string;
+    buyerId?: string;
+    role: 'Seller' | 'Buyer' | 'Both';
+    name: string;
+    phone: string;
+    email: string;
+    defaultCreditDays: number | null;
+  } = {
+    role: 'Seller',
+    name: '',
+    phone: '',
+    email: '',
     defaultCreditDays: 15,
   };
 
@@ -283,9 +307,12 @@ export class PartyLedgerComponent implements OnInit {
     interface PartyAcc {
       partyKey: string;
       partyName: string;
+      sellerId?: string;
+      buyerId?: string;
       hasSeller: boolean;
       hasBuyer: boolean;
       phone: string;
+      email: string;
       defaultCreditDays: number | null;
       totalPayableInr: number;
       totalPaidInr: number;
@@ -317,6 +344,7 @@ export class PartyLedgerComponent implements OnInit {
       name: string,
       roleHint?: 'Seller' | 'Buyer',
       phone = '',
+      email = '',
       creditDays: number | null = null,
     ): PartyAcc => {
       const clean = name.trim();
@@ -329,6 +357,7 @@ export class PartyLedgerComponent implements OnInit {
           hasSeller: roleHint === 'Seller',
           hasBuyer: roleHint === 'Buyer',
           phone,
+          email,
           defaultCreditDays: creditDays,
           totalPayableInr: 0,
           totalPaidInr: 0,
@@ -343,6 +372,7 @@ export class PartyLedgerComponent implements OnInit {
         if (roleHint === 'Seller') acc.hasSeller = true;
         if (roleHint === 'Buyer') acc.hasBuyer = true;
         if (!acc.phone && phone) acc.phone = phone;
+        if (!acc.email && email) acc.email = email;
         if (acc.defaultCreditDays === null && creditDays !== null) {
           acc.defaultCreditDays = creditDays;
         }
@@ -351,10 +381,12 @@ export class PartyLedgerComponent implements OnInit {
     };
 
     for (const s of this.sellers) {
-      ensureAcc(s.name, 'Seller', s.phone, s.defaultCreditDays);
+      const acc = ensureAcc(s.name, 'Seller', s.phone, s.email, s.defaultCreditDays);
+      acc.sellerId = s.id;
     }
     for (const b of this.buyers) {
-      ensureAcc(b.name, 'Buyer', b.phone, b.defaultCreditDays);
+      const acc = ensureAcc(b.name, 'Buyer', b.phone, b.email, b.defaultCreditDays);
+      acc.buyerId = b.id;
     }
 
     const txnRows: AllTransactionRow[] = [];
@@ -587,8 +619,11 @@ export class PartyLedgerComponent implements OnInit {
         return {
           partyKey: acc.partyKey,
           partyName: acc.partyName,
+          sellerId: acc.sellerId,
+          buyerId: acc.buyerId,
           partyRole,
           phone: acc.phone,
+          email: acc.email,
           defaultCreditDays: acc.defaultCreditDays,
           totalPayableInr: acc.totalPayableInr,
           totalPaidInr: acc.totalPaidInr,
@@ -686,6 +721,7 @@ export class PartyLedgerComponent implements OnInit {
       return (
         p.partyName.toLowerCase().includes(q) ||
         p.phone.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
         p.statement.some((s) => s.referenceNo.toLowerCase().includes(q))
       );
     });
@@ -850,6 +886,7 @@ export class PartyLedgerComponent implements OnInit {
       role: 'Seller',
       name: '',
       phone: '',
+      email: '',
       defaultCreditDays: 15,
     };
     this.showAddPartyModal = true;
@@ -868,11 +905,12 @@ export class PartyLedgerComponent implements OnInit {
       return;
     }
     const phone = (this.newPartyForm.phone || '').trim();
+    const email = (this.newPartyForm.email || '').trim();
     const creditDays = this.newPartyForm.defaultCreditDays;
     const res =
       this.newPartyForm.role === 'Seller'
-        ? this.erp.createSeller(name, phone, creditDays)
-        : this.erp.createBuyer(name, phone, creditDays);
+        ? this.erp.createSeller(name, phone, email, creditDays)
+        : this.erp.createBuyer(name, phone, email, creditDays);
 
     if (!res.ok) {
       this.partyError = res.message;
@@ -881,6 +919,91 @@ export class PartyLedgerComponent implements OnInit {
 
     this.closeAddPartyModal();
     this.notify.show(res.message, 'success', 3000);
+  }
+
+  // ── Edit Party Modal ──
+
+  openEditPartyModal(party: PartyLedgerSummary): void {
+    this.editPartyError = '';
+    const sRec = this.sellers.find(
+      (s) => s.name.toLowerCase() === party.partyKey || s.id === party.sellerId,
+    );
+    const bRec = this.buyers.find(
+      (b) => b.name.toLowerCase() === party.partyKey || b.id === party.buyerId,
+    );
+
+    this.editPartyForm = {
+      sellerId: sRec?.id || party.sellerId,
+      buyerId: bRec?.id || party.buyerId,
+      role: party.partyRole,
+      name: party.partyName,
+      phone: party.phone || sRec?.phone || bRec?.phone || '',
+      email: party.email || sRec?.email || bRec?.email || '',
+      defaultCreditDays:
+        party.defaultCreditDays !== null
+          ? party.defaultCreditDays
+          : (sRec?.defaultCreditDays ?? bRec?.defaultCreditDays ?? null),
+    };
+    this.showEditPartyModal = true;
+  }
+
+  closeEditPartyModal(): void {
+    this.showEditPartyModal = false;
+    this.editPartyError = '';
+  }
+
+  submitEditParty(): void {
+    this.editPartyError = '';
+    const name = (this.editPartyForm.name || '').trim();
+    if (name.length < 2) {
+      this.editPartyError = 'Party name must be at least 2 characters.';
+      return;
+    }
+    const phone = (this.editPartyForm.phone || '').trim();
+    const email = (this.editPartyForm.email || '').trim();
+    const creditDays = this.editPartyForm.defaultCreditDays;
+
+    if (this.editPartyForm.sellerId) {
+      const res = this.erp.updateSeller(
+        this.editPartyForm.sellerId,
+        name,
+        phone,
+        email,
+        creditDays,
+      );
+      if (!res.ok) {
+        this.editPartyError = res.message;
+        return;
+      }
+    }
+
+    if (this.editPartyForm.buyerId) {
+      const res = this.erp.updateBuyer(
+        this.editPartyForm.buyerId,
+        name,
+        phone,
+        email,
+        creditDays,
+      );
+      if (!res.ok) {
+        this.editPartyError = res.message;
+        return;
+      }
+    }
+
+    if (!this.editPartyForm.sellerId && !this.editPartyForm.buyerId) {
+      const res =
+        this.editPartyForm.role === 'Buyer'
+          ? this.erp.createBuyer(name, phone, email, creditDays)
+          : this.erp.createSeller(name, phone, email, creditDays);
+      if (!res.ok) {
+        this.editPartyError = res.message;
+        return;
+      }
+    }
+
+    this.closeEditPartyModal();
+    this.notify.show(`Party "${name}" updated successfully.`, 'success', 3000);
   }
 
   abs(n: number): number {

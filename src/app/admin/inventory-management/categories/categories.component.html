@@ -13,34 +13,26 @@
 
     <div class="erp-actions">
       <div class="tab-pill-group">
-        <button
-          type="button"
-          class="tab-pill-btn"
-          [class.active]="activeTab === 'Categories'"
-          (click)="setActiveTab('Categories')"
-        >
+        <button type="button" class="tab-pill-btn" [class.active]="activeTab === 'Categories'"
+          (click)="setActiveTab('Categories')">
           Categories
         </button>
-        <button
-          type="button"
-          class="tab-pill-btn"
-          [class.active]="activeTab === 'Sub Categories'"
-          (click)="setActiveTab('Sub Categories')"
-        >
+        <button type="button" class="tab-pill-btn" [class.active]="activeTab === 'Sub Categories'"
+          (click)="setActiveTab('Sub Categories')">
           Sub Categories
         </button>
       </div>
 
       @if (activeTab === 'Categories') {
-        <button type="button" class="btn-erp-primary" (click)="openAddCategoryModal()">
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Category</span>
-        </button>
+      <button type="button" class="btn-erp-primary" (click)="openAddCategoryModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Category</span>
+      </button>
       } @else {
-        <button type="button" class="btn-erp-primary" (click)="openAddSubCategoryModal()">
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Sub Category</span>
-        </button>
+      <button type="button" class="btn-erp-primary" (click)="openAddSubCategoryModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Sub Category</span>
+      </button>
       }
     </div>
   </div>
@@ -50,13 +42,9 @@
     <div class="filter-toolbar">
       <div class="table-size-selector">
         <span>Show</span>
-        <select
-          class="limit-select"
-          [(ngModel)]="tableSize"
-          (ngModelChange)="onTableSizeChange()"
-        >
+        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
           @for (size of tableSizes; track size) {
-            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
           }
         </select>
         <span>entries</span>
@@ -65,12 +53,8 @@
       <form (ngSubmit)="onSearch()" class="filter-form-right">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="text"
-            name="searchTerm"
-            [(ngModel)]="searchTerm"
-            [placeholder]="activeTab === 'Categories' ? 'Search Category...' : 'Search Sub Category...'"
-          />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            [placeholder]="activeTab === 'Categories' ? 'Search Category...' : 'Search Sub Category...'" />
         </div>
 
         <button type="submit" class="btn-erp-primary">
@@ -79,9 +63,9 @@
         </button>
 
         @if (showReset) {
-          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
-            <i class="fa-solid fa-rotate-left me-1"></i> Reset
-          </button>
+        <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </button>
         }
       </form>
     </div>
@@ -90,270 +74,226 @@
   <!-- Table Card -->
   <div class="erp-card">
     @if (activeTab === 'Categories') {
-      <div class="table-responsive">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th style="width: 80px">S.No.</th>
-              <th>Category Name</th>
-              <th class="text-center" style="width: 140px">Status</th>
-              <th class="text-center" style="width: 150px">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (filteredCategories.length === 0) {
-              <tr>
-                <td colspan="4" class="empty-state">
-                  <i class="fa-solid fa-folder-open mb-2"></i>
-                  <div>No categories found.</div>
-                </td>
-              </tr>
-            } @else {
-              @for (
-                cat of filteredCategories
-                  | paginate
-                    : {
-                        id: 'invCatPagination',
-                        itemsPerPage: itemsPerPageCount,
-                        currentPage: page,
-                        totalItems: filteredCategories.length,
-                      };
-                track cat.id;
-                let i = $index
-              ) {
-                <tr [class.inactive-row]="!cat.isActive">
-                  <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
-                  <td class="fw-semibold text-dark">{{ cat.name }}</td>
-                  <td class="text-center">
-                    <button
-                      type="button"
-                      class="status-toggle-btn"
-                      [ngClass]="cat.isActive ? 'is-active' : 'is-inactive'"
-                      (click)="toggleCategoryStatus(cat)"
-                    >
-                      <span class="dot"></span>
-                      <span>{{ cat.isActive ? 'Active' : 'Inactive' }}</span>
-                    </button>
-                  </td>
-                  <td class="text-center">
-                    <div class="action-group">
-                      <button
-                        type="button"
-                        class="icon-btn btn-edit"
-                        (click)="openEditCategoryModal(cat)"
-                        title="Edit Category"
-                      >
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        [ngClass]="cat.isActive ? 'btn-void' : 'btn-activate'"
-                        (click)="toggleCategoryStatus(cat)"
-                        [title]="cat.isActive ? 'Deactivate' : 'Activate'"
-                      >
-                        <i
-                          class="fa-solid"
-                          [ngClass]="cat.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"
-                        ></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Category Name</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredCategories.length === 0) {
+          <tr>
+            <td colspan="4" class="empty-state">
+              <i class="fa-solid fa-folder-open mb-2"></i>
+              <div>No categories found.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          cat of filteredCategories
+          | paginate
+          : {
+          id: 'invCatPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredCategories.length,
+          };
+          track cat.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="!cat.isActive">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td class="fw-semibold text-dark">{{ cat.name }}</td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [ngClass]="cat.isActive ? 'is-active' : 'is-inactive'"
+                (click)="toggleCategoryStatus(cat)">
+                <span class="dot"></span>
+                <span>{{ cat.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button" class="icon-btn btn-edit" (click)="openEditCategoryModal(cat)"
+                  title="Edit Category">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="icon-btn" [ngClass]="cat.isActive ? 'btn-void' : 'btn-activate'"
+                  (click)="toggleCategoryStatus(cat)" [title]="cat.isActive ? 'Deactivate' : 'Activate'">
+                  <i class="fa-solid" [ngClass]="cat.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
     } @else {
-      <div class="table-responsive">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th style="width: 80px">S.No.</th>
-              <th>Sub Category Name</th>
-              <th>Parent Category</th>
-              <th class="text-center" style="width: 140px">Status</th>
-              <th class="text-center" style="width: 150px">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (filteredSubCategories.length === 0) {
-              <tr>
-                <td colspan="5" class="empty-state">
-                  <i class="fa-solid fa-folder-open mb-2"></i>
-                  <div>No sub categories found.</div>
-                </td>
-              </tr>
-            } @else {
-              @for (
-                sub of filteredSubCategories
-                  | paginate
-                    : {
-                        id: 'invCatPagination',
-                        itemsPerPage: itemsPerPageCount,
-                        currentPage: page,
-                        totalItems: filteredSubCategories.length,
-                      };
-                track sub.id;
-                let i = $index
-              ) {
-                <tr [class.inactive-row]="!sub.isActive">
-                  <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
-                  <td class="fw-semibold text-dark">{{ sub.name }}</td>
-                  <td>{{ getCategoryName(sub.categoryId) }}</td>
-                  <td class="text-center">
-                    <button
-                      type="button"
-                      class="status-toggle-btn"
-                      [ngClass]="sub.isActive ? 'is-active' : 'is-inactive'"
-                      (click)="toggleSubCategoryStatus(sub)"
-                    >
-                      <span class="dot"></span>
-                      <span>{{ sub.isActive ? 'Active' : 'Inactive' }}</span>
-                    </button>
-                  </td>
-                  <td class="text-center">
-                    <div class="action-group">
-                      <button
-                        type="button"
-                        class="icon-btn btn-edit"
-                        (click)="openEditSubCategoryModal(sub)"
-                        title="Edit Sub Category"
-                      >
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        [ngClass]="sub.isActive ? 'btn-void' : 'btn-activate'"
-                        (click)="toggleSubCategoryStatus(sub)"
-                        [title]="sub.isActive ? 'Deactivate' : 'Activate'"
-                      >
-                        <i
-                          class="fa-solid"
-                          [ngClass]="sub.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"
-                        ></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Sub Category Name</th>
+            <th>Parent Category</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredSubCategories.length === 0) {
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-folder-open mb-2"></i>
+              <div>No sub categories found.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          sub of filteredSubCategories
+          | paginate
+          : {
+          id: 'invCatPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredSubCategories.length,
+          };
+          track sub.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="!sub.isActive">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td class="fw-semibold text-dark">{{ sub.name }}</td>
+            <td>{{ getCategoryName(sub.categoryId) }}</td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [ngClass]="sub.isActive ? 'is-active' : 'is-inactive'"
+                (click)="toggleSubCategoryStatus(sub)">
+                <span class="dot"></span>
+                <span>{{ sub.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button" class="icon-btn btn-edit" (click)="openEditSubCategoryModal(sub)"
+                  title="Edit Sub Category">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="icon-btn" [ngClass]="sub.isActive ? 'btn-void' : 'btn-activate'"
+                  (click)="toggleSubCategoryStatus(sub)" [title]="sub.isActive ? 'Deactivate' : 'Activate'">
+                  <i class="fa-solid" [ngClass]="sub.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
     }
 
     <div class="table-footer">
       <div class="pagination-info">
         Showing {{ showingStart }} to {{ showingEnd }} of {{ activeListLength }} entries
       </div>
-      <pagination-controls
-        id="invCatPagination"
-        (pageChange)="onTableDataChange($event)"
-        class="my-pagination"
-      ></pagination-controls>
+      <pagination-controls id="invCatPagination" (pageChange)="onTableDataChange($event)"
+        class="my-pagination"></pagination-controls>
     </div>
   </div>
 </div>
 
 <!-- Add / Edit Category Modal -->
 @if (isCatModalOpen) {
-  <div class="modal-backdrop-erp" (click)="closeModals()">
-    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
-      <div class="modal-header-erp">
-        <div>
-          <h3 class="modal-title-erp">
-            {{ isCatEdit ? 'Edit Category' : 'Add Category' }}
-          </h3>
-          <p class="modal-sub-erp">Commodity &amp; packaging group</p>
-        </div>
-        <button type="button" class="close-btn" (click)="closeModals()">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+<div class="modal-backdrop-erp" (click)="closeModals()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isCatEdit ? 'Edit Category' : 'Add Category' }}
+        </h3>
+        <p class="modal-sub-erp">Commodity &amp; packaging group</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeModals()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="categoryForm" (ngSubmit)="submitCategory()" class="modal-body-erp">
+      @if (formError) {
+      <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+      }
+
+      <div class="field-group">
+        <label>Category Name <span class="req">*</span></label>
+        <input type="text" formControlName="name" class="erp-input"
+          placeholder="e.g. Millets (Shree Anna), Food Grains" />
       </div>
 
-      <form [formGroup]="categoryForm" (ngSubmit)="submitCategory()" class="modal-body-erp">
-        @if (formError) {
-          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
-        }
-
-        <div class="field-group">
-          <label>Category Name <span class="req">*</span></label>
-          <input
-            type="text"
-            formControlName="name"
-            class="erp-input"
-            placeholder="e.g. Fresh Fruits"
-          />
-        </div>
-
-        <div class="modal-footer-erp">
-          <button type="button" class="btn-erp-ghost" (click)="closeModals()">
-            Cancel
-          </button>
-          <button type="submit" class="btn-erp-primary">
-            <i class="fa-solid fa-check me-1"></i>
-            {{ isCatEdit ? 'Update Category' : 'Add Category' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeModals()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check me-1"></i>
+          {{ isCatEdit ? 'Update Category' : 'Add Category' }}
+        </button>
+      </div>
+    </form>
   </div>
+</div>
 }
 
 <!-- Add / Edit Sub Category Modal -->
 @if (isSubModalOpen) {
-  <div class="modal-backdrop-erp" (click)="closeModals()">
-    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
-      <div class="modal-header-erp">
-        <div>
-          <h3 class="modal-title-erp">
-            {{ isSubEdit ? 'Edit Sub Category' : 'Add Sub Category' }}
-          </h3>
-          <p class="modal-sub-erp">Link sub-category to a parent Category</p>
-        </div>
-        <button type="button" class="close-btn" (click)="closeModals()">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+<div class="modal-backdrop-erp" (click)="closeModals()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isSubEdit ? 'Edit Sub Category' : 'Add Sub Category' }}
+        </h3>
+        <p class="modal-sub-erp">Link sub-category to a parent Category</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeModals()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="subCategoryForm" (ngSubmit)="submitSubCategory()" class="modal-body-erp">
+      @if (formError) {
+      <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+      }
+
+      <div class="field-group">
+        <label>Parent Category <span class="req">*</span></label>
+        <select formControlName="categoryId" class="erp-input">
+          <option value="">Select Category</option>
+          @for (cat of activeCategories; track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
       </div>
 
-      <form [formGroup]="subCategoryForm" (ngSubmit)="submitSubCategory()" class="modal-body-erp">
-        @if (formError) {
-          <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
-        }
+      <div class="field-group mt-3">
+        <label>Sub Category Name <span class="req">*</span></label>
+        <input type="text" formControlName="name" class="erp-input" placeholder="e.g. Major Millets (Bajra, Jowar)" />
+      </div>
 
-        <div class="field-group">
-          <label>Parent Category <span class="req">*</span></label>
-          <select formControlName="categoryId" class="erp-input">
-            <option value="">Select Category</option>
-            @for (cat of activeCategories; track cat.id) {
-              <option [value]="cat.id">{{ cat.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="field-group mt-3">
-          <label>Sub Category Name <span class="req">*</span></label>
-          <input
-            type="text"
-            formControlName="name"
-            class="erp-input"
-            placeholder="e.g. Apple Varieties"
-          />
-        </div>
-
-        <div class="modal-footer-erp">
-          <button type="button" class="btn-erp-ghost" (click)="closeModals()">
-            Cancel
-          </button>
-          <button type="submit" class="btn-erp-primary">
-            <i class="fa-solid fa-check me-1"></i>
-            {{ isSubEdit ? 'Update Sub Category' : 'Add Sub Category' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeModals()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check me-1"></i>
+          {{ isSubEdit ? 'Update Sub Category' : 'Add Sub Category' }}
+        </button>
+      </div>
+    </form>
   </div>
+</div>
 }
