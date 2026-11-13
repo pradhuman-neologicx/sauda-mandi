@@ -1,12 +1,26 @@
 
-import { Component, HostListener, Inject, Renderer2, DOCUMENT, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Inject,
+  Renderer2,
+  DOCUMENT,
+  ChangeDetectionStrategy,
+  ViewChild,
+  ElementRef,
+  DestroyRef,
+  inject,
+  OnInit,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ThemePalette } from '@angular/material/core';
 import { MatDrawerMode, MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { SidenavHeaderComponent } from './sidenav-header/sidenav-header.component';
 import { SidenavComponent } from './sidenav/sidenav.component';
 import { SpinnerComponent } from '../spinner/spinner.component';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 @Component({
     selector: 'app-admin',
     standalone: true,
@@ -15,11 +29,18 @@ import { RouterOutlet } from '@angular/router';
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [SidenavHeaderComponent, MatSidenavContainer, MatSidenav, SidenavComponent, MatSidenavContent, SpinnerComponent, RouterOutlet]
 })
-export class AdminComponent {
+export class AdminComponent implements OnInit {
   title = 'mat_admin';
   themeSectionOpen: boolean = false;
   isMobile: boolean = false;
   sidenavOpened: boolean = false;
+
+  @ViewChild(MatSidenavContent) sidenavContent?: MatSidenavContent;
+  @ViewChild('adminScrollContent', { read: ElementRef })
+  adminScrollContent?: ElementRef<HTMLElement>;
+
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -40,6 +61,50 @@ export class AdminComponent {
     localStorage.setItem('theme', 'light');
     this.applyTheme('light');
     this.checkScreenSize();
+
+    // Scroll to top automatically whenever router navigation ends
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.scrollToTop();
+        setTimeout(() => this.scrollToTop(), 0);
+      });
+  }
+
+  scrollToTop(): void {
+    // 1. Sidenav content via ViewChild
+    if (this.sidenavContent) {
+      const el = this.sidenavContent.getElementRef()?.nativeElement;
+      if (el) {
+        el.scrollTop = 0;
+        if (typeof el.scrollTo === 'function') {
+          el.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }
+      }
+    }
+    // 2. Sidenav content via template ref
+    if (this.adminScrollContent?.nativeElement) {
+      const el = this.adminScrollContent.nativeElement;
+      el.scrollTop = 0;
+      if (typeof el.scrollTo === 'function') {
+        el.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    }
+    // 3. Fallback querySelector in case ViewChild hasn't bound yet
+    const contentEl = this.document.querySelector('mat-sidenav-content');
+    if (contentEl) {
+      contentEl.scrollTop = 0;
+      if (typeof contentEl.scrollTo === 'function') {
+        contentEl.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    }
+    // 4. Window and document root scroll
+    window.scrollTo({ top: 0, left: 0 });
+    this.document.documentElement.scrollTop = 0;
+    this.document.body.scrollTop = 0;
   }
 
   // sidenav properties

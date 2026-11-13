@@ -9,10 +9,10 @@
       class="responsive-sidenav">
       <app-sidenav [collapsed]="collapsed" (closeSidenav)="sidenavOpened = false" [isMobile]="isMobile"></app-sidenav>
     </mat-sidenav>
-    <mat-sidenav-content [style.margin-left]="isMobile ? '0' : contentMargin"
+    <mat-sidenav-content #adminScrollContent [style.margin-left]="isMobile ? '0' : contentMargin"
       [style.transition]="'margin-left 0.3s ease-in-out'">
       <app-spinner></app-spinner>
-      <router-outlet></router-outlet>
+      <router-outlet (activate)="scrollToTop()"></router-outlet>
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>
