@@ -197,6 +197,31 @@ export interface InvProductRecord {
   updatedAt: string;
 }
 
+export interface PackagingUomRecord {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WeightUomRecord {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WarehouseRecord {
+  id: string;
+  name: string;
+  city: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type PaymentMode = 'RTGS / NEFT' | 'Cheque' | 'UPI' | 'Cash' | 'Adjustment';
 
 export interface LedgerSettlementRecord {
@@ -1287,6 +1312,28 @@ export class SaudaErpMockService {
     },
   ];
 
+  private readonly initialPackagingUoms: PackagingUomRecord[] = [
+    { id: 'PUOM-001', name: 'Bag', isActive: true, createdAt: '2026-11-01 09:00', updatedAt: '2026-11-01 09:00' },
+    { id: 'PUOM-002', name: 'Crate', isActive: true, createdAt: '2026-11-01 09:05', updatedAt: '2026-11-01 09:05' },
+    { id: 'PUOM-003', name: 'Box', isActive: true, createdAt: '2026-11-01 09:10', updatedAt: '2026-11-01 09:10' },
+    { id: 'PUOM-004', name: 'Carton', isActive: true, createdAt: '2026-11-01 09:15', updatedAt: '2026-11-01 09:15' },
+    { id: 'PUOM-005', name: 'Sack', isActive: true, createdAt: '2026-11-01 09:20', updatedAt: '2026-11-01 09:20' },
+    { id: 'PUOM-006', name: 'Loose', isActive: true, createdAt: '2026-11-01 09:25', updatedAt: '2026-11-01 09:25' },
+  ];
+
+  private readonly initialWeightUoms: WeightUomRecord[] = [
+    { id: 'WUOM-001', name: 'KG', isActive: true, createdAt: '2026-11-01 09:00', updatedAt: '2026-11-01 09:00' },
+    { id: 'WUOM-002', name: 'Quintal', isActive: true, createdAt: '2026-11-01 09:05', updatedAt: '2026-11-01 09:05' },
+    { id: 'WUOM-003', name: 'MT', isActive: true, createdAt: '2026-11-01 09:10', updatedAt: '2026-11-01 09:10' },
+  ];
+
+  private readonly initialWarehouses: WarehouseRecord[] = [
+    { id: 'WH-001', name: 'Desert Mandi Yard A', city: 'Jodhpur', isActive: true, createdAt: '2026-11-01 10:00', updatedAt: '2026-11-01 10:00' },
+    { id: 'WH-002', name: 'Fresh Terminal Cold Hub', city: 'Jaipur', isActive: true, createdAt: '2026-11-01 10:15', updatedAt: '2026-11-01 10:15' },
+    { id: 'WH-003', name: 'Rajasthan Agro Godown 4', city: 'Bikaner', isActive: true, createdAt: '2026-11-01 10:30', updatedAt: '2026-11-01 10:30' },
+    { id: 'WH-004', name: 'Kota Grain Silo', city: 'Kota', isActive: true, createdAt: '2026-11-01 10:45', updatedAt: '2026-11-01 10:45' },
+  ];
+
   private saudasSubject = new BehaviorSubject<SaudaRecord[]>(this.initialSaudas);
   private trucksSubject = new BehaviorSubject<TruckEntryRecord[]>(
     this.initialTrucks,
@@ -1316,6 +1363,15 @@ export class SaudaErpMockService {
   private ledgerSettlementsSubject = new BehaviorSubject<LedgerSettlementRecord[]>(
     this.initialLedgerSettlements,
   );
+  private packagingUomsSubject = new BehaviorSubject<PackagingUomRecord[]>(
+    this.initialPackagingUoms,
+  );
+  private weightUomsSubject = new BehaviorSubject<WeightUomRecord[]>(
+    this.initialWeightUoms,
+  );
+  private warehousesSubject = new BehaviorSubject<WarehouseRecord[]>(
+    this.initialWarehouses,
+  );
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -1328,6 +1384,9 @@ export class SaudaErpMockService {
   readonly invSubCategories$ = this.invSubCategoriesSubject.asObservable();
   readonly invProducts$ = this.invProductsSubject.asObservable();
   readonly ledgerSettlements$ = this.ledgerSettlementsSubject.asObservable();
+  readonly packagingUoms$ = this.packagingUomsSubject.asObservable();
+  readonly weightUoms$ = this.weightUomsSubject.asObservable();
+  readonly warehouses$ = this.warehousesSubject.asObservable();
 
   constructor() {
     this.recomputeAllSaudaStatuses();
@@ -3037,6 +3096,226 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `${payload.entryKind} of ₹${Number(payload.amountInr).toLocaleString('en-IN')} recorded for ${payload.partyName}.`,
+    };
+  }
+
+  // ── Packaging UOM Operations ──
+
+  createPackagingUom(name: string): ActionResult {
+    const trimmed = (name || '').trim();
+    if (trimmed.length < 2) {
+      return { ok: false, message: 'Packaging UOM name must be at least 2 characters.' };
+    }
+    if (
+      this.packagingUomsSubject.value.some(
+        (u) => u.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      return { ok: false, message: `Packaging UOM "${trimmed}" already exists.` };
+    }
+    const nextNum = this.packagingUomsSubject.value.length + 1;
+    const now = this.formatTimestamp();
+    const record: PackagingUomRecord = {
+      id: `PUOM-${String(nextNum).padStart(3, '0')}`,
+      name: trimmed,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.packagingUomsSubject.next([record, ...this.packagingUomsSubject.value]);
+    return { ok: true, message: `Packaging UOM "${trimmed}" created successfully.` };
+  }
+
+  updatePackagingUom(id: string, name: string): ActionResult {
+    const existing = this.packagingUomsSubject.value.find((u) => u.id === id);
+    if (!existing) return { ok: false, message: 'Packaging UOM not found.' };
+    const trimmed = (name || '').trim();
+    if (trimmed.length < 2) {
+      return { ok: false, message: 'Packaging UOM name must be at least 2 characters.' };
+    }
+    if (
+      this.packagingUomsSubject.value.some(
+        (u) => u.id !== id && u.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      return { ok: false, message: `Packaging UOM "${trimmed}" already exists.` };
+    }
+    const now = this.formatTimestamp();
+    this.packagingUomsSubject.next(
+      this.packagingUomsSubject.value.map((u) =>
+        u.id === id ? { ...u, name: trimmed, updatedAt: now } : u,
+      ),
+    );
+    return { ok: true, message: `Packaging UOM "${trimmed}" updated successfully.` };
+  }
+
+  togglePackagingUomStatus(id: string): ActionResult {
+    const existing = this.packagingUomsSubject.value.find((u) => u.id === id);
+    if (!existing) return { ok: false, message: 'Packaging UOM not found.' };
+    const nextActive = !existing.isActive;
+    const now = this.formatTimestamp();
+    this.packagingUomsSubject.next(
+      this.packagingUomsSubject.value.map((u) =>
+        u.id === id ? { ...u, isActive: nextActive, updatedAt: now } : u,
+      ),
+    );
+    return {
+      ok: true,
+      message: `${existing.name} marked as ${nextActive ? 'Active' : 'Inactive'}.`,
+    };
+  }
+
+  // ── Weight UOM Operations ──
+
+  createWeightUom(name: string): ActionResult {
+    const trimmed = (name || '').trim();
+    if (trimmed.length < 1) {
+      return { ok: false, message: 'Weight UOM name is required.' };
+    }
+    if (
+      this.weightUomsSubject.value.some(
+        (u) => u.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      return { ok: false, message: `Weight UOM "${trimmed}" already exists.` };
+    }
+    const nextNum = this.weightUomsSubject.value.length + 1;
+    const now = this.formatTimestamp();
+    const record: WeightUomRecord = {
+      id: `WUOM-${String(nextNum).padStart(3, '0')}`,
+      name: trimmed,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.weightUomsSubject.next([record, ...this.weightUomsSubject.value]);
+    return { ok: true, message: `Weight UOM "${trimmed}" created successfully.` };
+  }
+
+  updateWeightUom(id: string, name: string): ActionResult {
+    const existing = this.weightUomsSubject.value.find((u) => u.id === id);
+    if (!existing) return { ok: false, message: 'Weight UOM not found.' };
+    const trimmed = (name || '').trim();
+    if (trimmed.length < 1) {
+      return { ok: false, message: 'Weight UOM name is required.' };
+    }
+    if (
+      this.weightUomsSubject.value.some(
+        (u) => u.id !== id && u.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      return { ok: false, message: `Weight UOM "${trimmed}" already exists.` };
+    }
+    const now = this.formatTimestamp();
+    this.weightUomsSubject.next(
+      this.weightUomsSubject.value.map((u) =>
+        u.id === id ? { ...u, name: trimmed, updatedAt: now } : u,
+      ),
+    );
+    return { ok: true, message: `Weight UOM "${trimmed}" updated successfully.` };
+  }
+
+  toggleWeightUomStatus(id: string): ActionResult {
+    const existing = this.weightUomsSubject.value.find((u) => u.id === id);
+    if (!existing) return { ok: false, message: 'Weight UOM not found.' };
+    const nextActive = !existing.isActive;
+    const now = this.formatTimestamp();
+    this.weightUomsSubject.next(
+      this.weightUomsSubject.value.map((u) =>
+        u.id === id ? { ...u, isActive: nextActive, updatedAt: now } : u,
+      ),
+    );
+    return {
+      ok: true,
+      message: `${existing.name} marked as ${nextActive ? 'Active' : 'Inactive'}.`,
+    };
+  }
+
+  // ── Warehouse Operations ──
+
+  createWarehouse(name: string, city: string): ActionResult {
+    const trimmedName = (name || '').trim();
+    const trimmedCity = (city || '').trim();
+    if (trimmedName.length < 2) {
+      return { ok: false, message: 'Warehouse name must be at least 2 characters.' };
+    }
+    if (trimmedCity.length < 2) {
+      return { ok: false, message: 'City must be at least 2 characters.' };
+    }
+    if (
+      this.warehousesSubject.value.some(
+        (w) =>
+          w.name.toLowerCase() === trimmedName.toLowerCase() &&
+          w.city.toLowerCase() === trimmedCity.toLowerCase(),
+      )
+    ) {
+      return {
+        ok: false,
+        message: `Warehouse "${trimmedName}" in city "${trimmedCity}" already exists.`,
+      };
+    }
+    const nextNum = this.warehousesSubject.value.length + 1;
+    const now = this.formatTimestamp();
+    const record: WarehouseRecord = {
+      id: `WH-${String(nextNum).padStart(3, '0')}`,
+      name: trimmedName,
+      city: trimmedCity,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.warehousesSubject.next([record, ...this.warehousesSubject.value]);
+    return { ok: true, message: `Warehouse "${trimmedName}" created successfully.` };
+  }
+
+  updateWarehouse(id: string, name: string, city: string): ActionResult {
+    const existing = this.warehousesSubject.value.find((w) => w.id === id);
+    if (!existing) return { ok: false, message: 'Warehouse not found.' };
+    const trimmedName = (name || '').trim();
+    const trimmedCity = (city || '').trim();
+    if (trimmedName.length < 2) {
+      return { ok: false, message: 'Warehouse name must be at least 2 characters.' };
+    }
+    if (trimmedCity.length < 2) {
+      return { ok: false, message: 'City must be at least 2 characters.' };
+    }
+    if (
+      this.warehousesSubject.value.some(
+        (w) =>
+          w.id !== id &&
+          w.name.toLowerCase() === trimmedName.toLowerCase() &&
+          w.city.toLowerCase() === trimmedCity.toLowerCase(),
+      )
+    ) {
+      return {
+        ok: false,
+        message: `Warehouse "${trimmedName}" in city "${trimmedCity}" already exists.`,
+      };
+    }
+    const now = this.formatTimestamp();
+    this.warehousesSubject.next(
+      this.warehousesSubject.value.map((w) =>
+        w.id === id
+          ? { ...w, name: trimmedName, city: trimmedCity, updatedAt: now }
+          : w,
+      ),
+    );
+    return { ok: true, message: `Warehouse "${trimmedName}" updated successfully.` };
+  }
+
+  toggleWarehouseStatus(id: string): ActionResult {
+    const existing = this.warehousesSubject.value.find((w) => w.id === id);
+    if (!existing) return { ok: false, message: 'Warehouse not found.' };
+    const nextActive = !existing.isActive;
+    const now = this.formatTimestamp();
+    this.warehousesSubject.next(
+      this.warehousesSubject.value.map((w) =>
+        w.id === id ? { ...w, isActive: nextActive, updatedAt: now } : w,
+      ),
+    );
+    return {
+      ok: true,
+      message: `${existing.name} marked as ${nextActive ? 'Active' : 'Inactive'}.`,
     };
   }
 

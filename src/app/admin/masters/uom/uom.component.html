@@ -1,0 +1,305 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">Sauda Mandi ERP &bull; Masters</div>
+      <h1 class="erp-title">
+        {{ activeTab === 'Packaging UOM' ? 'Packaging UOM Master' : 'Weight UOM Master' }}
+      </h1>
+      <p class="erp-subtitle">
+        Manage Units of Measurement (UOM) used in Sauda, Truck &amp; Inventory Management
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <div class="tab-pill-group">
+        <button type="button" class="tab-pill-btn" [class.active]="activeTab === 'Packaging UOM'"
+          (click)="setActiveTab('Packaging UOM')">
+          Packaging UOM
+        </button>
+        <button type="button" class="tab-pill-btn" [class.active]="activeTab === 'Weight UOM'"
+          (click)="setActiveTab('Weight UOM')">
+          Weight UOM
+        </button>
+      </div>
+
+      @if (activeTab === 'Packaging UOM') {
+      <button type="button" class="btn-erp-primary" (click)="openAddPackagingModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Packaging UOM</span>
+      </button>
+      } @else {
+      <button type="button" class="btn-erp-primary" (click)="openAddWeightModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Weight UOM</span>
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Limit & Compact Right-Aligned Search -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+          @for (size of tableSizes; track size) {
+          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            [placeholder]="activeTab === 'Packaging UOM' ? 'Search Packaging UOM...' : 'Search Weight UOM...'" />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+        <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="erp-card">
+    @if (activeTab === 'Packaging UOM') {
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Packaging UOM Name</th>
+            <th>Created Date</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredPackagingUoms.length === 0) {
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-box-open mb-2"></i>
+              <div>No Packaging UOM records found.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          uom of filteredPackagingUoms
+          | paginate
+          : {
+          id: 'pkgPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredPackagingUoms.length,
+          };
+          track uom.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="!uom.isActive">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td class="fw-semibold text-dark">{{ uom.name }}</td>
+            <td class="num">{{ uom.createdAt }}</td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [ngClass]="uom.isActive ? 'is-active' : 'is-inactive'"
+                (click)="togglePkgStatus(uom)">
+                <span class="dot"></span>
+                <span>{{ uom.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button" class="icon-btn btn-edit" (click)="openEditPackagingModal(uom)"
+                  title="Edit Packaging UOM">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="icon-btn" [ngClass]="uom.isActive ? 'btn-void' : 'btn-activate'"
+                  (click)="togglePkgStatus(uom)" [title]="uom.isActive ? 'Deactivate' : 'Activate'">
+                  <i class="fa-solid" [ngClass]="uom.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of
+        {{ filteredPackagingUoms.length }} entries
+      </div>
+      <pagination-controls id="pkgPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+        class="my-pagination"></pagination-controls>
+    </div>
+    } @else {
+    <!-- Weight UOM Table -->
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 80px">S.No.</th>
+            <th>Weight UOM Name</th>
+            <th>Created Date</th>
+            <th class="text-center" style="width: 140px">Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredWeightUoms.length === 0) {
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-weight-scale mb-2"></i>
+              <div>No Weight UOM records found.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          uom of filteredWeightUoms
+          | paginate
+          : {
+          id: 'wtPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredWeightUoms.length,
+          };
+          track uom.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="!uom.isActive">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td class="fw-semibold text-dark">{{ uom.name }}</td>
+            <td class="num">{{ uom.createdAt }}</td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [ngClass]="uom.isActive ? 'is-active' : 'is-inactive'"
+                (click)="toggleWtStatus(uom)">
+                <span class="dot"></span>
+                <span>{{ uom.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button" class="icon-btn btn-edit" (click)="openEditWeightModal(uom)"
+                  title="Edit Weight UOM">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="icon-btn" [ngClass]="uom.isActive ? 'btn-void' : 'btn-activate'"
+                  (click)="toggleWtStatus(uom)" [title]="uom.isActive ? 'Deactivate' : 'Activate'">
+                  <i class="fa-solid" [ngClass]="uom.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of
+        {{ filteredWeightUoms.length }} entries
+      </div>
+      <pagination-controls id="wtPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+        class="my-pagination"></pagination-controls>
+    </div>
+    }
+  </div>
+</div>
+
+<!-- Packaging UOM Modal -->
+@if (isPkgModalOpen) {
+<div class="modal-backdrop-erp" (click)="closePkgModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isPkgEdit ? 'Edit Packaging UOM' : 'Add Packaging UOM' }}
+        </h3>
+        <p class="modal-sub-erp">Packaging unit of measurement (e.g. Bag, Crate, Box)</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closePkgModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="pkgForm" (ngSubmit)="submitPackagingUom()">
+      <div class="modal-body-erp">
+        @if (formError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Packaging UOM Name <span class="req">*</span></label>
+          <input type="text" formControlName="name" class="erp-input" placeholder="e.g. Bag, Crate, Box, Sack" />
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closePkgModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>{{ isPkgEdit ? 'Update UOM' : 'Save UOM' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<!-- Weight UOM Modal -->
+@if (isWtModalOpen) {
+<div class="modal-backdrop-erp" (click)="closeWtModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isWtEdit ? 'Edit Weight UOM' : 'Add Weight UOM' }}
+        </h3>
+        <p class="modal-sub-erp">Weight unit of measurement (e.g. KG, Quintal, MT)</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeWtModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="wtForm" (ngSubmit)="submitWeightUom()">
+      <div class="modal-body-erp">
+        @if (formError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        }
+
+        <div class="field-group">
+          <label>Weight UOM Name <span class="req">*</span></label>
+          <input type="text" formControlName="name" class="erp-input" placeholder="e.g. KG, Quintal, MT" />
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeWtModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>{{ isWtEdit ? 'Update UOM' : 'Save UOM' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

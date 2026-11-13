@@ -854,3 +854,13 @@ input[type="file"] {
 .ngx-pagination .current {
   background: $primary-color !important;
 }
+
+.modal-footer-erp {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  padding: 16px 24px 22px 24px !important;
+  border-top: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+}

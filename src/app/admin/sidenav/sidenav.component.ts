@@ -54,52 +54,73 @@ export class SidenavComponent implements OnInit {
       },
       {
         index: 3,
+        icon: 'tune',
+        label: 'Masters',
+        route: '/admin/masters',
+        subItems: [
+          {
+            index: 31,
+            icon: 'straighten',
+            label: 'UOM Master',
+            route: '/admin/masters/uom',
+          },
+          {
+            index: 32,
+            icon: 'warehouse',
+            label: 'Warehouse Master',
+            route: '/admin/masters/warehouse',
+          },
+        ],
+      },
+      {
+        index: 4,
         icon: 'inventory_2',
         label: 'Inventory Management',
         route: '/admin/inventory-management',
         subItems: [
           {
-            index: 61,
+            index: 41,
             icon: 'category',
             label: 'Categories',
             route: '/admin/inventory-management/categories',
           },
           {
-            index: 62,
+            index: 42,
             icon: 'inventory',
             label: 'Product Master',
             route: '/admin/inventory-management/product-master',
           },
           {
-            index: 63,
+            index: 43,
             icon: 'warehouse',
             label: 'Inventory Stock',
             route: '/admin/inventory-management/inventory',
           },
         ],
       },
-     
       {
-        index: 4,
+        index: 5,
         icon: 'receipt_long',
         label: 'Sauda Management',
         route: '/admin/sauda-management',
       },
       {
-        index: 5,
+        index: 6,
         icon: 'local_shipping',
         label: 'Truck Management',
         route: '/admin/truck-management',
       },
-       {
-        index: 6,
+      {
+        index: 7,
         icon: 'account_balance_wallet',
         label: 'Party Ledger',
         route: '/admin/party-ledger',
       },
     ];
 
-    if (this.router.url.startsWith('/admin/inventory-management')) {
+    if (this.router.url.startsWith('/admin/masters')) {
+      this.expandedSubmenu = '/admin/masters';
+    } else if (this.router.url.startsWith('/admin/inventory-management')) {
       this.expandedSubmenu = '/admin/inventory-management';
     }
   }

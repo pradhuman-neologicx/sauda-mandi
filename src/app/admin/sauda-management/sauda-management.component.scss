@@ -1,7 +1,7 @@
 .erp-page {
-  padding: 20px 24px 36px;
+  padding: 20px 24px 64px;
   max-width: 1480px;
-  margin: 0 auto;
+  margin: 0 auto 40px;
 }
 
 .erp-header {
@@ -454,17 +454,22 @@
 }
 
 .modal-body-erp {
-  padding: 20px 22px;
+  padding: 22px 24px;
   overflow-y: auto;
+
+  .modal-footer-erp {
+    margin: 20px -24px -22px -24px;
+  }
 }
 
 .modal-footer-erp {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
+  gap: 12px;
+  padding: 16px 24px 22px 24px;
   border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .form-grid-2 {

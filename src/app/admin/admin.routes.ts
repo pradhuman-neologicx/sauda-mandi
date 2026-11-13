@@ -26,6 +26,25 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
+        path: 'masters',
+        canActivate: [AuthGuard],
+        children: [
+          { path: '', redirectTo: 'uom', pathMatch: 'full' },
+          {
+            path: 'uom',
+            loadComponent: () =>
+              import('./masters/uom/uom.component').then((c) => c.UomComponent),
+          },
+          {
+            path: 'warehouse',
+            loadComponent: () =>
+              import('./masters/warehouse/warehouse.component').then(
+                (c) => c.WarehouseComponent,
+              ),
+          },
+        ],
+      },
+      {
         path: 'party-ledger',
         canActivate: [AuthGuard],
         loadComponent: () =>
