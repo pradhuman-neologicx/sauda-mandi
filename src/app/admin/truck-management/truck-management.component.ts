@@ -20,6 +20,7 @@ import {
   SaudaType,
   TruckEntryRecord,
   TruckStatus,
+  WarehouseRecord,
   WeightUom,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
@@ -46,16 +47,19 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   allTrucks: TruckEntryRecord[] = [];
   filteredTrucks: TruckEntryRecord[] = [];
   allSaudas: SaudaRecord[] = [];
+  allWarehouses: WarehouseRecord[] = [];
 
   // Listing Filters (applied on Search click)
   searchTerm = '';
   linkedSaudaFilter = 'All';
   saudaTypeFilter: 'All' | SaudaType = 'All';
+  warehouseFilter = 'All';
   entryDateFilter = '';
 
   appliedSearchTerm = '';
   appliedLinkedSaudaFilter = 'All';
   appliedSaudaTypeFilter: 'All' | SaudaType = 'All';
+  appliedWarehouseFilter = 'All';
   appliedEntryDateFilter = '';
   showReset = false;
 
@@ -100,11 +104,16 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForms();
 
-    combineLatest([this.erpService.trucks$, this.erpService.saudas$])
+    combineLatest([
+      this.erpService.trucks$,
+      this.erpService.saudas$,
+      this.erpService.warehouses$,
+    ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([trucks, saudas]) => {
+      .subscribe(([trucks, saudas, warehouses]) => {
         this.allTrucks = trucks;
         this.allSaudas = saudas;
+        this.allWarehouses = warehouses.filter((w) => w.isActive);
         this.applyFilters();
         if (this.selectedTruck) {
           this.selectedTruck =
@@ -130,6 +139,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     const today = new Date().toISOString().slice(0, 10);
     this.truckForm = this.fb.group({
       saudaId: ['', Validators.required],
+      warehouse: [''],
       dispatchDate: [today, Validators.required],
       vehicleNo: [
         '',
@@ -251,11 +261,13 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.appliedSearchTerm = this.searchTerm.trim();
     this.appliedLinkedSaudaFilter = this.linkedSaudaFilter;
     this.appliedSaudaTypeFilter = this.saudaTypeFilter;
+    this.appliedWarehouseFilter = this.warehouseFilter;
     this.appliedEntryDateFilter = this.entryDateFilter;
     this.showReset =
       this.appliedSearchTerm.length > 0 ||
       this.appliedLinkedSaudaFilter !== 'All' ||
       this.appliedSaudaTypeFilter !== 'All' ||
+      this.appliedWarehouseFilter !== 'All' ||
       this.appliedEntryDateFilter.length > 0;
     this.page = 1;
     this.applyFilters();
@@ -268,17 +280,27 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
         !q ||
         t.entryNo.toLowerCase().includes(q) ||
         t.vehicleNo.toLowerCase().includes(q) ||
-        t.commodities.toLowerCase().includes(q);
+        t.commodities.toLowerCase().includes(q) ||
+        (t.warehouse && t.warehouse.toLowerCase().includes(q));
       const matchesSauda =
         this.appliedLinkedSaudaFilter === 'All' ||
         t.saudaId === this.appliedLinkedSaudaFilter;
       const matchesType =
         this.appliedSaudaTypeFilter === 'All' ||
         t.saudaType === this.appliedSaudaTypeFilter;
+      const matchesWarehouse =
+        this.appliedWarehouseFilter === 'All' ||
+        t.warehouse === this.appliedWarehouseFilter;
       const matchesDate =
         !this.appliedEntryDateFilter ||
         t.dispatchDate === this.appliedEntryDateFilter;
-      return matchesQuery && matchesSauda && matchesType && matchesDate;
+      return (
+        matchesQuery &&
+        matchesSauda &&
+        matchesType &&
+        matchesWarehouse &&
+        matchesDate
+      );
     });
   }
 
@@ -286,10 +308,12 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.searchTerm = '';
     this.linkedSaudaFilter = 'All';
     this.saudaTypeFilter = 'All';
+    this.warehouseFilter = 'All';
     this.entryDateFilter = '';
     this.appliedSearchTerm = '';
     this.appliedLinkedSaudaFilter = 'All';
     this.appliedSaudaTypeFilter = 'All';
+    this.appliedWarehouseFilter = 'All';
     this.appliedEntryDateFilter = '';
     this.showReset = false;
     this.page = 1;
@@ -403,6 +427,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
 
     this.truckForm.reset({
       saudaId: firstAvailable?.id || '',
+      warehouse: this.allWarehouses[0]?.name || '',
       dispatchDate: today,
       vehicleNo: '',
       status: 'In Transit',
@@ -444,6 +469,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
 
     this.truckForm.patchValue({
       saudaId: truck.saudaId,
+      warehouse: truck.warehouse || '',
       dispatchDate: truck.dispatchDate,
       vehicleNo: truck.vehicleNo,
       status: truck.status,
@@ -474,6 +500,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     const v = this.truckForm.getRawValue();
     const payload = {
       saudaId: v.saudaId,
+      warehouse: (v.warehouse || '').trim(),
       dispatchDate: v.dispatchDate,
       expectedArrivalDate: v.expectedArrivalDate || v.dispatchDate,
       vehicleNo: v.vehicleNo.trim().toUpperCase(),

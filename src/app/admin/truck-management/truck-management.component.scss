@@ -56,13 +56,36 @@
 
 .summary-meta-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   padding-top: 14px;
   border-top: 1px solid #f1f5f9;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.sauda-filter-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 0.85fr 1.05fr 0.95fr auto;
+  gap: 12px;
+  align-items: end;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
   }
 }
 

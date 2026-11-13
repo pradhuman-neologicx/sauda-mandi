@@ -75,6 +75,7 @@ export interface TruckEntryRecord {
   saudaId: string;
   saudaNo: string;
   saudaType: SaudaType;
+  warehouse?: string;
   vehicleNo: string;
   driverName: string;
   driverPhone: string;
@@ -536,6 +537,7 @@ export class SaudaErpMockService {
       saudaId: 'SAU-2026-0001',
       saudaNo: 'SAU-2026-0001',
       saudaType: 'Purchase',
+      warehouse: 'Desert Mandi Yard A',
       vehicleNo: 'RJ07-GA-1234',
       driverName: 'Ramesh Choudhary',
       driverPhone: '9829011223',
@@ -571,6 +573,7 @@ export class SaudaErpMockService {
           reason: 'Initial truck entry linked to SAU-2026-0001',
           changes: [
             { field: 'Truck Number', oldValue: '-', newValue: 'RJ07-GA-1234' },
+            { field: 'Warehouse', oldValue: '-', newValue: 'Desert Mandi Yard A' },
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra (8 Quintal)' },
           ],
         },
@@ -582,6 +585,7 @@ export class SaudaErpMockService {
       saudaId: 'SAU-2026-0001',
       saudaNo: 'SAU-2026-0001',
       saudaType: 'Purchase',
+      warehouse: 'Desert Mandi Yard A',
       vehicleNo: 'RJ07-GA-1234',
       driverName: 'Suresh Gurjar',
       driverPhone: '9828144556',
@@ -624,6 +628,7 @@ export class SaudaErpMockService {
           reason: 'Scheduled second truck for SAU-2026-0001',
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra' },
+            { field: 'Warehouse', oldValue: '-', newValue: 'Desert Mandi Yard A' },
             { field: 'Weight (MT)', oldValue: '-', newValue: '1 MT' },
           ],
         },
@@ -650,6 +655,7 @@ export class SaudaErpMockService {
       saudaId: 'SAU-2026-0002',
       saudaNo: 'SAU-2026-0002',
       saudaType: 'Sales',
+      warehouse: 'Fresh Terminal Cold Hub',
       vehicleNo: 'RJ14-AB-5678',
       driverName: 'Vikram Singh',
       driverPhone: '9755099881',
@@ -685,6 +691,7 @@ export class SaudaErpMockService {
           reason: 'Full lot dispatch for City Wholesale Market',
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Wheat (50 Quintal)' },
+            { field: 'Warehouse', oldValue: '-', newValue: 'Fresh Terminal Cold Hub' },
             { field: 'Status', oldValue: '-', newValue: 'Delivered' },
           ],
         },
@@ -696,6 +703,7 @@ export class SaudaErpMockService {
       saudaId: 'SAU-2026-0003',
       saudaNo: 'SAU-2026-0003',
       saudaType: 'Brokerage',
+      warehouse: 'Rajasthan Agro Godown 4',
       vehicleNo: 'RJ20-GB-9104',
       driverName: 'Dinesh Jat',
       driverPhone: '9928377611',
@@ -731,6 +739,7 @@ export class SaudaErpMockService {
           reason: 'Brokerage Bajra loading completed',
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
+            { field: 'Warehouse', oldValue: '-', newValue: 'Rajasthan Agro Godown 4' },
             { field: 'Status', oldValue: '-', newValue: 'In Transit' },
           ],
         },
@@ -1900,6 +1909,9 @@ export class SaudaErpMockService {
               oldValue: '-',
               newValue: payload.vehicleNo.trim().toUpperCase(),
             },
+            ...(payload.warehouse
+              ? [{ field: 'Warehouse', oldValue: '-', newValue: payload.warehouse }]
+              : []),
             { field: 'Commodities', oldValue: '-', newValue: commodities },
             {
               field: 'Loaded Weight (MT)',
@@ -2013,6 +2025,7 @@ export class SaudaErpMockService {
     const commodities = payload.commodityItems.map((c) => c.commodity).join(', ');
     const changes: RevisionDiff[] = [];
     this.pushDiff(changes, 'Linked Sauda', existing.saudaNo, sauda.saudaNo);
+    this.pushDiff(changes, 'Warehouse', existing.warehouse || '—', payload.warehouse || '—');
     this.pushDiff(changes, 'Truck Number', existing.vehicleNo, normalizedVehicle);
     this.pushDiff(changes, 'Truck Entry Date', existing.dispatchDate, payload.dispatchDate);
     this.pushDiff(changes, 'Commodities', existing.commodities, commodities);

@@ -55,7 +55,7 @@ export class SidenavHeaderComponent implements OnInit, OnDestroy {
     //   error: (err: any) => console.error('Failed to fetch notifications'),
     // });
 
-    // Mock Notifications Data (Sauda Mandi ERP)
+    // Mock Notifications Data (JP-BROCKERS ERP)
     this.notifications = [
       {
         id: 'uuid-1',

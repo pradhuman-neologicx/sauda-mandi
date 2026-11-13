@@ -67,7 +67,7 @@
           <select name="linkedSaudaFilter" [(ngModel)]="linkedSaudaFilter" class="erp-input">
             <option value="All">All Saudas</option>
             @for (s of allSaudas; track s.id) {
-              <option [value]="s.id">{{ s.saudaNo }} ({{ s.partyName }})</option>
+            <option [value]="s.id">{{ s.saudaNo }} ({{ s.partyName }})</option>
             }
           </select>
         </div>
@@ -79,6 +79,16 @@
             <option value="Purchase">Purchase</option>
             <option value="Sales">Sales</option>
             <option value="Brokerage">Brokerage</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Warehouse</label>
+          <select name="warehouseFilter" [(ngModel)]="warehouseFilter" class="erp-input">
+            <option value="All">All Warehouses</option>
+            @for (w of allWarehouses; track w.id) {
+            <option [value]="w.name">{{ w.name }} ({{ w.city }})</option>
+            }
           </select>
         </div>
 
@@ -109,6 +119,7 @@
             <th>Truck Entry No.</th>
             <th>Date</th>
             <th>Truck Number</th>
+            <th>Warehouse</th>
             <th>Sauda Number</th>
             <th>Sauda Type</th>
             <th>Commodities</th>
@@ -119,7 +130,7 @@
         <tbody>
           @if (filteredTrucks.length === 0) {
           <tr>
-            <td colspan="8" class="empty-state">
+            <td colspan="9" class="empty-state">
               <i class="fa-solid fa-truck mb-2"></i>
               <div>No truck entries match your search or filters.</div>
             </td>
@@ -144,6 +155,7 @@
             </td>
             <td class="text-nowrap">{{ truck.dispatchDate }}</td>
             <td class="fw-semibold text-dark">{{ truck.vehicleNo }}</td>
+            <td>{{ truck.warehouse || '—' }}</td>
             <td>{{ truck.saudaNo }}</td>
             <td>{{ truck.saudaType }}</td>
             <td>{{ truck.commodities }}</td>
@@ -224,6 +236,10 @@
         <div class="meta-val">{{ selectedTruck.vehicleNo }}</div>
       </div>
       <div>
+        <div class="meta-label">Warehouse</div>
+        <div class="meta-val">{{ selectedTruck.warehouse || '—' }}</div>
+      </div>
+      <div>
         <div class="meta-label">Truck Entry Date</div>
         <div class="meta-val">{{ selectedTruck.dispatchDate }}</div>
       </div>
@@ -284,6 +300,10 @@
           <tr>
             <td>Date</td>
             <td>{{ selectedTruck.dispatchDate }}</td>
+          </tr>
+          <tr>
+            <td>Warehouse</td>
+            <td class="fw-semibold text-dark">{{ selectedTruck.warehouse || '—' }}</td>
           </tr>
           <tr>
             <td>Linked Sauda</td>
@@ -450,10 +470,22 @@
         </div>
 
         <div class="field-group">
+          <label>Warehouse</label>
+          <select formControlName="warehouse" class="erp-input">
+            <option value="">Select Warehouse...</option>
+            @for (w of allWarehouses; track w.id) {
+            <option [value]="w.name">{{ w.name }} ({{ w.city }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-group">
           <label>Truck Entry Date <span class="req">*</span></label>
           <input type="date" formControlName="dispatchDate" class="erp-input" />
         </div>
+      </div>
 
+      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>Truck Number <span class="req">*</span></label>
           <input type="text" formControlName="vehicleNo" class="erp-input text-uppercase"
@@ -462,9 +494,7 @@
           <span class="field-err">Valid vehicle format required (e.g. RJ07-GA-1234).</span>
           }
         </div>
-      </div>
 
-      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>Transit Status <span class="req">*</span></label>
           <select formControlName="status" class="erp-input">
@@ -479,14 +509,14 @@
           <input type="text" formControlName="transporterName" class="erp-input"
             placeholder="Optional transporter name" />
         </div>
+      </div>
 
+      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>LR / Bilty No.</label>
           <input type="text" formControlName="lrNo" class="erp-input text-uppercase" placeholder="Optional LR number" />
         </div>
-      </div>
 
-      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>Driver Name</label>
           <input type="text" formControlName="driverName" class="erp-input" placeholder="Optional driver name" />
@@ -500,7 +530,9 @@
           <span class="field-err">Enter a valid 10-digit Indian mobile number.</span>
           }
         </div>
+      </div>
 
+      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>Expected Arrival Date</label>
           <input type="date" formControlName="expectedArrivalDate" class="erp-input" />
