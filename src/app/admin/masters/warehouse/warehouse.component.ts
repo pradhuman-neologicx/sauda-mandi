@@ -11,6 +11,7 @@ import { NgxPaginationModule } from 'ngx-pagination';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
+  FirmRecord,
   SaudaErpMockService,
   WarehouseRecord,
 } from 'src/app/core/services/sauda-erp-mock.service';
@@ -30,6 +31,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
 
   warehouses: WarehouseRecord[] = [];
   filteredWarehouses: WarehouseRecord[] = [];
+  firms: FirmRecord[] = [];
 
   // Search & Filter controls (UC-WH-02)
   searchTerm = '';
@@ -78,6 +80,12 @@ export class WarehouseComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
 
+    this.erpService.firms$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((firms) => {
+        this.firms = firms.filter((f) => f.isActive);
+      });
+
     this.erpService.warehouses$
       .pipe(takeUntil(this.destroy$))
       .subscribe((list) => {
@@ -93,6 +101,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
 
   private initForm(): void {
     this.warehouseForm = this.fb.group({
+      clientFirm: ['', Validators.required],
       name: ['', [Validators.required, Validators.minLength(2)]],
       address: ['', [Validators.required, Validators.minLength(3)]],
       city: ['', [Validators.required, Validators.minLength(2)]],
@@ -166,6 +175,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
         w.name.toLowerCase().includes(q) ||
         w.id.toLowerCase().includes(q) ||
         w.city.toLowerCase().includes(q) ||
+        (w.clientFirm && w.clientFirm.toLowerCase().includes(q)) ||
         (w.contactPerson && w.contactPerson.toLowerCase().includes(q));
 
       const matchStatus =
@@ -241,6 +251,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.selectedWarehouse = null;
     this.formError = '';
     this.warehouseForm.reset({
+      clientFirm: this.firms[0]?.name || '',
       name: '',
       address: '',
       city: '',
@@ -256,6 +267,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.selectedWarehouse = w;
     this.formError = '';
     this.warehouseForm.reset({
+      clientFirm: w.clientFirm || this.firms[0]?.name || '',
       name: w.name,
       address: w.address,
       city: w.city,
@@ -275,7 +287,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.formError = '';
     if (this.warehouseForm.invalid) {
       this.warehouseForm.markAllAsTouched();
-      this.formError = 'Please fill all mandatory fields (Name, Address, City) with valid values.';
+      this.formError = 'Please select a Client Firm and fill all mandatory fields (Name, Address, City).';
       return;
     }
 

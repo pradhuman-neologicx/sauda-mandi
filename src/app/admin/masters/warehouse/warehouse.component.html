@@ -113,13 +113,14 @@
       <table class="erp-table">
         <thead>
           <tr>
-            <th style="width: 70px">S.No.</th>
+            <th style="width: 60px">S.No.</th>
             <th class="sortable-th" (click)="setSort('name')">
               <span>Warehouse Name & Address</span>
               @if (sortField === 'name') {
               <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
               }
             </th>
+            <th>Client Firm</th>
             <th class="sortable-th" (click)="setSort('city')">
               <span>City / Mandi Hub</span>
               @if (sortField === 'city') {
@@ -145,7 +146,7 @@
         <tbody>
           @if (filteredWarehouses.length === 0) {
           <tr>
-            <td colspan="7" class="empty-state">
+            <td colspan="8" class="empty-state">
               <i class="fa-solid fa-warehouse mb-2"></i>
               <div class="fw-semibold">No warehouse records found.</div>
               <div class="text-muted small">Try adjusting your search query or status filter.</div>
@@ -173,6 +174,9 @@
                   <i class="fa-solid fa-location-arrow me-1"></i>{{ w.address }}
                 </span>
               </div>
+            </td>
+            <td>
+              <span class="firm-tag">{{ w.clientFirm || 'Desert Fresh Traders' }}</span>
             </td>
             <td>
               <span class="city-pill">
@@ -269,6 +273,20 @@
           <span>{{ formError }}</span>
         </div>
         }
+
+        <!-- Client Firm (First field as requested) -->
+        <div class="field-group mb-3">
+          <label>Client Firm <span class="req">*</span></label>
+          <select formControlName="clientFirm" class="erp-input">
+            <option value="">Select Client Firm...</option>
+            @for (firm of firms; track firm.id) {
+            <option [value]="firm.name">{{ firm.name }}</option>
+            }
+          </select>
+          @if (warehouseForm.get('clientFirm')?.touched && warehouseForm.get('clientFirm')?.invalid) {
+          <span class="field-error">Client firm selection is mandatory.</span>
+          }
+        </div>
 
         <!-- Warehouse Name -->
         <div class="field-group mb-3">
@@ -375,6 +393,13 @@
       </div>
 
       <div class="detail-grid">
+        <div class="detail-item full-width-item">
+          <span class="detail-label">Client Firm</span>
+          <span class="detail-val fw-bold text-primary fs-6">
+            <i class="fa-solid fa-building me-1"></i>{{ viewingWarehouse.clientFirm || 'Desert Fresh Traders' }}
+          </span>
+        </div>
+
         <div class="detail-item">
           <span class="detail-label">Warehouse ID</span>
           <span class="detail-val">{{ viewingWarehouse.id }}</span>

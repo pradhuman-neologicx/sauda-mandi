@@ -308,6 +308,7 @@ export interface WeightUomRecord {
 export interface WarehouseRecord {
   id: string;
   name: string;
+  clientFirm?: string;
   address: string;
   city: string;
   contactPerson?: string;
@@ -2172,6 +2173,7 @@ export class SaudaErpMockService {
     {
       id: 'WH-001',
       name: 'Desert Mandi Yard A',
+      clientFirm: 'Desert Fresh Traders',
       address: 'Plot 12-15, Mandi Yard Phase 1, Basni Industrial Area',
       city: 'Jodhpur',
       contactPerson: 'Kailash Choudhary',
@@ -2186,6 +2188,7 @@ export class SaudaErpMockService {
     {
       id: 'WH-002',
       name: 'Fresh Terminal Cold Hub',
+      clientFirm: 'Desert Fresh Traders',
       address: 'Warehouse No. 8, Agro Food Park, Sitapura Industrial Area',
       city: 'Jaipur',
       contactPerson: 'Mukesh Sharma',
@@ -2200,6 +2203,7 @@ export class SaudaErpMockService {
     {
       id: 'WH-003',
       name: 'Rajasthan Agro Godown 4',
+      clientFirm: 'Rajasthan Agro',
       address: 'Old Mandi Road, Near Railway Goods Yard, Karni Industrial Area',
       city: 'Bikaner',
       contactPerson: 'Rajendra Solanki',
@@ -2214,6 +2218,7 @@ export class SaudaErpMockService {
     {
       id: 'WH-004',
       name: 'Kota Grain Silo',
+      clientFirm: 'Rajasthan Agro',
       address: 'Sector 5, RIICO Mandi Complex, Chambal Bypass Road',
       city: 'Kota',
       contactPerson: 'Deepak Meena',
@@ -2228,6 +2233,7 @@ export class SaudaErpMockService {
     {
       id: 'WH-005',
       name: 'Mewar Agro Storage Yard',
+      clientFirm: 'Desert Fresh Traders',
       address: 'Depot 3, Sukher Mandi Complex, NH-8',
       city: 'Udaipur',
       contactPerson: 'Bhawani Singh',
@@ -5498,6 +5504,7 @@ export class SaudaErpMockService {
       | string
       | {
           name: string;
+          clientFirm?: string;
           address: string;
           city: string;
           contactPerson?: string;
@@ -5512,6 +5519,7 @@ export class SaudaErpMockService {
             name: payloadOrName,
             address: `${cityArg || 'Industrial Area'} Mandi Depot`,
             city: cityArg || '',
+            clientFirm: 'Desert Fresh Traders',
           }
         : payloadOrName;
 
@@ -5547,6 +5555,7 @@ export class SaudaErpMockService {
     const record: WarehouseRecord = {
       id: `WH-${String(nextNum).padStart(3, '0')}`,
       name: trimmedName,
+      clientFirm: (payload.clientFirm || '').trim() || 'Desert Fresh Traders',
       address: trimmedAddress,
       city: trimmedCity,
       contactPerson: (payload.contactPerson || '').trim() || undefined,
@@ -5569,6 +5578,7 @@ export class SaudaErpMockService {
       | string
       | {
           name: string;
+          clientFirm?: string;
           address: string;
           city: string;
           contactPerson?: string;
@@ -5586,6 +5596,7 @@ export class SaudaErpMockService {
             name: payloadOrName,
             address: existing.address,
             city: cityArg || existing.city,
+            clientFirm: existing.clientFirm,
           }
         : payloadOrName;
 
@@ -5624,6 +5635,10 @@ export class SaudaErpMockService {
           ? {
               ...w,
               name: trimmedName,
+              clientFirm:
+                (payload.clientFirm || '').trim() ||
+                w.clientFirm ||
+                'Desert Fresh Traders',
               address: trimmedAddress,
               city: trimmedCity,
               contactPerson: (payload.contactPerson || '').trim() || undefined,
