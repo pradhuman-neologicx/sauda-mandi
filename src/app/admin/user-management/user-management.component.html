@@ -77,36 +77,22 @@
         <!-- Search Box (only searches on button click or form submit, not on type) -->
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="text"
-            name="searchTerm"
-            [(ngModel)]="searchTerm"
-            placeholder="Search by Name, Email, Mobile or User ID..."
-          />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search by Name, Email, Mobile..." />
         </div>
 
         <!-- Role Filter -->
-        <select
-          class="filter-select"
-          name="selectedRole"
-          [(ngModel)]="selectedRole"
-          (ngModelChange)="applyFilters()"
-        >
+        <select class="filter-select" name="selectedRole" [(ngModel)]="selectedRole" (ngModelChange)="applyFilters()">
           <option value="All">All Roles</option>
           <option value="Business Owner / Admin">Admin Only</option>
           <option value="Operations Executive">Operations Exec Only</option>
         </select>
 
         <!-- Firm Filter -->
-        <select
-          class="filter-select"
-          name="selectedFirm"
-          [(ngModel)]="selectedFirm"
-          (ngModelChange)="applyFilters()"
-        >
+        <select class="filter-select" name="selectedFirm" [(ngModel)]="selectedFirm" (ngModelChange)="applyFilters()">
           <option value="All">All Firms</option>
           @for (f of firmsList; track f.id) {
-            <option [value]="f.name">{{ f.name }}</option>
+          <option [value]="f.name">{{ f.name }}</option>
           }
         </select>
 
@@ -118,10 +104,10 @@
 
         <!-- Reset Button -->
         @if (showReset) {
-          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
-            <i class="fa-solid fa-rotate-left me-1"></i>
-            <span>Reset</span>
-          </button>
+        <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+          <i class="fa-solid fa-rotate-left me-1"></i>
+          <span>Reset</span>
+        </button>
         }
       </form>
     </div>
@@ -134,7 +120,6 @@
         <thead>
           <tr>
             <th style="width: 60px">S.No.</th>
-            <th style="width: 100px">User ID</th>
             <th>User & Contact</th>
             <th>Role / User Type</th>
             <th>Primary Firm</th>
@@ -167,9 +152,7 @@
           ) {
           <tr [class.inactive-row]="u.accountStatus === 'Inactive'">
             <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
-            <td>
-              <span class="user-id-badge">{{ u.id }}</span>
-            </td>
+
             <td>
               <div class="user-primary-cell">
                 <span class="user-name-text">{{ u.name }}</span>
@@ -407,7 +390,6 @@
         </div>
         <div>
           <h3 class="modal-title-erp">{{ viewingUser.name }}</h3>
-          <span class="user-id-badge">{{ viewingUser.id }}</span>
         </div>
       </div>
       <button type="button" class="close-btn" (click)="closeViewDetails()">
