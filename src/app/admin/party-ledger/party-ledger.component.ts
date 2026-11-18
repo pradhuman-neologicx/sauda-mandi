@@ -7,6 +7,10 @@ import { combineLatest } from 'rxjs';
 import {
   BuyerRecord,
   FirmRecord,
+  InvoiceLinkedSauda,
+  InvoicePaymentRecord,
+  InvoiceRecord,
+  InvoiceStatus,
   LedgerSettlementRecord,
   PaymentMode,
   SaudaErpMockService,
@@ -100,10 +104,20 @@ export class PartyLedgerComponent implements OnInit {
   allTransactions: AllTransactionRow[] = [];
   filteredTransactions: AllTransactionRow[] = [];
 
-  viewTab: 'parties' | 'transactions' = 'parties';
+  // Invoices (UC-FIN-01 & UC-FIN-04)
+  invoices: InvoiceRecord[] = [];
+  filteredInvoices: InvoiceRecord[] = [];
+
+  viewTab: 'invoices' | 'parties' | 'transactions' = 'invoices';
   selectedStatementParty: PartyLedgerSummary | null = null;
 
-  // Filters
+  // Invoice Filters
+  invoiceSearchTerm = '';
+  invoiceStatusFilter: 'All' | 'Issued' | 'Paid' = 'All';
+  invoiceFirmFilter = 'All';
+  invoicePage = 1;
+
+  // Party & Transaction Filters
   searchTerm = '';
   appliedSearchTerm = '';
   roleFilter: 'All' | 'Seller' | 'Buyer' = 'All';
@@ -125,6 +139,50 @@ export class PartyLedgerComponent implements OnInit {
     'Cash',
     'Adjustment',
   ];
+
+  // Create Invoice Modal (UC-FIN-01)
+  showCreateInvoiceModal = false;
+  createInvoiceError = '';
+  createInvoiceForm: {
+    clientFirm: string;
+    partyName: string;
+    partyRole: 'Seller' | 'Buyer';
+    selectedSaudaIds: string[];
+    finalAmount: number | null;
+    adjustmentReason: string;
+  } = {
+    clientFirm: '',
+    partyName: '',
+    partyRole: 'Seller',
+    selectedSaudaIds: [],
+    finalAmount: null,
+    adjustmentReason: '',
+  };
+  eligibleSaudasForInvoicing: SaudaRecord[] = [];
+
+  // Record Payment Against Invoice Modal (UC-FIN-04)
+  showInvoicePaymentModal = false;
+  invoicePaymentError = '';
+  paymentInvoice: InvoiceRecord | null = null;
+  invoicePaymentForm: {
+    paymentDate: string;
+    paymentMode: PaymentMode;
+    referenceNo: string;
+    bankDetails: string;
+    receiptAttachmentName: string;
+    remarks: string;
+  } = {
+    paymentDate: new Date().toISOString().slice(0, 10),
+    paymentMode: 'RTGS / NEFT',
+    referenceNo: '',
+    bankDetails: '',
+    receiptAttachmentName: '',
+    remarks: '',
+  };
+
+  // View Invoice Modal
+  showViewInvoiceModal = false;
+  viewingInvoice: InvoiceRecord | null = null;
 
   // Record Payment / Receipt Modal
   showPaymentModal = false;
@@ -198,14 +256,17 @@ export class PartyLedgerComponent implements OnInit {
       this.erp.buyers$,
       this.erp.firms$,
       this.erp.ledgerSettlements$,
+      this.erp.invoices$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([saudas, sellers, buyers, firms, settlements]) => {
+      .subscribe(([saudas, sellers, buyers, firms, settlements, invoices]) => {
         this.saudas = saudas;
         this.sellers = sellers;
         this.buyers = buyers;
         this.firms = firms.filter((f) => f.isActive);
         this.settlements = settlements;
+        this.invoices = invoices;
+        this.applyInvoiceFilters();
         this.rebuildLedgerData();
       });
   }
@@ -252,7 +313,41 @@ export class PartyLedgerComponent implements OnInit {
       .length;
   }
 
+  // ── Invoice KPIs ──
+
+  get totalInvoicedAmountInr(): number {
+    return this.invoices.reduce(
+      (sum, inv) => sum + Number(inv.finalAmount || 0),
+      0,
+    );
+  }
+
+  get totalIssuedInvoiceAmountInr(): number {
+    return this.invoices
+      .filter((inv) => inv.status === 'Issued')
+      .reduce((sum, inv) => sum + Number(inv.finalAmount || 0), 0);
+  }
+
+  get totalPaidInvoiceAmountInr(): number {
+    return this.invoices
+      .filter((inv) => inv.status === 'Paid')
+      .reduce((sum, inv) => sum + Number(inv.finalAmount || 0), 0);
+  }
+
+  get issuedInvoicesCount(): number {
+    return this.invoices.filter((inv) => inv.status === 'Issued').length;
+  }
+
+  get paidInvoicesCount(): number {
+    return this.invoices.filter((inv) => inv.status === 'Paid').length;
+  }
+
   get pageSize(): number {
+    if (this.viewTab === 'invoices') {
+      return this.tableSize === 'all'
+        ? Math.max(this.filteredInvoices.length, 1)
+        : this.tableSize;
+    }
     if (this.viewTab === 'transactions') {
       return this.tableSize === 'all'
         ? Math.max(this.filteredTransactions.length, 1)
@@ -688,10 +783,283 @@ export class PartyLedgerComponent implements OnInit {
   onTableSizeChange(): void {
     this.page = 1;
     this.txnPage = 1;
+    this.invoicePage = 1;
   }
 
-  setTab(tab: 'parties' | 'transactions'): void {
+  setTab(tab: 'invoices' | 'parties' | 'transactions'): void {
     this.viewTab = tab;
+    this.page = 1;
+    this.txnPage = 1;
+    this.invoicePage = 1;
+  }
+
+  // ── Invoice Management Methods (UC-FIN-01 & UC-FIN-04) ──
+
+  get originalCalculatedInvoiceTotal(): number {
+    const selected = this.eligibleSaudasForInvoicing.filter((s) =>
+      this.createInvoiceForm.selectedSaudaIds.includes(s.id),
+    );
+    return selected.reduce((sum, s) => sum + Number(s.totalAmountInr || 0), 0);
+  }
+
+  applyInvoiceFilters(): void {
+    const q = (this.invoiceSearchTerm || '').trim().toLowerCase();
+    this.filteredInvoices = this.invoices.filter((inv) => {
+      if (
+        this.invoiceStatusFilter !== 'All' &&
+        inv.status !== this.invoiceStatusFilter
+      ) {
+        return false;
+      }
+      if (
+        this.invoiceFirmFilter !== 'All' &&
+        inv.clientFirm !== this.invoiceFirmFilter
+      ) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        inv.invoiceNo.toLowerCase().includes(q) ||
+        inv.partyName.toLowerCase().includes(q) ||
+        inv.clientFirm.toLowerCase().includes(q) ||
+        (inv.paymentDetails?.paymentReferenceNo || '').toLowerCase().includes(q) ||
+        inv.linkedSaudas.some(
+          (s) =>
+            s.saudaNo.toLowerCase().includes(q) ||
+            s.commodity.toLowerCase().includes(q),
+        )
+      );
+    });
+  }
+
+  onInvoiceSearch(): void {
+    this.invoicePage = 1;
+    this.applyInvoiceFilters();
+  }
+
+  resetInvoiceFilters(): void {
+    this.invoiceSearchTerm = '';
+    this.invoiceStatusFilter = 'All';
+    this.invoiceFirmFilter = 'All';
+    this.invoicePage = 1;
+    this.applyInvoiceFilters();
+  }
+
+  openCreateInvoiceModal(): void {
+    this.createInvoiceError = '';
+    const defaultFirm = this.firms[0]?.name || 'Desert Fresh Traders';
+    const defaultParty =
+      this.partyDropdownOptions[0]?.name || 'Jal Kisan Suppliers';
+    const defaultPartyRole =
+      this.partyDropdownOptions[0]?.role || 'Seller';
+
+    this.createInvoiceForm = {
+      clientFirm: defaultFirm,
+      partyName: defaultParty,
+      partyRole: defaultPartyRole,
+      selectedSaudaIds: [],
+      finalAmount: null,
+      adjustmentReason: '',
+    };
+    this.refreshEligibleSaudas();
+    this.showCreateInvoiceModal = true;
+  }
+
+  closeCreateInvoiceModal(): void {
+    this.showCreateInvoiceModal = false;
+    this.createInvoiceError = '';
+  }
+
+  onInvoiceFirmOrPartyChange(): void {
+    this.createInvoiceForm.selectedSaudaIds = [];
+    this.createInvoiceForm.finalAmount = null;
+    this.createInvoiceForm.adjustmentReason = '';
+    this.createInvoiceError = '';
+
+    const found = this.partyDropdownOptions.find(
+      (p) =>
+        p.name.toLowerCase() ===
+        (this.createInvoiceForm.partyName || '').toLowerCase(),
+    );
+    if (found) {
+      this.createInvoiceForm.partyRole = found.role;
+    }
+
+    this.refreshEligibleSaudas();
+  }
+
+  refreshEligibleSaudas(): void {
+    if (
+      !this.createInvoiceForm.clientFirm ||
+      !this.createInvoiceForm.partyName
+    ) {
+      this.eligibleSaudasForInvoicing = [];
+      return;
+    }
+    this.eligibleSaudasForInvoicing = this.erp.getEligibleSaudasForInvoicing(
+      this.createInvoiceForm.clientFirm,
+      this.createInvoiceForm.partyName,
+      this.createInvoiceForm.partyRole,
+    );
+  }
+
+  toggleSaudaSelection(saudaId: string): void {
+    const idx = this.createInvoiceForm.selectedSaudaIds.indexOf(saudaId);
+    if (idx >= 0) {
+      this.createInvoiceForm.selectedSaudaIds.splice(idx, 1);
+    } else {
+      this.createInvoiceForm.selectedSaudaIds.push(saudaId);
+    }
+    this.createInvoiceForm.finalAmount = this.originalCalculatedInvoiceTotal;
+  }
+
+  isSaudaSelected(saudaId: string): boolean {
+    return this.createInvoiceForm.selectedSaudaIds.includes(saudaId);
+  }
+
+  selectAllEligibleSaudas(): void {
+    this.createInvoiceForm.selectedSaudaIds =
+      this.eligibleSaudasForInvoicing.map((s) => s.id);
+    this.createInvoiceForm.finalAmount = this.originalCalculatedInvoiceTotal;
+  }
+
+  deselectAllSaudas(): void {
+    this.createInvoiceForm.selectedSaudaIds = [];
+    this.createInvoiceForm.finalAmount = 0;
+  }
+
+  submitCreateInvoice(): void {
+    this.createInvoiceError = '';
+    if (
+      !this.createInvoiceForm.clientFirm ||
+      !this.createInvoiceForm.partyName
+    ) {
+      this.createInvoiceError = 'Please select Client Firm and Party Name.';
+      return;
+    }
+    if (this.createInvoiceForm.selectedSaudaIds.length === 0) {
+      this.createInvoiceError =
+        'Please select at least one eligible Sauda to include in the invoice (BR-IN-04).';
+      return;
+    }
+
+    const calcSum = this.originalCalculatedInvoiceTotal;
+    const finalAmt =
+      this.createInvoiceForm.finalAmount !== null
+        ? Number(this.createInvoiceForm.finalAmount)
+        : calcSum;
+
+    if (finalAmt <= 0) {
+      this.createInvoiceError = 'Final invoice amount must be greater than zero.';
+      return;
+    }
+
+    if (finalAmt !== calcSum && !this.createInvoiceForm.adjustmentReason.trim()) {
+      this.createInvoiceError =
+        'Adjustment Reason is strictly mandatory when invoice amount differs from calculated total (BR-IN-05).';
+      return;
+    }
+
+    const res = this.erp.createInvoice({
+      clientFirm: this.createInvoiceForm.clientFirm,
+      partyName: this.createInvoiceForm.partyName,
+      partyRole: this.createInvoiceForm.partyRole,
+      saudaIds: this.createInvoiceForm.selectedSaudaIds,
+      finalAmount: finalAmt,
+      adjustmentReason: this.createInvoiceForm.adjustmentReason,
+      issuedBy: 'Operations Executive',
+    });
+
+    if (!res.ok) {
+      this.createInvoiceError = res.message;
+      return;
+    }
+
+    this.closeCreateInvoiceModal();
+    this.notify.show(res.message, 'success', 3500);
+    this.viewTab = 'invoices';
+  }
+
+  // ── Record Payment Against Invoice (UC-FIN-04) ──
+
+  openInvoicePaymentModal(invoice: InvoiceRecord): void {
+    if (invoice.status === 'Paid') {
+      this.notify.show(
+        `Invoice ${invoice.invoiceNo} has already been settled in full.`,
+        'info',
+        3000,
+      );
+      return;
+    }
+    this.paymentInvoice = invoice;
+    this.invoicePaymentError = '';
+    this.invoicePaymentForm = {
+      paymentDate: new Date().toISOString().slice(0, 10),
+      paymentMode: 'RTGS / NEFT',
+      referenceNo: '',
+      bankDetails: '',
+      receiptAttachmentName: '',
+      remarks: `Full payment settlement against invoice ${invoice.invoiceNo}`,
+    };
+    this.showInvoicePaymentModal = true;
+  }
+
+  closeInvoicePaymentModal(): void {
+    this.showInvoicePaymentModal = false;
+    this.paymentInvoice = null;
+    this.invoicePaymentError = '';
+  }
+
+  submitInvoicePayment(): void {
+    this.invoicePaymentError = '';
+    if (!this.paymentInvoice) return;
+
+    if (!this.invoicePaymentForm.paymentDate) {
+      this.invoicePaymentError = 'Payment Date is mandatory.';
+      return;
+    }
+    if (!this.invoicePaymentForm.referenceNo.trim()) {
+      this.invoicePaymentError =
+        'Payment Reference / UTR Number is mandatory.';
+      return;
+    }
+    if (!this.invoicePaymentForm.bankDetails.trim()) {
+      this.invoicePaymentError =
+        'Bank Details (Bank Name, Branch, Account details) are strictly required (BR-PAY-07).';
+      return;
+    }
+
+    const res = this.erp.recordPaymentAgainstInvoice({
+      invoiceId: this.paymentInvoice.id,
+      paymentDate: this.invoicePaymentForm.paymentDate,
+      paymentAmount: this.paymentInvoice.finalAmount, // Strict: exact invoice amount (BR-PAY-04)
+      paymentMode: this.invoicePaymentForm.paymentMode,
+      paymentReferenceNo: this.invoicePaymentForm.referenceNo,
+      bankDetails: this.invoicePaymentForm.bankDetails,
+      receiptAttachmentName: this.invoicePaymentForm.receiptAttachmentName,
+      remarks: this.invoicePaymentForm.remarks,
+      recordedBy: 'Operations Executive',
+    });
+
+    if (!res.ok) {
+      this.invoicePaymentError = res.message;
+      return;
+    }
+
+    this.closeInvoicePaymentModal();
+    this.notify.show(res.message, 'success', 3500);
+  }
+
+  // ── View Invoice Details Modal ──
+
+  openViewInvoiceModal(invoice: InvoiceRecord): void {
+    this.viewingInvoice = invoice;
+    this.showViewInvoiceModal = true;
+  }
+
+  closeViewInvoiceModal(): void {
+    this.showViewInvoiceModal = false;
+    this.viewingInvoice = null;
   }
 
   applyFilters(): void {

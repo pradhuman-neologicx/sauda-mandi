@@ -15,14 +15,47 @@
         <i class="fa-solid fa-user-plus"></i>
         <span>Add Party</span>
       </button>
-      <button type="button" class="btn-erp-primary" (click)="openPaymentModal()">
-        <i class="fa-solid fa-indian-rupee-sign"></i>
-        <span>Record Payment / Receipt</span>
+      <button type="button" class="btn-erp-primary" (click)="openCreateInvoiceModal()">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Create Invoice</span>
       </button>
     </div>
   </div>
 
-  <!-- 4 KPI Cards -->
+  <!-- KPI Cards (Dynamic based on active tab) -->
+  @if (viewTab === 'invoices') {
+  <div class="sauda-kpi-grid">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Invoiced Value</div>
+      <div class="sauda-kpi-val text-primary">
+        {{ totalInvoicedAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Issued (Pending Payment)</div>
+      <div class="sauda-kpi-val text-amber">
+        {{ totalIssuedInvoiceAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Paid (Settled in Full)</div>
+      <div class="sauda-kpi-val text-receivable">
+        {{ totalPaidInvoiceAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+      </div>
+
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Active Client Firms</div>
+      <div class="sauda-kpi-val">{{ firms.length }}</div>
+
+    </div>
+  </div>
+  } @else {
   <div class="sauda-kpi-grid">
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Pending Payable</div>
@@ -65,12 +98,17 @@
         </div>
       </div>
     </div>
+    }
 
     <!-- Listing Card -->
     <div class="erp-card">
       <div class="listing-card-top">
         <div class="listing-header-row">
           <div class="ledger-tabs-row">
+            <button type="button" class="tab-pill-btn" [class.active]="viewTab === 'invoices'"
+              (click)="setTab('invoices')">
+              <i class="fa-solid fa-file-invoice"></i> Invoices ({{ filteredInvoices.length }})
+            </button>
             <button type="button" class="tab-pill-btn" [class.active]="viewTab === 'parties'"
               (click)="setTab('parties')">
               Party Balances ({{ filteredSummaries.length }})
@@ -92,6 +130,48 @@
           </div>
         </div>
 
+        @if (viewTab === 'invoices') {
+        <form (ngSubmit)="onInvoiceSearch()" class="ledger-filter-grid">
+          <div class="filter-field">
+            <label>Search Invoice / Party / Sauda</label>
+            <input type="text" class="erp-input" name="invoiceSearchTerm" [(ngModel)]="invoiceSearchTerm"
+              placeholder="INV No, Party name, UTR, Sauda No..." />
+          </div>
+
+          <div class="filter-field">
+            <label>Invoice Status</label>
+            <select class="erp-input" name="invoiceStatusFilter" [(ngModel)]="invoiceStatusFilter"
+              (ngModelChange)="onInvoiceSearch()">
+              <option value="All">All Invoices</option>
+              <option value="Issued">Issued (Pending Payment)</option>
+              <option value="Paid">Paid (Settled in Full)</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label>Client Firm</label>
+            <select class="erp-input" name="invoiceFirmFilter" [(ngModel)]="invoiceFirmFilter"
+              (ngModelChange)="onInvoiceSearch()">
+              <option value="All">All Firms</option>
+              @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-btn-col">
+            <button type="submit" class="btn-erp-primary">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Search</span>
+            </button>
+            @if (invoiceSearchTerm || invoiceStatusFilter !== 'All' || invoiceFirmFilter !== 'All') {
+            <button type="button" class="btn-erp-ghost" (click)="resetInvoiceFilters()">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            }
+          </div>
+        </form>
+        } @else {
         <form (ngSubmit)="onSearch()" class="ledger-filter-grid">
           <div class="filter-field">
             <label>Search Party / Ref No.</label>
@@ -140,10 +220,112 @@
             }
           </div>
         </form>
+        }
       </div>
 
-      <!-- Tab 1: Party Balances Summary Table -->
-      @if (viewTab === 'parties') {
+      <!-- Tab: Invoices (UC-FIN-01 & UC-FIN-04) -->
+      @if (viewTab === 'invoices') {
+      <div class="table-responsive">
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">S.No.</th>
+              <th>Invoice No &amp; Date</th>
+              <th>Client Firm</th>
+              <th>Party Name &amp; Role</th>
+              <th>Consolidated Saudas</th>
+              <th class="text-end">Original Total</th>
+              <th class="text-end">Final Invoiced (₹)</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inv of filteredInvoices | paginate: { itemsPerPage: pageSize, currentPage: invoicePage, id:
+            'invPagination' }; track inv.id; let idx = $index) {
+            <tr>
+              <td class="num">{{ (invoicePage - 1) * pageSize + idx + 1 }}</td>
+              <td>
+                <div class="fw-semibold text-dark">{{ inv.invoiceNo }}</div>
+                <div class="sub-cell"><i class="fa-regular fa-calendar"></i> {{ inv.invoiceDate }}</div>
+              </td>
+              <td>
+                <span class="firm-tag">{{ inv.clientFirm }}</span>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ inv.partyName }}</div>
+                <span class="role-badge" [ngClass]="inv.partyRole === 'Seller' ? 'role-seller' : 'role-buyer'">
+                  {{ inv.partyRole }}
+                </span>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ inv.linkedSaudas.length }} Sauda(s)</div>
+                <div class="sub-cell text-truncate" style="max-width: 200px;">
+                  @for (ls of inv.linkedSaudas; track ls.saudaId) {
+                  <span>{{ ls.saudaNo }} ({{ ls.commodity }}) </span>
+                  }
+                </div>
+              </td>
+              <td class="text-end num">
+                {{ inv.originalCalculatedAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </td>
+              <td class="text-end num fw-bold" [class.text-amber]="inv.adjustmentAmount !== 0">
+                <div>{{ inv.finalAmount | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+                @if (inv.adjustmentAmount !== 0) {
+                <div class="sub-cell text-muted" title="{{ inv.adjustmentReason }}">
+                  Adj: {{ inv.adjustmentAmount > 0 ? '+' : '' }}{{ inv.adjustmentAmount | currency: 'INR' : 'symbol' :
+                  '1.0-0' }}
+                </div>
+                }
+              </td>
+              <td class="text-center">
+                @if (inv.status === 'Issued') {
+                <span class="status-badge badge-amber">
+                  <i class="fa-solid fa-clock"></i> Issued
+                </span>
+                } @else if (inv.status === 'Paid') {
+                <span class="status-badge badge-green">
+                  <i class="fa-solid fa-circle-check"></i> Paid
+                </span>
+                }
+              </td>
+              <td class="text-center">
+                <div class="table-actions">
+                  @if (inv.status === 'Issued') {
+                  <button type="button" class="btn-action-primary" (click)="openInvoicePaymentModal(inv)"
+                    title="Record Payment Against Invoice">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                    <span>Pay</span>
+                  </button>
+                  }
+                  <button type="button" class="btn-action-ghost" (click)="openViewInvoiceModal(inv)"
+                    title="View Invoice &amp; Details">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>View</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-file-invoice fs-2 d-block mb-2 text-slate-300"></i>
+                No invoices found matching criteria. Click <strong>"Create Invoice"</strong> to generate a consolidated
+                invoice.
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-wrapper">
+        <pagination-controls id="invPagination" (pageChange)="invoicePage = $event" [autoHide]="true"
+          [responsive]="true">
+        </pagination-controls>
+      </div>
+      } @else if (viewTab === 'parties') {
+      <!-- Tab 2: Party Balances Summary Table -->
       <div class="table-responsive">
         <table class="erp-table">
           <thead>
@@ -282,8 +464,8 @@
         <pagination-controls id="ledgerPartiesPag" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
           class="my-pagination"></pagination-controls>
       </div>
-      } @else {
-      <!-- Tab 2: All Transactions Daybook -->
+      } @else if (viewTab === 'transactions') {
+      <!-- Tab 3: All Transactions Daybook -->
       <div class="table-responsive">
         <table class="erp-table">
           <thead>
@@ -409,7 +591,7 @@
         <div class="sauda-kpi-val text-payable">
           {{ selectedStatementParty.pendingPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
         </div>
-        <div class="sauda-kpi-sub">Outstanding payable amount</div>
+
       </div>
 
       <div class="sauda-kpi-card">
@@ -417,9 +599,7 @@
         <div class="sauda-kpi-val">
           {{ selectedStatementParty.totalReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
         </div>
-        <div class="sauda-kpi-sub">
-          Recd: {{ selectedStatementParty.totalReceivedInr | currency: 'INR' : 'symbol' : '1.0-0' }}
-        </div>
+
       </div>
 
       <div class="sauda-kpi-card">
@@ -427,7 +607,7 @@
         <div class="sauda-kpi-val text-receivable">
           {{ selectedStatementParty.pendingReceivableInr | currency: 'INR' : 'symbol' : '1.0-0' }}
         </div>
-        <div class="sauda-kpi-sub">Outstanding receivable amount</div>
+
       </div>
     </div>
 
@@ -800,6 +980,399 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+  }
+
+  <!-- Create & Issue Invoice Modal (UC-FIN-01) -->
+  @if (showCreateInvoiceModal) {
+  <div class="modal-backdrop-erp" (click)="closeCreateInvoiceModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Create &amp; Issue Invoice</h3>
+          <p class="modal-sub-erp">
+            Consolidate eligible, fully fulfilled Saudas for a single Client Firm and Party (BR-IN-01, BR-IN-03)
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeCreateInvoiceModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitCreateInvoice()" class="modal-body-erp">
+        @if (createInvoiceError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ createInvoiceError }}</div>
+        }
+
+        <div class="form-grid-3 mb-3">
+          <div class="field-group">
+            <label>Client Firm <span class="req">*</span></label>
+            <select class="erp-input" name="invClientFirm" [(ngModel)]="createInvoiceForm.clientFirm"
+              (ngModelChange)="onInvoiceFirmOrPartyChange()">
+              @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Party Name <span class="req">*</span></label>
+            <select class="erp-input" name="invPartyName" [(ngModel)]="createInvoiceForm.partyName"
+              (ngModelChange)="onInvoiceFirmOrPartyChange()">
+              @for (p of partyDropdownOptions; track p.name) {
+              <option [value]="p.name">{{ p.name }} ({{ p.role }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Party Role</label>
+            <select class="erp-input" name="invPartyRole" [(ngModel)]="createInvoiceForm.partyRole"
+              (ngModelChange)="refreshEligibleSaudas()">
+              <option value="Seller">Seller (Supplier / Payables)</option>
+              <option value="Buyer">Buyer (Customer / Receivables)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="invoice-sauda-section mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="fw-bold fs-6">
+              Eligible Fully Fulfilled Saudas ({{ eligibleSaudasForInvoicing.length }})
+            </label>
+            @if (eligibleSaudasForInvoicing.length > 0) {
+            <div class="selection-actions">
+              <button type="button" class="btn-link-action" (click)="selectAllEligibleSaudas()">Select All</button>
+              <span class="mx-1 text-muted">&bull;</span>
+              <button type="button" class="btn-link-action" (click)="deselectAllSaudas()">Clear Selection</button>
+            </div>
+            }
+          </div>
+
+          @if (eligibleSaudasForInvoicing.length === 0) {
+          <div class="alert-erp alert-info-erp">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            No uninvoiced, fully fulfilled (Completed) Saudas found for <strong>{{ createInvoiceForm.partyName ||
+              'selected party' }}</strong> under <strong>{{ createInvoiceForm.clientFirm }}</strong>.
+          </div>
+          } @else {
+          <div class="table-responsive"
+            style="max-height: 220px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table class="erp-table table-sm">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">Select</th>
+                  <th>Sauda No</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Commodity</th>
+                  <th class="text-end">Quantity</th>
+                  <th class="text-end">Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of eligibleSaudasForInvoicing; track s.id) {
+                <tr [class.selected-row]="isSaudaSelected(s.id)" (click)="toggleSaudaSelection(s.id)"
+                  style="cursor: pointer;">
+                  <td class="text-center" (click)="$event.stopPropagation()">
+                    <input type="checkbox" [checked]="isSaudaSelected(s.id)" (change)="toggleSaudaSelection(s.id)" />
+                  </td>
+                  <td class="fw-semibold text-dark">{{ s.saudaNo }}</td>
+                  <td>{{ s.saudaDate }}</td>
+                  <td><span class="badge-slate">{{ s.saudaType }}</span></td>
+                  <td>{{ s.commodity }}</td>
+                  <td class="text-end num">{{ s.quantityMt }} MT</td>
+                  <td class="text-end num fw-semibold">{{ s.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted mt-1 d-block">
+            * Only fully delivered / fulfilled Saudas are eligible per BR-IN-03. Selected: {{
+            createInvoiceForm.selectedSaudaIds.length }} Sauda(s).
+          </small>
+          }
+        </div>
+
+        <div class="invoice-calc-box p-3 bg-light rounded-3 mb-3 border">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <div class="text-muted small">Original Calculated Total (BR-IN-05):</div>
+              <div class="fs-4 fw-bold text-dark">
+                {{ originalCalculatedInvoiceTotal | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Final Invoice Amount (₹) <span class="req">*</span></label>
+              <input type="number" min="1" class="erp-input fw-bold text-end" name="finalAmount"
+                [(ngModel)]="createInvoiceForm.finalAmount" placeholder="Invoice amount" />
+            </div>
+          </div>
+
+          @if (createInvoiceForm.finalAmount !== null && createInvoiceForm.finalAmount !==
+          originalCalculatedInvoiceTotal) {
+          <div class="mt-3 pt-2 border-top">
+            <div class="text-amber fw-semibold small mb-1">
+              <i class="fa-solid fa-triangle-exclamation"></i> Amount differs from calculated total by
+              {{ (createInvoiceForm.finalAmount - originalCalculatedInvoiceTotal) | currency: 'INR' : 'symbol' : '1.0-0'
+              }}.
+              Adjustment reason is mandatory (BR-IN-05).
+            </div>
+            <label class="small fw-semibold">Adjustment Reason <span class="req">* Mandatory</span></label>
+            <input type="text" class="erp-input" name="adjustmentReason"
+              [(ngModel)]="createInvoiceForm.adjustmentReason"
+              placeholder="e.g. Moisture deduction, quality allowance, or freight rebate..." />
+          </div>
+          }
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeCreateInvoiceModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary" [disabled]="createInvoiceForm.selectedSaudaIds.length === 0">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>Issue Invoice</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- Record Payment Against Invoice Modal (UC-FIN-04) -->
+  @if (showInvoicePaymentModal && paymentInvoice) {
+  <div class="modal-backdrop-erp" (click)="closeInvoicePaymentModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Record Payment Against Invoice</h3>
+          <p class="modal-sub-erp">
+            One payment entry must settle exactly one invoice
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeInvoicePaymentModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="submitInvoicePayment()" class="modal-body-erp">
+        @if (invoicePaymentError) {
+        <div class="alert-erp alert-danger-erp mb-3">{{ invoicePaymentError }}</div>
+        }
+
+        <!-- Invoice summary card -->
+        <div class="invoice-summary-card p-3 rounded-3 mb-3 bg-slate-50 border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold fs-5 text-dark">{{ paymentInvoice.invoiceNo }}</span>
+            <span class="status-badge badge-amber"><i class="fa-solid fa-clock"></i> Issued</span>
+          </div>
+          <div class="small text-muted mb-2">
+            {{ paymentInvoice.clientFirm }} &bull; Party: <strong>{{ paymentInvoice.partyName }}</strong> ({{
+            paymentInvoice.partyRole }})
+          </div>
+          <div class="d-flex justify-content-between align-items-baseline pt-2 border-top">
+            <span class="small fw-semibold text-secondary">Final Approved Invoice Amount:</span>
+            <span class="fs-4 fw-bold text-dark">
+              {{ paymentInvoice.finalAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Payment Amount (₹) <span class="req">* Locked</span></label>
+            <input type="text" class="erp-input text-end fw-bold"
+              [value]="paymentInvoice.finalAmount | currency: 'INR' : 'symbol' : '1.0-0'" disabled />
+            <small class="text-muted">Must exactly match invoice amount (No partial payments per BR-PAY-04)</small>
+          </div>
+
+          <div class="field-group">
+            <label>Payment Date <span class="req">*</span></label>
+            <input type="date" class="erp-input" name="payDate" [(ngModel)]="invoicePaymentForm.paymentDate" />
+          </div>
+
+          <div class="field-group">
+            <label>Payment Mode <span class="req">*</span></label>
+            <select class="erp-input" name="payMode" [(ngModel)]="invoicePaymentForm.paymentMode">
+              @for (m of paymentModes; track m) {
+              <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Reference / UTR No. <span class="req">*</span></label>
+            <input type="text" class="erp-input" name="payRef" [(ngModel)]="invoicePaymentForm.referenceNo"
+              placeholder="e.g. UTR-20261118-881920" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Bank Details <span class="req">*</span></label>
+            <input type="text" class="erp-input" name="payBank" [(ngModel)]="invoicePaymentForm.bankDetails"
+              placeholder="e.g. HDFC Bank, Mandi Branch, A/c 502000348129" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Receipt Attachment (Optional)</label>
+            <input type="text" class="erp-input" name="payReceipt"
+              [(ngModel)]="invoicePaymentForm.receiptAttachmentName" placeholder="e.g. Bank_Deposit_Challan_8819.pdf" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Remarks</label>
+            <textarea rows="2" class="erp-input" name="payRemarks" [(ngModel)]="invoicePaymentForm.remarks"
+              placeholder="Settlement notes or reference..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeInvoicePaymentModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-check"></i>
+            <span>Confirm Settlement</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- View Invoice Details Modal -->
+  @if (showViewInvoiceModal && viewingInvoice) {
+  <div class="modal-backdrop-erp" (click)="closeViewInvoiceModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Invoice Details — {{ viewingInvoice.invoiceNo }}</h3>
+          <p class="modal-sub-erp">
+            Created on {{ viewingInvoice.invoiceDate }} by {{ viewingInvoice.issuedBy }}
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeViewInvoiceModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <div class="d-flex justify-content-between align-items-center p-3 mb-3 rounded-3 bg-light border">
+          <div>
+            <div class="fw-bold fs-5 text-dark">{{ viewingInvoice.clientFirm }}</div>
+            <div class="text-secondary small">
+              Party: <strong>{{ viewingInvoice.partyName }}</strong> ({{ viewingInvoice.partyRole }})
+            </div>
+          </div>
+          <div class="text-end">
+            @if (viewingInvoice.status === 'Issued') {
+            <span class="status-badge badge-amber"><i class="fa-solid fa-clock"></i> Issued</span>
+            } @else {
+            <span class="status-badge badge-green"><i class="fa-solid fa-circle-check"></i> Paid</span>
+            }
+            <div class="fs-4 fw-bold text-dark mt-1">
+              {{ viewingInvoice.finalAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </div>
+          </div>
+        </div>
+
+        <h5 class="fw-bold mb-2">Consolidated Saudas ({{ viewingInvoice.linkedSaudas.length }})</h5>
+        <div class="table-responsive mb-3 border rounded-3">
+          <table class="erp-table table-sm">
+            <thead>
+              <tr>
+                <th>Sauda No</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Commodity</th>
+                <th class="text-end">Quantity</th>
+                <th class="text-end">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of viewingInvoice.linkedSaudas; track s.saudaId) {
+              <tr>
+                <td class="fw-semibold text-dark">{{ s.saudaNo }}</td>
+                <td>{{ s.saudaDate }}</td>
+                <td><span class="badge-slate">{{ s.saudaType }}</span></td>
+                <td>{{ s.commodity }}</td>
+                <td class="text-end num">{{ s.quantityMt }} MT</td>
+                <td class="text-end num">{{ s.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-end fw-semibold">Original Sum:</td>
+                <td class="text-end num fw-bold">
+                  {{ viewingInvoice.originalCalculatedAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </td>
+              </tr>
+              @if (viewingInvoice.adjustmentAmount !== 0) {
+              <tr>
+                <td colspan="5" class="text-end text-amber fw-semibold">
+                  Adjustment ({{ viewingInvoice.adjustmentReason }}):
+                </td>
+                <td class="text-end num text-amber fw-bold">
+                  {{ viewingInvoice.adjustmentAmount > 0 ? '+' : '' }}{{ viewingInvoice.adjustmentAmount | currency:
+                  'INR' : 'symbol' : '1.0-0' }}
+                </td>
+              </tr>
+              }
+              <tr class="table-active">
+                <td colspan="5" class="text-end fw-bold">Final Invoiced Amount:</td>
+                <td class="text-end num fw-bold text-primary fs-6">
+                  {{ viewingInvoice.finalAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        @if (viewingInvoice.paymentDetails) {
+        <div class="payment-receipt-card p-3 rounded-3 border border-success bg-green-50 mb-3"
+          style="background-color: #f0fdf4;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-success mb-0">
+              <i class="fa-solid fa-circle-check"></i> Payment Settlement Record
+            </h6>
+            <span class="badge bg-success text-white">Full Settlement</span>
+          </div>
+          <div class="form-grid-2 small">
+            <div><strong>Payment Date:</strong> {{ viewingInvoice.paymentDetails.paymentDate }}</div>
+            <div><strong>Mode:</strong> {{ viewingInvoice.paymentDetails.paymentMode }}</div>
+            <div><strong>Reference / UTR:</strong> {{ viewingInvoice.paymentDetails.paymentReferenceNo }}</div>
+            <div><strong>Bank Details:</strong> {{ viewingInvoice.paymentDetails.bankDetails }}</div>
+            @if (viewingInvoice.paymentDetails.receiptAttachmentName) {
+            <div class="ledger-span-2">
+              <strong>Receipt Attachment:</strong>
+              <i class="fa-solid fa-paperclip ms-1 text-primary"></i> {{
+              viewingInvoice.paymentDetails.receiptAttachmentName }}
+            </div>
+            }
+            <div class="ledger-span-2">
+              <strong>Recorded By:</strong> {{ viewingInvoice.paymentDetails.recordedBy }} on {{
+              viewingInvoice.paymentDetails.recordedAt }}
+            </div>
+          </div>
+        </div>
+        }
+
+        <div class="modal-footer-erp">
+          @if (viewingInvoice.status === 'Issued') {
+          <button type="button" class="btn-erp-primary"
+            (click)="closeViewInvoiceModal(); openInvoicePaymentModal(viewingInvoice)">
+            <i class="fa-solid fa-indian-rupee-sign"></i> Record Payment
+          </button>
+          }
+          <button type="button" class="btn-erp-ghost" (click)="closeViewInvoiceModal()">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   }

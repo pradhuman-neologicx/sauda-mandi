@@ -92,6 +92,9 @@ export interface SaudaRecord {
     reason: string;
   };
   revisions: RevisionEntry[];
+  isInvoiced?: boolean;
+  invoiceId?: string;
+  invoiceNo?: string;
 }
 
 export interface TruckEntryRecord {
@@ -352,6 +355,52 @@ export interface ActionResult {
   message: string;
 }
 
+export type InvoiceStatus = 'Issued' | 'Paid';
+
+export interface InvoicePaymentRecord {
+  id: string;
+  invoiceId: string;
+  invoiceNo: string;
+  paymentDate: string;
+  paymentAmount: number; // Must strictly equal Invoice.finalAmount (BR-PAY-04)
+  paymentMode: PaymentMode;
+  paymentReferenceNo: string; // UTR / Cheque / Bank ref (BR-PAY-07)
+  bankDetails: string; // Mandatory bank name, branch, etc. (BR-PAY-07)
+  receiptAttachmentName?: string; // Optional (BR-PAY-07)
+  recordedBy: string;
+  recordedAt: string;
+  remarks?: string;
+}
+
+export interface InvoiceLinkedSauda {
+  saudaId: string;
+  saudaNo: string;
+  saudaDate: string;
+  saudaType: SaudaType;
+  commodity: string;
+  quantityMt: number;
+  totalAmountInr: number;
+}
+
+export interface InvoiceRecord {
+  id: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  clientFirm: string;
+  partyName: string;
+  partyRole: 'Seller' | 'Buyer';
+  linkedSaudas: InvoiceLinkedSauda[];
+  originalCalculatedAmount: number;
+  finalAmount: number;
+  adjustmentAmount: number; // finalAmount - originalCalculatedAmount
+  adjustmentReason?: string; // Mandatory if finalAmount !== originalCalculatedAmount (BR-IN-05)
+  status: InvoiceStatus; // 'Issued' | 'Paid' (BR-IN-06)
+  issuedBy: string;
+  issuedAt: string;
+  paymentDetails?: InvoicePaymentRecord;
+  createdAt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -435,6 +484,9 @@ export class SaudaErpMockService {
           ],
         },
       ],
+      isInvoiced: true,
+      invoiceId: 'INV-2026-0002',
+      invoiceNo: 'INV-2026-0002',
     },
     {
       id: 'SAU-2026-0002',
@@ -485,6 +537,9 @@ export class SaudaErpMockService {
           ],
         },
       ],
+      isInvoiced: true,
+      invoiceId: 'INV-2026-0001',
+      invoiceNo: 'INV-2026-0001',
     },
     {
       id: 'SAU-2026-0003',
@@ -695,6 +750,110 @@ export class SaudaErpMockService {
         },
       ],
     },
+    {
+      id: 'SAU-2026-0006',
+      saudaNo: 'SAU-2026-0006',
+      saudaDate: '2026-11-10',
+      saudaType: 'Purchase',
+      clientFirm: 'Desert Fresh Traders',
+      sellerName: 'Jal Kisan Suppliers',
+      buyerName: '',
+      partyName: 'Jal Kisan Suppliers',
+      commodityItems: [
+        {
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
+          packagingQty: 150,
+          weightUom: 'Quintal',
+          actualWeight: 40,
+          rate: 3000,
+          lineTotal: 120000,
+        },
+      ],
+      commodity: 'Bajra - Desi Hybrid Bajra',
+      quantityMt: 4,
+      totalAmountInr: 120000,
+      expectedDeliveryDate: '2026-11-16',
+      sellerCreditPeriodDays: 15,
+      sellerCreditStartDate: '2026-11-10',
+      sellerDueDate: '2026-11-25',
+      buyerCreditPeriodDays: null,
+      buyerCreditStartDate: '',
+      buyerDueDate: '',
+      remarks: 'Desi Hybrid Bajra lot from mandi yard',
+      status: 'Completed',
+      currentVersion: 1,
+      amendmentStatus: 'None',
+      isInvoiced: false,
+      createdBy: 'Amit Patel',
+      createdAt: '2026-11-10 10:00',
+      updatedAt: '2026-11-10 10:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-10 10:00',
+          changedBy: 'Amit Patel',
+          action: 'Created',
+          reason: 'Direct purchase booked',
+          changes: [
+            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹1,20,000' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'SAU-2026-0007',
+      saudaNo: 'SAU-2026-0007',
+      saudaDate: '2026-11-11',
+      saudaType: 'Purchase',
+      clientFirm: 'Desert Fresh Traders',
+      sellerName: 'Jal Kisan Suppliers',
+      buyerName: '',
+      partyName: 'Jal Kisan Suppliers',
+      commodityItems: [
+        {
+          commodity: 'Jowar',
+          packagingUom: 'Bag',
+          packagingQty: 100,
+          weightUom: 'Quintal',
+          actualWeight: 40,
+          rate: 3000,
+          lineTotal: 120000,
+        },
+      ],
+      commodity: 'Jowar - Maldandi White Jowar',
+      quantityMt: 4,
+      totalAmountInr: 120000,
+      expectedDeliveryDate: '2026-11-17',
+      sellerCreditPeriodDays: 15,
+      sellerCreditStartDate: '2026-11-11',
+      sellerDueDate: '2026-11-26',
+      buyerCreditPeriodDays: null,
+      buyerCreditStartDate: '',
+      buyerDueDate: '',
+      remarks: 'Maldandi white jowar grain lot',
+      status: 'Completed',
+      currentVersion: 1,
+      amendmentStatus: 'None',
+      isInvoiced: false,
+      createdBy: 'Amit Patel',
+      createdAt: '2026-11-11 11:30',
+      updatedAt: '2026-11-11 11:30',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-11 11:30',
+          changedBy: 'Amit Patel',
+          action: 'Created',
+          reason: 'Direct purchase booked',
+          changes: [
+            { field: 'Commodities', oldValue: '-', newValue: 'Jowar (40 Quintal)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹1,20,000' },
+          ],
+        },
+      ],
+    },
   ];
 
   private readonly initialTrucks: TruckEntryRecord[] = [
@@ -775,7 +934,7 @@ export class SaudaErpMockService {
         },
       ],
       commodities: 'Bajra, Jowar',
-      loadedQtyMt: 2,
+      loadedQtyMt: 4.2,
       freightRatePerMt: 1200,
       advancePaid: 1000,
       dispatchDate: '2026-11-06',
@@ -908,6 +1067,98 @@ export class SaudaErpMockService {
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
             { field: 'Warehouse', oldValue: '-', newValue: 'Rajasthan Agro Godown 4' },
             { field: 'Status', oldValue: '-', newValue: 'In Transit' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TRK-2026-0005',
+      entryNo: 'TRK-2026-0005',
+      saudaId: 'SAU-2026-0006',
+      saudaNo: 'SAU-2026-0006',
+      saudaType: 'Purchase',
+      warehouse: 'Desert Mandi Yard A',
+      vehicleNo: 'RJ07-GB-4321',
+      driverName: 'Mukesh Yadav',
+      driverPhone: '9829033445',
+      transporterName: 'Marwar Roadways',
+      lrNo: 'LR-88540',
+      commodityItems: [
+        {
+          commodity: 'Bajra',
+          packagingUom: 'Bag',
+          packagingQty: 150,
+          weightUom: 'Quintal',
+          actualWeight: 40,
+        },
+      ],
+      commodities: 'Bajra',
+      loadedQtyMt: 4,
+      freightRatePerMt: 1100,
+      advancePaid: 2000,
+      dispatchDate: '2026-11-10',
+      expectedArrivalDate: '2026-11-12',
+      status: 'Delivered',
+      remarks: 'Full contract delivered to Desert Mandi Yard A',
+      currentVersion: 1,
+      createdBy: 'Amit Patel',
+      createdAt: '2026-11-10 12:00',
+      updatedAt: '2026-11-12 16:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-10 12:00',
+          changedBy: 'Amit Patel',
+          action: 'Created',
+          reason: 'Initial truck dispatch for SAU-2026-0006',
+          changes: [
+            { field: 'Status', oldValue: '-', newValue: 'Delivered' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TRK-2026-0006',
+      entryNo: 'TRK-2026-0006',
+      saudaId: 'SAU-2026-0007',
+      saudaNo: 'SAU-2026-0007',
+      saudaType: 'Purchase',
+      warehouse: 'Desert Mandi Yard A',
+      vehicleNo: 'RJ07-GC-5678',
+      driverName: 'Kailash Meena',
+      driverPhone: '9829044556',
+      transporterName: 'Kota Freight Carriers',
+      lrNo: 'LR-88555',
+      commodityItems: [
+        {
+          commodity: 'Jowar',
+          packagingUom: 'Bag',
+          packagingQty: 100,
+          weightUom: 'Quintal',
+          actualWeight: 40,
+        },
+      ],
+      commodities: 'Jowar',
+      loadedQtyMt: 4,
+      freightRatePerMt: 1100,
+      advancePaid: 2000,
+      dispatchDate: '2026-11-11',
+      expectedArrivalDate: '2026-11-13',
+      status: 'Delivered',
+      remarks: 'Full contract delivered to Desert Mandi Yard A',
+      currentVersion: 1,
+      createdBy: 'Amit Patel',
+      createdAt: '2026-11-11 13:00',
+      updatedAt: '2026-11-13 17:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-11 13:00',
+          changedBy: 'Amit Patel',
+          action: 'Created',
+          reason: 'Initial truck dispatch for SAU-2026-0007',
+          changes: [
+            { field: 'Status', oldValue: '-', newValue: 'Delivered' },
           ],
         },
       ],
@@ -1814,6 +2065,76 @@ export class SaudaErpMockService {
     },
   ];
 
+  private readonly initialInvoices: InvoiceRecord[] = [
+    {
+      id: 'INV-2026-0001',
+      invoiceNo: 'INV-2026-0001',
+      invoiceDate: '2026-11-09',
+      clientFirm: 'Desert Fresh Traders',
+      partyName: 'City Wholesale Market',
+      partyRole: 'Buyer',
+      linkedSaudas: [
+        {
+          saudaId: 'SAU-2026-0002',
+          saudaNo: 'SAU-2026-0002',
+          saudaDate: '2026-11-05',
+          saudaType: 'Sales',
+          commodity: 'Wheat',
+          quantityMt: 5,
+          totalAmountInr: 125000,
+        },
+      ],
+      originalCalculatedAmount: 125000,
+      finalAmount: 125000,
+      adjustmentAmount: 0,
+      status: 'Paid',
+      issuedBy: 'Amit Patel (Operations Executive)',
+      issuedAt: '2026-11-09 10:00',
+      paymentDetails: {
+        id: 'PAY-2026-0001',
+        invoiceId: 'INV-2026-0001',
+        invoiceNo: 'INV-2026-0001',
+        paymentDate: '2026-11-10',
+        paymentAmount: 125000,
+        paymentMode: 'RTGS / NEFT',
+        paymentReferenceNo: 'UTR-20261110-881920',
+        bankDetails: 'State Bank of India, Mandi Branch, A/c 3810029102',
+        receiptAttachmentName: 'SBI_Settlement_Challan_881920.pdf',
+        recordedBy: 'Rajesh Sharma (Admin)',
+        recordedAt: '2026-11-10 14:30',
+        remarks: 'Full settlement of Wheat Sales Sauda INV-2026-0001',
+      },
+      createdAt: '2026-11-09 10:00',
+    },
+    {
+      id: 'INV-2026-0002',
+      invoiceNo: 'INV-2026-0002',
+      invoiceDate: '2026-11-12',
+      clientFirm: 'Desert Fresh Traders',
+      partyName: 'Sharma Grain Traders',
+      partyRole: 'Seller',
+      linkedSaudas: [
+        {
+          saudaId: 'SAU-2026-0001',
+          saudaNo: 'SAU-2026-0001',
+          saudaDate: '2026-11-04',
+          saudaType: 'Purchase',
+          commodity: 'Bajra, Jowar',
+          quantityMt: 5,
+          totalAmountInr: 150000,
+        },
+      ],
+      originalCalculatedAmount: 150000,
+      finalAmount: 148500,
+      adjustmentAmount: -1500,
+      adjustmentReason: 'Agreed moisture & cleaning deduction (-₹1,500) per mandi quality test',
+      status: 'Issued',
+      issuedBy: 'Amit Patel (Operations Executive)',
+      issuedAt: '2026-11-12 11:30',
+      createdAt: '2026-11-12 11:30',
+    },
+  ];
+
   private readonly initialPackagingUoms: PackagingUomRecord[] = [
     { id: 'PUOM-001', name: 'Bag', isActive: true, createdAt: '2026-11-01 09:00', updatedAt: '2026-11-01 09:00' },
     { id: 'PUOM-002', name: 'Crate', isActive: true, createdAt: '2026-11-01 09:05', updatedAt: '2026-11-01 09:05' },
@@ -2020,6 +2341,9 @@ export class SaudaErpMockService {
   private stockMovementsSubject = new BehaviorSubject<StockMovementRecord[]>(
     this.initialStockMovements,
   );
+  private invoicesSubject = new BehaviorSubject<InvoiceRecord[]>(
+    this.initialInvoices,
+  );
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -2034,6 +2358,7 @@ export class SaudaErpMockService {
   readonly invSubCategories$ = this.invSubCategoriesSubject.asObservable();
   readonly invProducts$ = this.invProductsSubject.asObservable();
   readonly ledgerSettlements$ = this.ledgerSettlementsSubject.asObservable();
+  readonly invoices$ = this.invoicesSubject.asObservable();
   readonly packagingUoms$ = this.packagingUomsSubject.asObservable();
   readonly weightUoms$ = this.weightUomsSubject.asObservable();
   readonly warehouses$ = this.warehousesSubject.asObservable();
@@ -4551,6 +4876,302 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `${payload.entryKind} of ₹${Number(payload.amountInr).toLocaleString('en-IN')} recorded for ${payload.partyName}.`,
+    };
+  }
+
+  // ── Invoice Management Operations (UC-FIN-01 & UC-FIN-04) ──
+
+  getInvoicesSnapshot(): InvoiceRecord[] {
+    return this.invoicesSubject.value;
+  }
+
+  getInvoiceById(id: string): InvoiceRecord | undefined {
+    return this.invoicesSubject.value.find((inv) => inv.id === id || inv.invoiceNo === id);
+  }
+
+  getEligibleSaudasForInvoicing(
+    clientFirm: string,
+    partyName: string,
+    partyRole?: 'Seller' | 'Buyer',
+  ): SaudaRecord[] {
+    const firm = (clientFirm || '').trim().toLowerCase();
+    const party = (partyName || '').trim().toLowerCase();
+
+    return this.saudasSubject.value.filter((s) => {
+      // BR-IN-03: Only fully fulfilled Saudas are eligible
+      if (s.status !== 'Completed') return false;
+      // BR-IN-02: Sauda can belong to only one invoice
+      if (s.isInvoiced) return false;
+      // BR-IN-01: Must match client firm
+      if (s.clientFirm.trim().toLowerCase() !== firm) return false;
+
+      // Must match party
+      if (partyRole === 'Seller') {
+        if (s.saudaType === 'Sales') return false;
+        const sParty = (s.sellerName || s.partyName).trim().toLowerCase();
+        if (sParty !== party) return false;
+      } else if (partyRole === 'Buyer') {
+        if (s.saudaType === 'Purchase') return false;
+        const bParty = (s.buyerName || s.partyName).trim().toLowerCase();
+        if (bParty !== party) return false;
+      } else {
+        const matches =
+          s.partyName.trim().toLowerCase() === party ||
+          s.sellerName.trim().toLowerCase() === party ||
+          s.buyerName.trim().toLowerCase() === party;
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }
+
+  createInvoice(payload: {
+    clientFirm: string;
+    partyName: string;
+    partyRole: 'Seller' | 'Buyer';
+    saudaIds: string[];
+    finalAmount?: number;
+    adjustmentReason?: string;
+    issuedBy?: string;
+  }): { ok: boolean; message: string; invoice?: InvoiceRecord } {
+    if (!payload.clientFirm || !payload.partyName) {
+      return { ok: false, message: 'Client Firm and Party Name are mandatory.' };
+    }
+    if (!payload.saudaIds || payload.saudaIds.length === 0) {
+      return {
+        ok: false,
+        message: 'Please select at least one eligible Sauda to include in the invoice (BR-IN-04).',
+      };
+    }
+
+    const allSaudas = this.saudasSubject.value;
+    const selectedSaudas = allSaudas.filter((s) => payload.saudaIds.includes(s.id));
+
+    if (selectedSaudas.length !== payload.saudaIds.length) {
+      return { ok: false, message: 'One or more selected Saudas could not be found.' };
+    }
+
+    // BR-IN-01: All Saudas must belong to the selected firm
+    for (const s of selectedSaudas) {
+      if (s.clientFirm.trim().toLowerCase() !== payload.clientFirm.trim().toLowerCase()) {
+        return {
+          ok: false,
+          message: `Sauda ${s.saudaNo} belongs to a different client firm (${s.clientFirm}). All Saudas must belong to ${payload.clientFirm}.`,
+        };
+      }
+      // BR-IN-03: Must be fully fulfilled
+      if (s.status !== 'Completed') {
+        return {
+          ok: false,
+          message: `Sauda ${s.saudaNo} is not fully fulfilled (Current status: ${s.status}). Only fully fulfilled Saudas can be invoiced.`,
+        };
+      }
+      // BR-IN-02: Cannot be invoiced twice
+      if (s.isInvoiced) {
+        return {
+          ok: false,
+          message: `Sauda ${s.saudaNo} is already linked to invoice ${s.invoiceNo}.`,
+        };
+      }
+    }
+
+    const originalSum = selectedSaudas.reduce(
+      (acc, s) => acc + Number(s.totalAmountInr || 0),
+      0,
+    );
+    const finalAmount =
+      payload.finalAmount !== undefined ? Number(payload.finalAmount) : originalSum;
+
+    if (finalAmount <= 0) {
+      return { ok: false, message: 'Final invoice amount must be greater than zero.' };
+    }
+
+    // BR-IN-05: Mandatory adjustment reason if amount changed
+    if (
+      finalAmount !== originalSum &&
+      (!payload.adjustmentReason || !payload.adjustmentReason.trim())
+    ) {
+      return {
+        ok: false,
+        message:
+          'Adjustment Reason is strictly mandatory when invoice amount differs from calculated total (BR-IN-05).',
+      };
+    }
+
+    const nextInvoiceCount = this.invoicesSubject.value.length + 1;
+    const invoiceNo = `INV-2026-${String(nextInvoiceCount).padStart(4, '0')}`;
+    const invoiceId = invoiceNo;
+    const now = this.formatTimestamp();
+    const today = new Date().toISOString().slice(0, 10);
+
+    const linkedSaudas: InvoiceLinkedSauda[] = selectedSaudas.map((s) => ({
+      saudaId: s.id,
+      saudaNo: s.saudaNo,
+      saudaDate: s.saudaDate,
+      saudaType: s.saudaType,
+      commodity: s.commodity,
+      quantityMt: s.quantityMt,
+      totalAmountInr: Number(s.totalAmountInr || 0),
+    }));
+
+    const newInvoice: InvoiceRecord = {
+      id: invoiceId,
+      invoiceNo,
+      invoiceDate: today,
+      clientFirm: payload.clientFirm,
+      partyName: payload.partyName,
+      partyRole: payload.partyRole,
+      linkedSaudas,
+      originalCalculatedAmount: originalSum,
+      finalAmount,
+      adjustmentAmount: finalAmount - originalSum,
+      adjustmentReason: payload.adjustmentReason?.trim() || undefined,
+      status: 'Issued',
+      issuedBy: payload.issuedBy || 'Operations Executive',
+      issuedAt: now,
+      createdAt: now,
+    };
+
+    // Mark linked saudas as isInvoiced
+    const updatedSaudas = allSaudas.map((s) => {
+      if (payload.saudaIds.includes(s.id)) {
+        return {
+          ...s,
+          isInvoiced: true,
+          invoiceId,
+          invoiceNo,
+        };
+      }
+      return s;
+    });
+
+    this.saudasSubject.next(updatedSaudas);
+    this.invoicesSubject.next([newInvoice, ...this.invoicesSubject.value]);
+
+    return {
+      ok: true,
+      message: `Invoice ${invoiceNo} successfully created and issued for ${payload.partyName} (₹${finalAmount.toLocaleString('en-IN')}).`,
+      invoice: newInvoice,
+    };
+  }
+
+  recordPaymentAgainstInvoice(payload: {
+    invoiceId: string;
+    paymentDate: string;
+    paymentAmount: number;
+    paymentMode: PaymentMode;
+    paymentReferenceNo: string;
+    bankDetails: string;
+    receiptAttachmentName?: string;
+    remarks?: string;
+    recordedBy?: string;
+  }): ActionResult {
+    const invoices = this.invoicesSubject.value;
+    const invoiceIndex = invoices.findIndex(
+      (inv) => inv.id === payload.invoiceId || inv.invoiceNo === payload.invoiceId,
+    );
+
+    if (invoiceIndex === -1) {
+      return { ok: false, message: 'Invoice not found in the system.' };
+    }
+
+    const invoice = invoices[invoiceIndex];
+
+    // BR-PAY-01 & BR-PAY-06: Status validation
+    if (invoice.status === 'Paid') {
+      return {
+        ok: false,
+        message: `Invoice ${invoice.invoiceNo} has already been paid and settled.`,
+      };
+    }
+    if (invoice.status !== 'Issued') {
+      return {
+        ok: false,
+        message: `Only invoices in Issued status are eligible for payment recording.`,
+      };
+    }
+
+    // BR-PAY-02, BR-PAY-03, BR-PAY-04: Strict exact match; no partial payments
+    if (Number(payload.paymentAmount) !== Number(invoice.finalAmount)) {
+      return {
+        ok: false,
+        message: `Payment amount (₹${Number(payload.paymentAmount).toLocaleString('en-IN')}) must exactly match the final invoice amount (₹${invoice.finalAmount.toLocaleString('en-IN')}). Partial payments and instalments are not permitted (BR-PAY-02, BR-PAY-04).`,
+      };
+    }
+
+    if (!payload.paymentDate) {
+      return { ok: false, message: 'Payment Date is mandatory.' };
+    }
+    if (!payload.paymentReferenceNo || !payload.paymentReferenceNo.trim()) {
+      return {
+        ok: false,
+        message: 'Payment Reference Number (UTR / Bank Transaction No / Cheque) is mandatory.',
+      };
+    }
+    if (!payload.bankDetails || !payload.bankDetails.trim()) {
+      return {
+        ok: false,
+        message: 'Bank Details (Bank Name, Branch, Account details) are strictly mandatory (BR-PAY-07).',
+      };
+    }
+
+    const payCount = (invoice.paymentDetails ? 1 : 0) + 1;
+    const payId = `PAY-2026-${String(payCount).padStart(4, '0')}-${Date.now().toString().slice(-4)}`;
+    const now = this.formatTimestamp();
+
+    const paymentRecord: InvoicePaymentRecord = {
+      id: payId,
+      invoiceId: invoice.id,
+      invoiceNo: invoice.invoiceNo,
+      paymentDate: payload.paymentDate,
+      paymentAmount: Number(invoice.finalAmount),
+      paymentMode: payload.paymentMode,
+      paymentReferenceNo: payload.paymentReferenceNo.trim(),
+      bankDetails: payload.bankDetails.trim(),
+      receiptAttachmentName: payload.receiptAttachmentName?.trim() || undefined,
+      recordedBy: payload.recordedBy || 'Admin / Operations Executive',
+      recordedAt: now,
+      remarks: payload.remarks?.trim() || `Full payment settlement against invoice ${invoice.invoiceNo}`,
+    };
+
+    const updatedInvoice: InvoiceRecord = {
+      ...invoice,
+      status: 'Paid',
+      paymentDetails: paymentRecord,
+    };
+
+    const updatedInvoices = [...invoices];
+    updatedInvoices[invoiceIndex] = updatedInvoice;
+    this.invoicesSubject.next(updatedInvoices);
+
+    // BR-PAY-07: Update corresponding party ledger
+    const settlementRecord: LedgerSettlementRecord = {
+      id: `TXN-2026-${String(this.ledgerSettlementsSubject.value.length + 1).padStart(4, '0')}`,
+      date: payload.paymentDate,
+      partyName: invoice.partyName,
+      partyRole: invoice.partyRole,
+      clientFirm: invoice.clientFirm,
+      entryKind: invoice.partyRole === 'Seller' ? 'Payment Paid' : 'Payment Received',
+      ledgerSide: invoice.partyRole === 'Seller' ? 'Payable' : 'Receivable',
+      amountInr: Number(invoice.finalAmount),
+      paymentMode: payload.paymentMode,
+      referenceNo: payload.paymentReferenceNo.trim(),
+      saudaNo: invoice.invoiceNo,
+      remarks:
+        payload.remarks?.trim() ||
+        `Full settlement of Invoice ${invoice.invoiceNo} via ${payload.bankDetails}`,
+      recordedBy: payload.recordedBy || 'Sauda Admin',
+      createdAt: now,
+    };
+
+    this.ledgerSettlementsSubject.next([
+      settlementRecord,
+      ...this.ledgerSettlementsSubject.value,
+    ]);
+
+    return {
+      ok: true,
+      message: `Payment of ₹${Number(invoice.finalAmount).toLocaleString('en-IN')} recorded against Invoice ${invoice.invoiceNo}. Invoice marked as Paid.`,
     };
   }
 
