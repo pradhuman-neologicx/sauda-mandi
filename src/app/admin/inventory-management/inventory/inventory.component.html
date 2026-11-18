@@ -3,63 +3,112 @@
   <div class="erp-header">
     <div>
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Inventory Management</div>
-      <h1 class="erp-title">Warehouse Stock</h1>
+      <h1 class="erp-title">Warehouse Stock &amp; Inventory</h1>
       <p class="erp-subtitle">
-        Product-wise stock synced automatically with Product Master &amp; Truck dispatches
+        Physical inventory tracked by Firm + Warehouse + Commodity with Maker-Checker controls
       </p>
     </div>
 
     <div class="erp-actions">
-      <button type="button" class="btn-erp-primary" (click)="openAdjustModal()">
-        <i class="fa-solid fa-boxes-stacked"></i>
-        <span>Stock In / Adjust</span>
+      <!-- Role Switcher Banner -->
+      <div class="role-pill-selector">
+        <span class="role-pill-label">Active Role:</span>
+        <button type="button" class="role-pill-btn" [class.active]="isChecker"
+          (click)="switchActorRole('Business Owner / Admin (Checker)')"
+          title="Full access across all client firms, Checker authority for adjustments">
+          <i class="fa-solid fa-user-shield"></i>
+          <span>Admin (Checker)</span>
+        </button>
+        <button type="button" class="role-pill-btn" [class.active]="isMaker"
+          (click)="switchActorRole('Operations Executive (Maker)')"
+          title="Assigned to Desert Fresh Traders, Maker role for adjustments">
+          <i class="fa-solid fa-user-pen"></i>
+          <span>Operations Exec (Maker)</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-erp-primary" (click)="openCreateAdjModal()">
+        <i class="fa-solid fa-plus-circle"></i>
+        <span>Create Stock Adjustment</span>
       </button>
     </div>
   </div>
 
-  @if (actionMessage) {
-  <div class="alert-erp alert-success-erp mb-3">
-    <i class="fa-solid fa-circle-check me-2"></i>{{ actionMessage }}
+  @if (isMaker) {
+  <div class="alert-erp alert-info-erp mb-3">
+    <i class="fa-solid fa-circle-info me-2"></i>
+    <strong>Operations Executive Scope:</strong> Restricted to your assigned firm:
+    <strong>{{ assignedPrimaryFirm }}</strong>. You can create stock adjustments (Maker role).
   </div>
   }
 
+  <!-- Navigation Tabs -->
+  <div class="inv-tabs-bar mb-3">
+    <button type="button" class="inv-tab-btn" [class.active]="activeTab === 'current-stock'"
+      (click)="setActiveTab('current-stock')">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      <span>Current Stock</span>
+    </button>
+    <button type="button" class="inv-tab-btn" [class.active]="activeTab === 'adjustments'"
+      (click)="setActiveTab('adjustments')">
+      <i class="fa-solid fa-sliders"></i>
+      <span>Stock Adjustments</span>
+      @if (pendingAdjustmentsCount > 0) {
+      <span class="tab-badge-count">{{ pendingAdjustmentsCount }}</span>
+      }
+    </button>
+    <button type="button" class="inv-tab-btn" [class.active]="activeTab === 'history'"
+      (click)="setActiveTab('history')">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Stock Movement History</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: CURRENT STOCK (UC-INV-01)                              -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'current-stock') {
   <!-- KPI Cards -->
   <div class="sauda-kpi-grid">
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Active Stock SKUs</div>
-      <div class="sauda-kpi-val">{{ inventoryList.length }}</div>
-      <div class="sauda-kpi-sub">Product &times; Client Firm lots</div>
+      <div class="sauda-kpi-label">Active Commodities</div>
+      <div class="sauda-kpi-val">{{ totalCommoditiesCount }}</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Quantity (by UOM)</div>
+      <div class="sauda-kpi-val text-break-uom">{{ totalUnitsByUomSummary }}</div>
+
     </div>
 
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Total Net Weight</div>
-      <div class="sauda-kpi-val">{{ totalWeightMt | number: '1.2-2' }} MT</div>
-      <div class="sauda-kpi-sub">Live warehouse weight</div>
+      <div class="sauda-kpi-val">{{ totalStockWeightMt | number: '1.2-2' }} MT</div>
+
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Total Packaging Units</div>
-      <div class="sauda-kpi-val">{{ totalUnits | number }}</div>
-      <div class="sauda-kpi-sub">Crates, boxes, bags &amp; sacks</div>
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Low / Out Alerts</div>
-      <div class="sauda-kpi-val" [class.text-amber]="lowStockCount > 0">
-        {{ lowStockCount }}
+      <div class="sauda-kpi-label">Zero Stock SKUs</div>
+      <div class="sauda-kpi-val" [class.text-amber]="zeroStockCount > 0">
+        {{ zeroStockCount }}
       </div>
-      <div class="sauda-kpi-sub">At or below min threshold</div>
+
     </div>
   </div>
 
-  <!-- Stock Listing Card -->
+  <!-- Current Stock Card -->
   <div class="erp-card">
     <div class="listing-card-top">
       <div class="listing-header-row">
-        <h2 class="listing-card-title">Inventory Stock Listing</h2>
+        <div>
+          <h2 class="listing-card-title">Live Warehouse Balances</h2>
+          <p class="listing-card-sub">
+            Maintained separately for each Warehouse + Commodity + Firm combination
+          </p>
+        </div>
         <div class="table-size-selector">
           <span>Show</span>
-          <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+          <select class="limit-select" [(ngModel)]="stockTableSize" (ngModelChange)="stockPage = 1">
             @for (size of tableSizes; track size) {
             <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
             }
@@ -68,61 +117,79 @@
         </div>
       </div>
 
-      <form (ngSubmit)="onSearch()" class="inv-filter-grid">
-        <div class="filter-field">
+      <!-- Filters (Search button driven) -->
+      <form (ngSubmit)="onStockSearch()" class="inv-filter-grid">
+        <div class="filter-field search-field">
           <label>Search</label>
-          <input type="text" class="erp-input" name="searchTerm" [(ngModel)]="searchTerm"
-            placeholder="Product, commodity or ref..." />
+          <input type="text" class="erp-input" name="stockSearchTerm" [(ngModel)]="stockSearchTerm"
+            placeholder="Warehouse, firm, commodity..." />
         </div>
 
         <div class="filter-field">
-          <label>Category</label>
-          <select class="erp-input" name="categoryFilter" [(ngModel)]="categoryFilter"
-            (ngModelChange)="onCategoryFilterChange()">
-            <option value="All">All Categories</option>
-            @for (cat of categories; track cat.id) {
-            <option [value]="cat.id">{{ cat.name }}</option>
+          <label>Warehouse</label>
+          <select class="erp-input" name="stockWarehouseFilter" [(ngModel)]="stockWarehouseFilter"
+            (ngModelChange)="onStockSearch()">
+            <option value="All">All Warehouses</option>
+            @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.id">
+              {{ wh.name }}{{ wh.isActive ? '' : ' (Inactive)' }}
+            </option>
             }
           </select>
         </div>
 
         <div class="filter-field">
-          <label>Product</label>
-          <select class="erp-input" name="productFilter" [(ngModel)]="productFilter" (ngModelChange)="onSearch()">
-            <option value="All">All Products</option>
-            @for (prod of filteredProductsForFilter; track prod.id) {
-            <option [value]="prod.id">{{ prod.name }}</option>
+          <label>Commodity</label>
+          <select class="erp-input" name="stockCommodityFilter" [(ngModel)]="stockCommodityFilter"
+            (ngModelChange)="onStockSearch()">
+            <option value="All">All Commodities</option>
+            @for (c of commodities; track c.id) {
+            <option [value]="c.name">{{ c.name }}</option>
             }
           </select>
         </div>
 
+        <div class="filter-field">
+          <label>Packaging UOM</label>
+          <select class="erp-input" name="stockUomFilter" [(ngModel)]="stockUomFilter"
+            (ngModelChange)="onStockSearch()">
+            <option value="All">All UOMs</option>
+            @for (u of packagingUoms; track u) {
+            <option [value]="u">{{ u }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Stock Availability</label>
+          <select class="erp-input" name="stockAvailabilityFilter" [(ngModel)]="stockAvailabilityFilter"
+            (ngModelChange)="onStockSearch()">
+            <option value="All">All Stock</option>
+            <option value="Available Stock">Available Stock (&gt; 0)</option>
+            <option value="Zero Stock">Zero Stock (= 0)</option>
+          </select>
+        </div>
+
+        @if (isChecker) {
         <div class="filter-field">
           <label>Client Firm</label>
-          <select class="erp-input" name="firmFilter" [(ngModel)]="firmFilter" (ngModelChange)="onSearch()">
-            <option value="All">All Firms</option>
-            @for (firm of firms; track firm.id) {
-            <option [value]="firm.name">{{ firm.name }}</option>
+          <select class="erp-input" name="stockFirmFilter" [(ngModel)]="stockFirmFilter"
+            (ngModelChange)="onStockSearch()">
+            <option value="All">All Client Firms</option>
+            @for (f of firms; track f.id) {
+            <option [value]="f.name">{{ f.name }}</option>
             }
           </select>
         </div>
-
-        <div class="filter-field">
-          <label>Stock Status</label>
-          <select class="erp-input" name="statusFilter" [(ngModel)]="statusFilter" (ngModelChange)="onSearch()">
-            <option value="All">All Statuses</option>
-            <option value="Healthy">Healthy</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
-          </select>
-        </div>
+        }
 
         <div class="filter-btn-col">
           <button type="submit" class="btn-erp-primary">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search</span>
           </button>
-          @if (showReset) {
-          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+          @if (showStockReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetStockFilters()" title="Reset filters">
             <i class="fa-solid fa-rotate-left"></i>
           </button>
           }
@@ -130,78 +197,96 @@
       </form>
     </div>
 
+    <!-- Table -->
     <div class="table-responsive">
       <table class="erp-table">
         <thead>
           <tr>
-            <th>Product</th>
-            <th>Category</th>
+            <th class="w-sno">S.No.</th>
+            <th>Warehouse</th>
             <th>Client Firm</th>
-            <th class="text-end">Available Units</th>
-            <th class="text-end">Available Weight</th>
-            <th class="text-end">Min Threshold</th>
-            <th>Last Updated</th>
-            <th>Status</th>
-            <th class="text-center">Actions</th>
+            <th>Commodity / Product</th>
+            <th>Packaging UOM</th>
+            <th class="text-end">Available Quantity</th>
+            <th class="text-end">Total Weight (MT)</th>
+            <th class="text-end">Avg Weight (KG)</th>
+            <th>Stock Status</th>
+            <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           @for (
-          item of filteredList
-          | paginate
-          : {
-          itemsPerPage: pageSize,
-          currentPage: page,
-          };
-          track item.id
+          item of filteredInventory
+          | paginate: { itemsPerPage: stockPageSize, currentPage: stockPage, id: 'stock-pg' };
+          track item.id;
+          let i = $index
           ) {
           <tr>
-            <td>
-              <div class="fw-semibold text-dark">
-                {{ item.productName || item.commodity }}
-              </div>
-              <div class="sub-cell">Commodity: {{ item.commodity }}</div>
+            <td class="w-sno text-muted">
+              {{ (stockPage - 1) * stockPageSize + i + 1 }}
             </td>
             <td>
-              <div class="fw-semibold text-dark">
-                {{ item.categoryName || 'Uncategorized' }}
-              </div>
-              <div class="sub-cell">{{ item.subCategoryName || '—' }}</div>
+              <div class="fw-medium text-dark">{{ item.warehouseName }}</div>
+              @if (!item.isActiveWarehouse) {
+              <span class="badge-tag badge-tag-muted">Inactive Warehouse</span>
+              }
             </td>
-            <td>{{ item.clientFirm }}</td>
-            <td class="text-end num fw-semibold">
-              {{ item.availableUnits | number }} {{ item.packagingUom }}
-            </td>
-            <td class="text-end num fw-semibold">
-              {{ item.availableWeightMt | number: '1.2-3' }} MT
-            </td>
-            <td class="text-end num">
-              {{ item.minThresholdMt | number: '1.1-2' }} MT
-            </td>
-            <td class="num">{{ item.lastUpdated }}</td>
             <td>
-              <span class="status-badge" [ngClass]="getStatusBadgeClass(getStockStatus(item))">
-                {{ getStockStatus(item) }}
+              <span class="fw-semibold">{{ item.clientFirm }}</span>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ item.commodity }}</div>
+              @if (item.productName && item.productName !== item.commodity) {
+              <div class="text-xs text-muted">{{ item.productName }}</div>
+              }
+            </td>
+            <td>
+              <span class="badge-uom">{{ item.packagingUom }}</span>
+            </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-muted]="item.availableUnits === 0"
+                [class.text-dark]="item.availableUnits > 0">
+                {{ item.availableUnits | number }}
               </span>
             </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-muted]="item.availableWeightMt === 0"
+                [class.text-dark]="item.availableWeightMt > 0">
+                {{ item.availableWeightMt | number: '1.2-3' }} MT
+              </span>
+            </td>
+            <td class="text-end text-muted">
+              {{ item.averageWeightKg | number: '1.1-2' }} kg
+            </td>
+            <td>
+              @if (item.availableUnits > 0 && item.availableWeightMt > 0) {
+              <span class="badge-erp badge-green">
+                <i class="fa-solid fa-circle-check me-1"></i>Available Stock
+              </span>
+              } @else {
+              <span class="badge-erp badge-gray">
+                <i class="fa-solid fa-circle-xmark me-1"></i>Zero Stock
+              </span>
+              }
+            </td>
             <td class="text-center">
-              <div class="action-group">
-                <button type="button" class="icon-btn btn-edit" title="Stock In / Out Adjust"
-                  (click)="openAdjustModal(item)">
-                  <i class="fa-solid fa-plus-minus"></i>
-                </button>
-                <button type="button" class="icon-btn btn-history" title="Movement History"
-                  (click)="openHistoryModal(item)">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                </button>
-              </div>
+              <button type="button" class="btn-row-action" (click)="openCreateAdjModal(item)"
+                title="Create Stock Adjustment for this lot">
+                <i class="fa-solid fa-sliders me-1"></i>
+                <span>Adjust</span>
+              </button>
             </td>
           </tr>
           } @empty {
           <tr>
-            <td colspan="9" class="empty-state">
-              <i class="fa-solid fa-warehouse mb-2"></i>
-              <div>No inventory records match the selected filters.</div>
+            <td colspan="10" class="erp-table-empty">
+              <i class="fa-solid fa-boxes-stacked"></i>
+              <p>No inventory balance records match your filter criteria.</p>
+              @if (showStockReset) {
+              <button type="button" class="btn-erp-ghost mt-2" (click)="resetStockFilters()">
+                Reset All Filters
+              </button>
+              }
             </td>
           </tr>
           }
@@ -209,214 +294,838 @@
       </table>
     </div>
 
-    <div class="table-footer">
-      <div class="pagination-info">
-        Showing {{ filteredList.length }} of {{ inventoryList.length }} stock record(s)
+    <!-- Pagination -->
+    @if (filteredInventory.length > 0) {
+    <div class="erp-pagination-bar">
+      <div class="text-xs text-muted">
+        Showing {{ (stockPage - 1) * stockPageSize + 1 }} to
+        {{ stockTableSize === 'all' ? filteredInventory.length : Math.min(stockPage * stockPageSize,
+        filteredInventory.length) }}
+        of {{ filteredInventory.length }} entries
       </div>
-      <pagination-controls (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
-        class="my-pagination"></pagination-controls>
+      <pagination-controls id="stock-pg" (pageChange)="stockPage = $event" [maxSize]="5" [responsive]="true"
+        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: STOCK ADJUSTMENTS & APPROVALS (UC-INV-04 / UC-INV-05)  -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'adjustments') {
+  <div class="erp-card">
+    <div class="listing-card-top">
+      <div class="listing-header-row">
+        <div>
+          <h2 class="listing-card-title">Stock Adjustments</h2>
+          <p class="listing-card-sub">
+            Maker-Checker workflow for manual corrections. Only Approved adjustments impact live stock.
+          </p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <!-- Sub-view Pill Toggle -->
+          <div class="subview-pills">
+            <button type="button" class="subview-btn" [class.active]="adjSubView === 'pending'"
+              (click)="setAdjSubView('pending')">
+              <span>Pending Review</span>
+              @if (pendingAdjustmentsCount > 0) {
+              <span class="subview-badge">{{ pendingAdjustmentsCount }}</span>
+              }
+            </button>
+            <button type="button" class="subview-btn" [class.active]="adjSubView === 'history'"
+              (click)="setAdjSubView('history')">
+              <span>Adjustment History</span>
+            </button>
+          </div>
+
+          <div class="table-size-selector">
+            <span>Show</span>
+            <select class="limit-select" [(ngModel)]="adjTableSize" (ngModelChange)="adjPage = 1">
+              @for (size of tableSizes; track size) {
+              <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <form (ngSubmit)="onAdjSearch()" class="inv-filter-grid">
+        <div class="filter-field search-field">
+          <label>Search</label>
+          <input type="text" class="erp-input" name="adjSearchTerm" [(ngModel)]="adjSearchTerm"
+            placeholder="Adj Ref, commodity, maker..." />
+        </div>
+
+        <div class="filter-field">
+          <label>Warehouse</label>
+          <select class="erp-input" name="adjWarehouseFilter" [(ngModel)]="adjWarehouseFilter"
+            (ngModelChange)="onAdjSearch()">
+            <option value="All">All Warehouses</option>
+            @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+
+        @if (isChecker) {
+        <div class="filter-field">
+          <label>Client Firm</label>
+          <select class="erp-input" name="adjFirmFilter" [(ngModel)]="adjFirmFilter" (ngModelChange)="onAdjSearch()">
+            <option value="All">All Client Firms</option>
+            @for (f of firms; track f.id) {
+            <option [value]="f.name">{{ f.name }}</option>
+            }
+          </select>
+        </div>
+        }
+
+        <div class="filter-btn-col">
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+          </button>
+          @if (showAdjReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetAdjFilters()" title="Reset filters">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+          }
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Reference No</th>
+            <th>Adjustment Date</th>
+            <th>Warehouse &amp; Firm</th>
+            <th>Commodity</th>
+            <th>Type</th>
+            <th class="text-end">Quantity</th>
+            <th class="text-end">Total Weight</th>
+            <th class="text-end">Avg Weight</th>
+            <th>Maker</th>
+            <th>Status</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+          adj of filteredAdjustments
+          | paginate: { itemsPerPage: adjPageSize, currentPage: adjPage, id: 'adj-pg' };
+          track adj.id
+          ) {
+          <tr>
+            <td>
+              <span class="fw-bold font-monospace text-primary">{{ adj.adjNo }}</span>
+              <div class="text-xs text-muted">{{ adj.submittedAt }}</div>
+            </td>
+            <td>
+              <div class="fw-medium text-dark">{{ adj.adjustmentDate }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ adj.warehouseName }}</div>
+              <div class="text-xs text-muted">{{ adj.clientFirm }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ adj.commodity }}</div>
+              <span class="badge-uom">{{ adj.packagingUom }}</span>
+            </td>
+            <td>
+              @if (adj.adjustmentType === 'Increase') {
+              <span class="badge-erp badge-green">
+                <i class="fa-solid fa-arrow-trend-up me-1"></i>Increase (+In)
+              </span>
+              } @else {
+              <span class="badge-erp badge-amber">
+                <i class="fa-solid fa-arrow-trend-down me-1"></i>Decrease (-Out)
+              </span>
+              }
+            </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-pos]="adj.adjustmentType === 'Increase'"
+                [class.text-neg]="adj.adjustmentType === 'Decrease'">
+                {{ adj.adjustmentType === 'Increase' ? '+' : '-' }}{{ adj.quantity | number }}
+              </span>
+            </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-pos]="adj.adjustmentType === 'Increase'"
+                [class.text-neg]="adj.adjustmentType === 'Decrease'">
+                {{ adj.adjustmentType === 'Increase' ? '+' : '-' }}{{ adj.totalWeightMt | number: '1.2-3' }} MT
+              </span>
+            </td>
+            <td class="text-end text-muted">
+              {{ adj.averageWeightKg | number: '1.1-2' }} kg
+            </td>
+            <td>
+              <div class="text-xs fw-semibold text-dark">{{ adj.makerName }}</div>
+              <div class="text-xxs text-muted">{{ adj.makerRole }}</div>
+            </td>
+            <td>
+              @if (adj.status === 'Pending Approval') {
+              <span class="badge-erp badge-amber">
+                <i class="fa-solid fa-hourglass-half me-1"></i>Pending Review
+              </span>
+              } @else if (adj.status === 'Approved') {
+              <span class="badge-erp badge-green">
+                <i class="fa-solid fa-circle-check me-1"></i>Approved
+              </span>
+              } @else {
+              <span class="badge-erp badge-red">
+                <i class="fa-solid fa-circle-xmark me-1"></i>Rejected
+              </span>
+              }
+            </td>
+            <td class="text-center">
+              @if (adj.status === 'Pending Approval') {
+              <button type="button" class="btn-row-action" (click)="openReviewAdjModal(adj)"
+                title="Review adjustment request">
+                <i class="fa-solid fa-clipboard-check me-1"></i>
+                <span>Review</span>
+              </button>
+              } @else {
+              <button type="button" class="btn-row-action btn-row-ghost" (click)="openReviewAdjModal(adj)"
+                title="View request details">
+                <i class="fa-solid fa-eye me-1"></i>
+                <span>View</span>
+              </button>
+              }
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="11" class="erp-table-empty">
+              <i class="fa-solid fa-sliders"></i>
+              <p>
+                No {{ adjSubView === 'pending' ? 'Pending Approval' : 'historical' }} stock adjustments found.
+              </p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (filteredAdjustments.length > 0) {
+    <div class="erp-pagination-bar">
+      <div class="text-xs text-muted">
+        Showing {{ (adjPage - 1) * adjPageSize + 1 }} to
+        {{ adjTableSize === 'all' ? filteredAdjustments.length : Math.min(adjPage * adjPageSize,
+        filteredAdjustments.length) }}
+        of {{ filteredAdjustments.length }} entries
+      </div>
+      <pagination-controls id="adj-pg" (pageChange)="adjPage = $event" [maxSize]="5" [responsive]="true"
+        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: STOCK MOVEMENT HISTORY (UC-INV-06)                     -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'history') {
+  <!-- Movement KPI Cards -->
+  <div class="sauda-kpi-grid">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Stock In (Inflow)</div>
+      <div class="sauda-kpi-val text-pos">{{ totalStockInKpi.weightMt | number: '1.2-2' }} MT</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Stock Out (Outflow)</div>
+      <div class="sauda-kpi-val text-neg">{{ totalStockOutKpi.weightMt | number: '1.2-2' }} MT</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Net Stock Movement</div>
+      <div class="sauda-kpi-val">
+        {{ netStockMovementKpi.weightMt >= 0 ? '+' : '' }}{{ netStockMovementKpi.weightMt | number: '1.2-2' }} MT
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Stock In / Adjust Modal -->
-@if (showAdjustModal) {
-<div class="modal-backdrop-erp" (click)="closeAdjustModal()">
-  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
-    <div class="modal-header-erp">
-      <div>
-        <h3 class="modal-title-erp">Stock In / Stock Adjustment</h3>
-        <p class="modal-sub-erp">
-          Select from Product Master to adjust warehouse balance
-        </p>
+  <div class="erp-card">
+    <div class="listing-card-top">
+      <div class="listing-header-row">
+        <div>
+          <h2 class="listing-card-title">Completed Stock Movements Audit Trail</h2>
+          <p class="listing-card-sub">
+            Chronological log of completed Purchase Receipts, Sales Dispatches, and Approved Stock Adjustments
+          </p>
+        </div>
+        <div class="table-size-selector">
+          <span>Show</span>
+          <select class="limit-select" [(ngModel)]="movTableSize" (ngModelChange)="movPage = 1">
+            @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+            }
+          </select>
+          <span>entries</span>
+        </div>
       </div>
-      <button type="button" class="close-btn" (click)="closeAdjustModal()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
 
-    <form (ngSubmit)="submitAdjustment()" class="modal-body-erp">
-      @if (formError) {
-      <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
-      }
+      <!-- Filters (Search button driven) -->
+      <form (ngSubmit)="onMovSearch()" class="inv-filter-grid">
+        <div class="filter-field search-field">
+          <label>Search</label>
+          <input type="text" class="erp-input" name="movSearchTerm" [(ngModel)]="movSearchTerm"
+            placeholder="Ref No, truck, commodity..." />
+        </div>
 
-      <div class="form-grid-2">
-        <div class="field-group">
-          <label>Movement Action <span class="req">*</span></label>
-          <select class="erp-input" name="action" [(ngModel)]="adjustForm.action">
+        <div class="filter-field">
+          <label>Warehouse</label>
+          <select class="erp-input" name="movWarehouseFilter" [(ngModel)]="movWarehouseFilter"
+            (ngModelChange)="onMovSearch()">
+            <option value="All">All Warehouses</option>
+            @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.name">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Commodity</label>
+          <select class="erp-input" name="movCommodityFilter" [(ngModel)]="movCommodityFilter"
+            (ngModelChange)="onMovSearch()">
+            <option value="All">All Commodities</option>
+            @for (c of commodities; track c.id) {
+            <option [value]="c.name">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Movement Type</label>
+          <select class="erp-input" name="movTypeFilter" [(ngModel)]="movTypeFilter" (ngModelChange)="onMovSearch()">
+            <option value="All">All Types</option>
+            <option value="Purchase Receipt">Purchase Receipt</option>
+            <option value="Sales Dispatch">Sales Dispatch</option>
+            <option value="Stock Adjustment">Stock Adjustment</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Movement Direction</label>
+          <select class="erp-input" name="movDirectionFilter" [(ngModel)]="movDirectionFilter"
+            (ngModelChange)="onMovSearch()">
+            <option value="All">All Directions</option>
             <option value="Stock In">Stock In (+)</option>
             <option value="Stock Out">Stock Out (-)</option>
           </select>
         </div>
 
-        <div class="field-group">
-          <label>Client Firm <span class="req">*</span></label>
-          <select class="erp-input" name="clientFirm" [(ngModel)]="adjustForm.clientFirm">
-            @for (firm of firms; track firm.id) {
-            <option [value]="firm.name">{{ firm.name }}</option>
+        @if (isChecker) {
+        <div class="filter-field">
+          <label>Client Firm</label>
+          <select class="erp-input" name="movFirmFilter" [(ngModel)]="movFirmFilter" (ngModelChange)="onMovSearch()">
+            <option value="All">All Client Firms</option>
+            @for (f of firms; track f.id) {
+            <option [value]="f.name">{{ f.name }}</option>
             }
           </select>
         </div>
+        }
 
-        <div class="field-group">
-          <label>Filter by Category</label>
-          <select class="erp-input" name="modalCategoryId" [(ngModel)]="modalCategoryId"
-            (ngModelChange)="onModalCategoryChange()">
-            <option value="All">All Categories</option>
-            @for (cat of activeCategories; track cat.id) {
-            <option [value]="cat.id">{{ cat.name }}</option>
+        <div class="filter-field">
+          <label>From Date</label>
+          <input type="date" class="erp-input" name="movFromDate" [(ngModel)]="movFromDate"
+            (ngModelChange)="onMovSearch()" />
+        </div>
+
+        <div class="filter-field">
+          <label>To Date</label>
+          <input type="date" class="erp-input" name="movToDate" [(ngModel)]="movToDate"
+            (ngModelChange)="onMovSearch()" />
+        </div>
+
+        <div class="filter-btn-col">
+          <button type="submit" class="btn-erp-primary">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+          </button>
+          @if (showMovReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetMovFilters()" title="Reset filters">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+          }
+        </div>
+      </form>
+    </div>
+
+    <!-- Movement Table -->
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Movement Ref</th>
+            <th>Date &amp; Recorded At</th>
+            <th>Direction &amp; Type</th>
+            <th>Firm &amp; Warehouse</th>
+            <th>Commodity</th>
+            <th class="text-end">Quantity &amp; UOM</th>
+            <th class="text-end">Total Weight</th>
+            <th class="text-end">Avg Weight</th>
+            <th>Source / Truck Ref</th>
+            <th>Recorded By</th>
+            <th class="text-end">Balance After</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+          m of filteredMovements
+          | paginate: { itemsPerPage: movPageSize, currentPage: movPage, id: 'mov-pg' };
+          track m.id
+          ) {
+          <tr>
+            <td>
+              <span class="fw-bold font-monospace text-primary">{{ m.movementNo }}</span>
+            </td>
+            <td>
+              <div class="fw-medium text-dark">{{ m.movementDate }}</div>
+              <div class="text-xs text-muted">{{ m.recordedAt }}</div>
+            </td>
+            <td>
+              @if (m.movementDirection === 'Stock In') {
+              <span class="badge-erp badge-green">
+                <i class="fa-solid fa-arrow-down me-1"></i>Stock In
+              </span>
+              } @else {
+              <span class="badge-erp badge-amber">
+                <i class="fa-solid fa-arrow-up me-1"></i>Stock Out
+              </span>
+              }
+              <div class="text-xxs text-muted mt-1">{{ m.movementType }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ m.warehouseName }}</div>
+              <div class="text-xs text-muted">{{ m.clientFirm }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ m.commodity }}</div>
+            </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-pos]="m.movementDirection === 'Stock In'"
+                [class.text-neg]="m.movementDirection === 'Stock Out'">
+                {{ m.movementDirection === 'Stock In' ? '+' : '-' }}{{ m.quantity | number }}
+              </span>
+              <span class="text-xs text-muted ms-1">{{ m.packagingUom }}</span>
+            </td>
+            <td class="text-end">
+              <span class="fw-bold" [class.text-pos]="m.movementDirection === 'Stock In'"
+                [class.text-neg]="m.movementDirection === 'Stock Out'">
+                {{ m.movementDirection === 'Stock In' ? '+' : '-' }}{{ m.totalWeightMt | number: '1.2-3' }} MT
+              </span>
+            </td>
+            <td class="text-end text-muted">
+              {{ m.averageWeightKg | number: '1.1-2' }} kg
+            </td>
+            <td>
+              <div class="fw-medium text-dark">{{ m.sourceRef }}</div>
+              @if (m.truckNo) {
+              <div class="text-xs text-muted"><i class="fa-solid fa-truck me-1"></i>{{ m.truckNo }}</div>
+              }
+            </td>
+            <td>
+              <div class="text-xs fw-semibold text-dark">{{ m.recordedBy }}</div>
+              @if (m.makerCheckerDetails) {
+              <div class="text-xxs text-muted">{{ m.makerCheckerDetails }}</div>
+              }
+            </td>
+            <td class="text-end">
+              <div class="fw-bold text-dark">{{ m.stockBalanceUnitsAfter | number }} {{ m.packagingUom }}</div>
+              <div class="text-xs text-muted">{{ m.stockBalanceWeightMtAfter | number: '1.2-3' }} MT</div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="11" class="erp-table-empty">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <p>No completed stock movements match your filter criteria.</p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (filteredMovements.length > 0) {
+    <div class="erp-pagination-bar">
+      <div class="text-xs text-muted">
+        Showing {{ (movPage - 1) * movPageSize + 1 }} to
+        {{ movTableSize === 'all' ? filteredMovements.length : Math.min(movPage * movPageSize, filteredMovements.length)
+        }}
+        of {{ filteredMovements.length }} entries
+      </div>
+      <pagination-controls id="mov-pg" (pageChange)="movPage = $event" [maxSize]="5" [responsive]="true"
+        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- MODAL: CREATE STOCK ADJUSTMENT (UC-INV-04)                    -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (showCreateAdjModal) {
+  <div class="modal-backdrop-erp" (click)="closeCreateAdjModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Create Stock Adjustment Request</h3>
+          <p class="modal-sub-erp">
+            Adjust physical inventory for a single Firm, Warehouse and Commodity (UC-INV-04)
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeCreateAdjModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        @if (createAdjError) {
+        <div class="alert-erp alert-danger-erp mb-3">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ createAdjError }}
+        </div>
+        }
+
+        <div class="modal-form-grid">
+          <!-- Client Firm -->
+          <div class="field-group">
+            <label class="erp-label">Client Firm *</label>
+            @if (isMaker) {
+            <input type="text" class="erp-input bg-light" [value]="assignedPrimaryFirm" disabled />
+            } @else {
+            <select class="erp-input" [(ngModel)]="createAdjForm.clientFirm" (ngModelChange)="createAdjError = ''">
+              @for (f of firms; track f.id) {
+              <option [value]="f.name">{{ f.name }}</option>
+              }
+            </select>
             }
-          </select>
+          </div>
+
+          <!-- Warehouse -->
+          <div class="field-group">
+            <label class="erp-label">Warehouse *</label>
+            <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId" (ngModelChange)="createAdjError = ''">
+              @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">
+                {{ wh.name }}{{ wh.isActive ? '' : ' (Inactive)' }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Commodity -->
+          <div class="field-group">
+            <label class="erp-label">Commodity *</label>
+            <select class="erp-input" [(ngModel)]="createAdjForm.commodity" (ngModelChange)="createAdjError = ''">
+              @for (c of commodities; track c.id) {
+              <option [value]="c.name">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Adjustment Date -->
+          <div class="field-group">
+            <label class="erp-label">Adjustment Date *</label>
+            <input type="date" class="erp-input" [(ngModel)]="createAdjForm.adjustmentDate" />
+          </div>
+
+          <!-- Live Stock Info Callout -->
+          <div class="field-group span-2">
+            <div class="live-stock-callout">
+              <div class="callout-label">Live Available Stock:</div>
+              @if (liveSelectedStock) {
+              <div class="callout-val text-dark">
+                <strong>{{ liveSelectedStock.availableUnits | number }} {{ liveSelectedStock.packagingUom }}s</strong>
+                &bull; {{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT
+                <span class="text-muted ms-2">(Avg {{ liveSelectedStock.averageWeightKg | number: '1.1-2' }}
+                  kg/unit)</span>
+              </div>
+              } @else {
+              <div class="callout-val text-muted">
+                <em>No existing stock record in selected warehouse (Empty lot / 0 units).</em>
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Adjustment Type -->
+          <div class="field-group span-2">
+            <label class="erp-label">Adjustment Type *</label>
+            <div class="adj-type-toggle">
+              <label class="type-radio-btn" [class.selected]="createAdjForm.adjustmentType === 'Increase'">
+                <input type="radio" name="adjType" value="Increase" [(ngModel)]="createAdjForm.adjustmentType" />
+                <i class="fa-solid fa-arrow-trend-up text-pos me-2"></i>
+                <div>
+                  <strong>Increase (Stock In)</strong>
+                  <div class="text-xxs text-muted">Found excess stock, weighbridge correction, inward lot</div>
+                </div>
+              </label>
+
+              <label class="type-radio-btn" [class.selected]="createAdjForm.adjustmentType === 'Decrease'">
+                <input type="radio" name="adjType" value="Decrease" [(ngModel)]="createAdjForm.adjustmentType" />
+                <i class="fa-solid fa-arrow-trend-down text-neg me-2"></i>
+                <div>
+                  <strong>Decrease (Stock Out)</strong>
+                  <div class="text-xxs text-muted">Damaged bags, spillage write-off, short delivery write-off</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Packaging UOM -->
+          <div class="field-group">
+            <label class="erp-label">Packaging UOM *</label>
+            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom">
+              @for (u of packagingUoms; track u) {
+              <option [value]="u">{{ u }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Quantity (Units) -->
+          <div class="field-group">
+            <label class="erp-label">Quantity (Units) *</label>
+            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" placeholder="e.g. 50" />
+          </div>
+
+          <!-- Total Weight (MT) -->
+          <div class="field-group">
+            <label class="erp-label">Total Weight (MT) *</label>
+            <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt"
+              placeholder="e.g. 2.500" />
+          </div>
+
+          <!-- Average Weight (Calculated) -->
+          <div class="field-group">
+            <label class="erp-label">Calculated Avg Weight</label>
+            <div class="erp-input bg-light d-flex align-items-center">
+              <span class="fw-bold">{{ computedAverageWeightKg | number: '1.1-2' }}</span>
+              <span class="text-muted ms-1">kg / unit</span>
+            </div>
+          </div>
+
+          <!-- Mandatory Reason -->
+          <div class="field-group span-2">
+            <label class="erp-label">Reason for Stock Adjustment *</label>
+            <textarea class="erp-input" rows="3" [(ngModel)]="createAdjForm.reason"
+              placeholder="Provide a clear operational reason for this stock adjustment (mandatory for audit)..."></textarea>
+          </div>
         </div>
 
-        <div class="field-group">
-          <label>Product <span class="req">*</span></label>
-          <select class="erp-input" name="productId" [(ngModel)]="adjustForm.productId"
-            (ngModelChange)="onModalProductChange($event)">
-            @for (prod of filteredProductsForModal; track prod.id) {
-            <option [value]="prod.id">
-              {{ prod.name }} ({{ getCategoryNameForProduct(prod) }})
-            </option>
-            }
-          </select>
-        </div>
 
-        <div class="field-group">
-          <label>
-            Packaging Units ({{ adjustForm.packagingUom }}) <span class="req">*</span>
-          </label>
-          <input type="number" min="1" class="erp-input" name="units" [(ngModel)]="adjustForm.units"
-            placeholder="e.g. 50" />
-        </div>
-
-        <div class="field-group">
-          <label>Weight (MT) <span class="req">*</span></label>
-          <input type="number" min="0.01" step="0.01" class="erp-input" name="weightMt"
-            [(ngModel)]="adjustForm.weightMt" placeholder="e.g. 2.5" />
-        </div>
-
-        <div class="field-group">
-          <label>Packaging UOM</label>
-          <select class="erp-input" name="packagingUom" [(ngModel)]="adjustForm.packagingUom">
-            @for (u of packagingUoms; track u) {
-            <option [value]="u">{{ u }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="field-group">
-          <label>Min Threshold (MT)</label>
-          <input type="number" min="0" step="0.5" class="erp-input" name="minThresholdMt"
-            [(ngModel)]="adjustForm.minThresholdMt" />
-        </div>
-
-        <div class="field-group inv-span-2">
-          <label>Reference No.</label>
-          <input type="text" class="erp-input" name="referenceNo" [(ngModel)]="adjustForm.referenceNo"
-            placeholder="e.g. GRN-2026-005 or OPENING-STK" />
-        </div>
-
-        <div class="field-group inv-span-2">
-          <label>Remarks</label>
-          <textarea rows="2" class="erp-input" name="remarks" [(ngModel)]="adjustForm.remarks"
-            placeholder="Reason or warehouse lot details..."></textarea>
-        </div>
       </div>
 
       <div class="modal-footer-erp">
-        <button type="button" class="btn-erp-ghost" (click)="closeAdjustModal()">
+        <button type="button" class="btn-erp-ghost" (click)="closeCreateAdjModal()">
           Cancel
         </button>
-        <button type="submit" class="btn-erp-primary">
-          <i class="fa-solid fa-check"></i>
-          <span>Save Stock Movement</span>
+        <button type="button" class="btn-erp-primary" (click)="submitCreateAdjustment()">
+          <i class="fa-solid fa-paper-plane me-1"></i>
+          Submit Adjustment Request
         </button>
       </div>
-    </form>
-  </div>
-</div>
-}
-
-<!-- Movement History Modal -->
-@if (selectedHistoryItem) {
-<div class="modal-backdrop-erp" (click)="closeHistoryModal()">
-  <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
-    <div class="modal-header-erp">
-      <div>
-        <h3 class="modal-title-erp">
-          Stock Movement Ledger &bull;
-          {{ selectedHistoryItem.productName || selectedHistoryItem.commodity }}
-        </h3>
-        <p class="modal-sub-erp">
-          {{ selectedHistoryItem.categoryName || 'Uncategorized' }}
-          &bull; {{ selectedHistoryItem.subCategoryName || '—' }}
-          &bull; {{ selectedHistoryItem.clientFirm }}
-          &bull; Current:
-          {{ selectedHistoryItem.availableUnits | number }}
-          {{ selectedHistoryItem.packagingUom }} /
-          {{ selectedHistoryItem.availableWeightMt | number: '1.2-3' }} MT
-        </p>
-      </div>
-      <button type="button" class="close-btn" (click)="closeHistoryModal()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
     </div>
+  </div>
+  }
 
-    <div class="modal-body-erp">
-      <div class="table-responsive">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th>Date &amp; Time</th>
-              <th>Action</th>
-              <th>Reference</th>
-              <th class="text-end">Units Change</th>
-              <th class="text-end">Weight Change</th>
-              <th>Remarks</th>
-              <th>Done By</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (log of selectedHistoryItem.logs; track log.id) {
-            <tr>
-              <td class="num">{{ log.date }}</td>
-              <td>
-                <span class="status-badge" [ngClass]="
-                        log.action === 'Stock In'
-                          ? 'badge-green'
-                          : log.action === 'Stock Out'
-                            ? 'badge-amber'
-                            : 'badge-blue'
-                      ">
-                  {{ log.action }}
-                </span>
-              </td>
-              <td class="fw-semibold text-dark">{{ log.referenceNo }}</td>
-              <td class="text-end num fw-semibold" [ngClass]="log.unitsChange >= 0 ? 'text-pos' : 'text-neg'">
-                {{ log.unitsChange >= 0 ? '+' : '' }}{{ log.unitsChange }}
-              </td>
-              <td class="text-end num fw-semibold" [ngClass]="log.weightMtChange >= 0 ? 'text-pos' : 'text-neg'">
-                {{ log.weightMtChange >= 0 ? '+' : ''
-                }}{{ log.weightMtChange | number: '1.2-3' }} MT
-              </td>
-              <td>{{ log.remarks }}</td>
-              <td>{{ log.doneBy }}</td>
-            </tr>
-            } @empty {
-            <tr>
-              <td colspan="7" class="empty-state">No movement logs yet.</td>
-            </tr>
-            }
-          </tbody>
-        </table>
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- MODAL: REVIEW / DECISION ON STOCK ADJUSTMENT (UC-INV-05)       -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (showReviewAdjModal && selectedAdj) {
+  <div class="modal-backdrop-erp" (click)="closeReviewAdjModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            Review Stock Adjustment &bull; {{ selectedAdj.adjNo }}
+          </h3>
+          <p class="modal-sub-erp">
+            Review submitted request details and approve or reject
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeReviewAdjModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        @if (reviewError) {
+        <div class="alert-erp alert-danger-erp mb-3">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ reviewError }}
+        </div>
+        }
+
+        <!-- Segregation of Duties Check -->
+        @if (isChecker && selectedAdj.status === 'Pending Approval' && currentActorName.toLowerCase() ===
+        selectedAdj.makerName.toLowerCase()) {
+        <div class="alert-erp alert-danger-erp mb-3">
+          <i class="fa-solid fa-hand me-2"></i>
+          <strong>Segregation of Duties Enforced:</strong> You ({{ currentActorName }}) submitted this request. As the
+          Maker, you cannot approve or reject your own request. Another Admin must review this adjustment.
+        </div>
+        }
+
+        <!-- Details Grid -->
+        <div class="review-details-grid">
+          <div class="review-item">
+            <span class="label">Reference No:</span>
+            <span class="val font-monospace text-primary fw-bold">{{ selectedAdj.adjNo }}</span>
+          </div>
+          <div class="review-item">
+            <span class="label">Status:</span>
+            <span class="val">
+              @if (selectedAdj.status === 'Pending Approval') {
+              <span class="badge-erp badge-amber">Pending Approval</span>
+              } @else if (selectedAdj.status === 'Approved') {
+              <span class="badge-erp badge-green">Approved</span>
+              } @else {
+              <span class="badge-erp badge-red">Rejected</span>
+              }
+            </span>
+          </div>
+
+          <div class="review-item">
+            <span class="label">Client Firm:</span>
+            <span class="val fw-semibold">{{ selectedAdj.clientFirm }}</span>
+          </div>
+          <div class="review-item">
+            <span class="label">Warehouse:</span>
+            <span class="val fw-semibold">
+              {{ selectedAdj.warehouseName }}
+              @if (!selectedAdj.isActiveWarehouse) {
+              <span class="badge-tag badge-tag-muted ms-1">Inactive</span>
+              }
+            </span>
+          </div>
+
+          <div class="review-item">
+            <span class="label">Commodity:</span>
+            <span class="val fw-bold text-dark">{{ selectedAdj.commodity }}</span>
+          </div>
+          <div class="review-item">
+            <span class="label">Adjustment Type:</span>
+            <span class="val">
+              @if (selectedAdj.adjustmentType === 'Increase') {
+              <span class="badge-erp badge-green"><i class="fa-solid fa-arrow-trend-up me-1"></i>Increase (+In)</span>
+              } @else {
+              <span class="badge-erp badge-amber"><i class="fa-solid fa-arrow-trend-down me-1"></i>Decrease
+                (-Out)</span>
+              }
+            </span>
+          </div>
+
+          <div class="review-item">
+            <span class="label">Requested Quantity:</span>
+            <span class="val fw-bold text-dark">
+              {{ selectedAdj.quantity | number }} {{ selectedAdj.packagingUom }}s
+            </span>
+          </div>
+          <div class="review-item">
+            <span class="label">Total Weight:</span>
+            <span class="val fw-bold text-dark">{{ selectedAdj.totalWeightMt | number: '1.2-3' }} MT</span>
+          </div>
+
+          <div class="review-item">
+            <span class="label">Average Weight:</span>
+            <span class="val text-muted">{{ selectedAdj.averageWeightKg | number: '1.1-2' }} kg / unit</span>
+          </div>
+          <div class="review-item">
+            <span class="label">Adjustment Date:</span>
+            <span class="val">{{ selectedAdj.adjustmentDate }}</span>
+          </div>
+
+          <div class="review-item">
+            <span class="label">Maker:</span>
+            <span class="val">
+              <strong>{{ selectedAdj.makerName }}</strong>
+              <span class="text-xs text-muted ms-1">({{ selectedAdj.makerRole }})</span>
+            </span>
+          </div>
+          <div class="review-item">
+            <span class="label">Submitted At:</span>
+            <span class="val text-muted">{{ selectedAdj.submittedAt }}</span>
+          </div>
+
+          <div class="review-item span-2">
+            <span class="label">Operational Reason:</span>
+            <div class="val reason-text mt-1">{{ selectedAdj.reason }}</div>
+          </div>
+
+          @if (selectedAdj.status !== 'Pending Approval') {
+          <div class="review-item">
+            <span class="label">Checker / Decision Maker:</span>
+            <span class="val fw-semibold">{{ selectedAdj.checkerName }} ({{ selectedAdj.checkerRole }})</span>
+          </div>
+          <div class="review-item">
+            <span class="label">Decision Date &amp; Time:</span>
+            <span class="val text-muted">{{ selectedAdj.reviewedAt }}</span>
+          </div>
+          }
+
+          @if (selectedAdj.rejectionReason) {
+          <div class="review-item span-2 alert-erp alert-danger-erp mt-2">
+            <span class="label text-danger">Rejection Reason:</span>
+            <div class="val text-danger fw-semibold mt-1">{{ selectedAdj.rejectionReason }}</div>
+          </div>
+          }
+        </div>
+
+        <!-- In-Modal Rejection Reason Prompt (when rejecting) -->
+        @if (isRejecting) {
+        <div class="rejection-box mt-3">
+          <label class="erp-label text-danger">
+            <strong>Mandatory Rejection Reason *</strong>
+          </label>
+          <textarea class="erp-input border-danger" rows="3" [(ngModel)]="rejectionReasonInput"
+            placeholder="Explain why this adjustment request is being rejected (recorded for audit)..."></textarea>
+        </div>
+        }
       </div>
 
       <div class="modal-footer-erp">
-        <button type="button" class="btn-erp-ghost" (click)="closeHistoryModal()">
+        <button type="button" class="btn-erp-ghost" (click)="closeReviewAdjModal()">
           Close
         </button>
+
+        @if (selectedAdj.status === 'Pending Approval') {
+        @if (!isRejecting) {
+        <!-- Reject Trigger -->
+        <button type="button" class="btn-erp-danger"
+          [disabled]="!isChecker || currentActorName.toLowerCase() === selectedAdj.makerName.toLowerCase()"
+          (click)="startRejectFlow()">
+          <i class="fa-solid fa-xmark me-1"></i>
+          Reject Request
+        </button>
+
+        <!-- Approve Trigger -->
+        <button type="button" class="btn-erp-success"
+          [disabled]="!isChecker || currentActorName.toLowerCase() === selectedAdj.makerName.toLowerCase()"
+          (click)="approveAdjustment(selectedAdj)">
+          <i class="fa-solid fa-check me-1"></i>
+          Approve &amp; Update Inventory
+        </button>
+        } @else {
+        <button type="button" class="btn-erp-ghost" (click)="cancelRejectFlow()">
+          Cancel
+        </button>
+        <button type="button" class="btn-erp-danger" (click)="confirmRejectAdjustment()">
+          <i class="fa-solid fa-circle-xmark me-1"></i>
+          Confirm Rejection
+        </button>
+        }
+        }
       </div>
     </div>
   </div>
+  }
 </div>
-}

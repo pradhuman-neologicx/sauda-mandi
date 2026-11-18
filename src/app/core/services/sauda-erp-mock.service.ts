@@ -180,6 +180,9 @@ export interface InventoryLogEntry {
 
 export interface InventoryRecord {
   id: string;
+  warehouseId: string;
+  warehouseName: string;
+  isActiveWarehouse: boolean;
   productId: string;
   productName: string;
   categoryId: string;
@@ -190,9 +193,59 @@ export interface InventoryRecord {
   packagingUom: PackagingUom;
   availableUnits: number;
   availableWeightMt: number;
+  averageWeightKg: number;
   minThresholdMt: number;
   lastUpdated: string;
   logs: InventoryLogEntry[];
+}
+
+export interface StockAdjustmentRecord {
+  id: string;
+  adjNo: string;
+  clientFirm: string;
+  warehouseId: string;
+  warehouseName: string;
+  isActiveWarehouse: boolean;
+  commodity: string;
+  productId?: string;
+  productName?: string;
+  adjustmentType: 'Increase' | 'Decrease';
+  packagingUom: PackagingUom;
+  quantity: number;
+  totalWeightMt: number;
+  averageWeightKg: number;
+  reason: string;
+  adjustmentDate: string; // YYYY-MM-DD
+  submittedAt: string; // YYYY-MM-DD HH:mm
+  makerRole: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)';
+  makerName: string;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  checkerRole?: string;
+  checkerName?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+}
+
+export interface StockMovementRecord {
+  id: string;
+  movementNo: string;
+  movementType: 'Purchase Receipt' | 'Sales Dispatch' | 'Stock Adjustment';
+  movementDirection: 'Stock In' | 'Stock Out';
+  clientFirm: string;
+  warehouseName: string;
+  commodity: string;
+  packagingUom: PackagingUom;
+  quantity: number;
+  totalWeightMt: number;
+  averageWeightKg: number;
+  sourceRef: string;
+  truckNo?: string;
+  movementDate: string;
+  recordedAt: string;
+  recordedBy: string;
+  makerCheckerDetails?: string;
+  stockBalanceUnitsAfter: number;
+  stockBalanceWeightMtAfter: number;
 }
 
 export interface InvCategoryRecord {
@@ -1074,6 +1127,9 @@ export class SaudaErpMockService {
   private readonly initialInventory: InventoryRecord[] = [
     {
       id: 'INV-001',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      isActiveWarehouse: true,
       productId: 'PRD-001',
       productName: 'Desi Hybrid Bajra',
       categoryId: 'CAT-001',
@@ -1084,6 +1140,7 @@ export class SaudaErpMockService {
       packagingUom: 'Bag',
       availableUnits: 190,
       availableWeightMt: 3.8,
+      averageWeightKg: 20,
       minThresholdMt: 2,
       lastUpdated: '2026-11-06 17:45',
       logs: [
@@ -1111,6 +1168,9 @@ export class SaudaErpMockService {
     },
     {
       id: 'INV-002',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      isActiveWarehouse: true,
       productId: 'PRD-002',
       productName: 'Maldandi White Jowar',
       categoryId: 'CAT-001',
@@ -1121,6 +1181,7 @@ export class SaudaErpMockService {
       packagingUom: 'Bag',
       availableUnits: 50,
       availableWeightMt: 1,
+      averageWeightKg: 20,
       minThresholdMt: 1.5,
       lastUpdated: '2026-11-06 17:45',
       logs: [
@@ -1138,6 +1199,9 @@ export class SaudaErpMockService {
     },
     {
       id: 'INV-003',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      isActiveWarehouse: true,
       productId: 'PRD-003',
       productName: 'Lokwan Sharbati Wheat',
       categoryId: 'CAT-002',
@@ -1148,6 +1212,7 @@ export class SaudaErpMockService {
       packagingUom: 'Bag',
       availableUnits: 0,
       availableWeightMt: 0,
+      averageWeightKg: 0,
       minThresholdMt: 2,
       lastUpdated: '2026-11-09 16:00',
       logs: [
@@ -1175,6 +1240,9 @@ export class SaudaErpMockService {
     },
     {
       id: 'INV-004',
+      warehouseId: 'WH-003',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      isActiveWarehouse: true,
       productId: 'PRD-001',
       productName: 'Desi Hybrid Bajra',
       categoryId: 'CAT-001',
@@ -1185,6 +1253,7 @@ export class SaudaErpMockService {
       packagingUom: 'Bag',
       availableUnits: 200,
       availableWeightMt: 4,
+      averageWeightKg: 20,
       minThresholdMt: 2,
       lastUpdated: '2026-11-08 18:10',
       logs: [
@@ -1202,6 +1271,9 @@ export class SaudaErpMockService {
     },
     {
       id: 'INV-005',
+      warehouseId: 'WH-003',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      isActiveWarehouse: true,
       productId: 'PRD-004',
       productName: 'Yellow Field Maize',
       categoryId: 'CAT-002',
@@ -1212,6 +1284,7 @@ export class SaudaErpMockService {
       packagingUom: 'Sack',
       availableUnits: 120,
       availableWeightMt: 6,
+      averageWeightKg: 50,
       minThresholdMt: 2,
       lastUpdated: '2026-11-07 12:00',
       logs: [
@@ -1226,6 +1299,287 @@ export class SaudaErpMockService {
           doneBy: 'Sauda Admin',
         },
       ],
+    },
+    {
+      id: 'INV-006',
+      warehouseId: 'WH-002',
+      warehouseName: 'Fresh Terminal Cold Hub',
+      isActiveWarehouse: true,
+      productId: '',
+      productName: 'Mustard Seeds',
+      categoryId: '',
+      categoryName: 'Oilseeds',
+      subCategoryName: 'Mustard & Rapeseed',
+      commodity: 'Mustard Seeds',
+      clientFirm: 'Desert Fresh Traders',
+      packagingUom: 'Bag',
+      availableUnits: 150,
+      availableWeightMt: 7.5,
+      averageWeightKg: 50,
+      minThresholdMt: 2,
+      lastUpdated: '2026-11-10 11:30',
+      logs: [
+        {
+          id: 'LOG-108',
+          date: '2026-11-10 11:30',
+          action: 'Stock In',
+          referenceNo: 'OPENING-STK',
+          unitsChange: 150,
+          weightMtChange: 7.5,
+          remarks: 'Cold hub initial stock deposit',
+          doneBy: 'Sauda Admin',
+        },
+      ],
+    },
+    {
+      id: 'INV-007',
+      warehouseId: 'WH-004',
+      warehouseName: 'Kota Grain Silo',
+      isActiveWarehouse: true,
+      productId: '',
+      productName: 'Soybean Special',
+      categoryId: '',
+      categoryName: 'Oilseeds',
+      subCategoryName: 'Soybean',
+      commodity: 'Soybean',
+      clientFirm: 'Desert Fresh Traders',
+      packagingUom: 'Crate',
+      availableUnits: 80,
+      availableWeightMt: 4,
+      averageWeightKg: 50,
+      minThresholdMt: 1.5,
+      lastUpdated: '2026-11-11 14:15',
+      logs: [
+        {
+          id: 'LOG-109',
+          date: '2026-11-11 14:15',
+          action: 'Stock In',
+          referenceNo: 'OPENING-STK',
+          unitsChange: 80,
+          weightMtChange: 4,
+          remarks: 'Silo crates receipt',
+          doneBy: 'Sauda Admin',
+        },
+      ],
+    },
+    {
+      id: 'INV-008',
+      warehouseId: 'WH-005',
+      warehouseName: 'Mewar Agro Storage Yard',
+      isActiveWarehouse: false,
+      productId: '',
+      productName: 'Desi Chana (Historical)',
+      categoryId: 'CAT-003',
+      categoryName: 'Pulses & Legumes',
+      subCategoryName: 'Gram & Chickpeas',
+      commodity: 'Desi Chana',
+      clientFirm: 'Desert Fresh Traders',
+      packagingUom: 'Bag',
+      availableUnits: 0,
+      availableWeightMt: 0,
+      averageWeightKg: 0,
+      minThresholdMt: 1,
+      lastUpdated: '2026-10-20 10:00',
+      logs: [],
+    },
+  ];
+
+  private readonly initialStockAdjustments: StockAdjustmentRecord[] = [
+    {
+      id: 'ADJ-REC-001',
+      adjNo: 'ADJ-2026-0001',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      isActiveWarehouse: true,
+      commodity: 'Bajra',
+      productId: 'PRD-001',
+      productName: 'Desi Hybrid Bajra',
+      adjustmentType: 'Increase',
+      packagingUom: 'Bag',
+      quantity: 20,
+      totalWeightMt: 0.4,
+      averageWeightKg: 20,
+      reason: 'Physical mandi count found extra 20 bags from harvest shipment unrecorded in truck tally',
+      adjustmentDate: '2026-11-12',
+      submittedAt: '2026-11-12 11:30',
+      makerRole: 'Operations Executive (Maker)',
+      makerName: 'Amit Patel',
+      status: 'Pending Approval',
+    },
+    {
+      id: 'ADJ-REC-002',
+      adjNo: 'ADJ-2026-0002',
+      clientFirm: 'Rajasthan Agro',
+      warehouseId: 'WH-003',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      isActiveWarehouse: true,
+      commodity: 'Maize',
+      productId: 'PRD-004',
+      productName: 'Yellow Field Maize',
+      adjustmentType: 'Decrease',
+      packagingUom: 'Sack',
+      quantity: 10,
+      totalWeightMt: 0.5,
+      averageWeightKg: 50,
+      reason: 'Damaged sacks written off due to roof seepage during unseasonal rain',
+      adjustmentDate: '2026-11-09',
+      submittedAt: '2026-11-09 10:15',
+      makerRole: 'Operations Executive (Maker)',
+      makerName: 'Suresh Meena',
+      status: 'Approved',
+      checkerRole: 'Business Owner / Admin (Checker)',
+      checkerName: 'Rajesh Sharma',
+      reviewedAt: '2026-11-09 14:00',
+    },
+    {
+      id: 'ADJ-REC-003',
+      adjNo: 'ADJ-2026-0003',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      isActiveWarehouse: true,
+      commodity: 'Jowar',
+      productId: 'PRD-002',
+      productName: 'Maldandi White Jowar',
+      adjustmentType: 'Decrease',
+      packagingUom: 'Bag',
+      quantity: 30,
+      totalWeightMt: 0.6,
+      averageWeightKg: 20,
+      reason: 'Party claimed 30 bags short delivery without weighbridge slip',
+      adjustmentDate: '2026-11-07',
+      submittedAt: '2026-11-07 16:00',
+      makerRole: 'Operations Executive (Maker)',
+      makerName: 'Amit Patel',
+      status: 'Rejected',
+      checkerRole: 'Business Owner / Admin (Checker)',
+      checkerName: 'Rajesh Sharma',
+      reviewedAt: '2026-11-08 09:30',
+      rejectionReason: 'Discrepancy rejected. Unverified by gate weighbridge operator. Dispatched truck LR matches billed count.',
+    },
+  ];
+
+  private readonly initialStockMovements: StockMovementRecord[] = [
+    {
+      id: 'MOV-006',
+      movementNo: 'MOV-2026-0006',
+      movementType: 'Sales Dispatch',
+      movementDirection: 'Stock Out',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseName: 'Desert Mandi Yard A',
+      commodity: 'Wheat',
+      packagingUom: 'Bag',
+      quantity: 100,
+      totalWeightMt: 5,
+      averageWeightKg: 50,
+      sourceRef: 'SAU-2026-0002',
+      truckNo: 'TRK-2026-0003',
+      movementDate: '2026-11-09',
+      recordedAt: '2026-11-09 16:00',
+      recordedBy: 'Sauda Admin',
+      stockBalanceUnitsAfter: 0,
+      stockBalanceWeightMtAfter: 0,
+    },
+    {
+      id: 'MOV-005',
+      movementNo: 'MOV-2026-0005',
+      movementType: 'Stock Adjustment',
+      movementDirection: 'Stock Out',
+      clientFirm: 'Rajasthan Agro',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      commodity: 'Maize',
+      packagingUom: 'Sack',
+      quantity: 10,
+      totalWeightMt: 0.5,
+      averageWeightKg: 50,
+      sourceRef: 'ADJ-2026-0002',
+      movementDate: '2026-11-09',
+      recordedAt: '2026-11-09 14:00',
+      recordedBy: 'Rajesh Sharma',
+      makerCheckerDetails: 'Maker: Suresh Meena | Checker: Rajesh Sharma',
+      stockBalanceUnitsAfter: 120,
+      stockBalanceWeightMtAfter: 6,
+    },
+    {
+      id: 'MOV-004',
+      movementNo: 'MOV-2026-0004',
+      movementType: 'Purchase Receipt',
+      movementDirection: 'Stock In',
+      clientFirm: 'Rajasthan Agro',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      commodity: 'Bajra',
+      packagingUom: 'Bag',
+      quantity: 200,
+      totalWeightMt: 4,
+      averageWeightKg: 20,
+      sourceRef: 'SAU-2026-0003',
+      truckNo: 'TRK-2026-0004',
+      movementDate: '2026-11-08',
+      recordedAt: '2026-11-08 18:10',
+      recordedBy: 'Sauda Admin',
+      stockBalanceUnitsAfter: 200,
+      stockBalanceWeightMtAfter: 4,
+    },
+    {
+      id: 'MOV-003',
+      movementNo: 'MOV-2026-0003',
+      movementType: 'Purchase Receipt',
+      movementDirection: 'Stock In',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseName: 'Desert Mandi Yard A',
+      commodity: 'Jowar',
+      packagingUom: 'Bag',
+      quantity: 50,
+      totalWeightMt: 1,
+      averageWeightKg: 20,
+      sourceRef: 'SAU-2026-0001',
+      truckNo: 'TRK-2026-0002',
+      movementDate: '2026-11-06',
+      recordedAt: '2026-11-06 17:45',
+      recordedBy: 'Sauda Admin',
+      stockBalanceUnitsAfter: 50,
+      stockBalanceWeightMtAfter: 1,
+    },
+    {
+      id: 'MOV-002',
+      movementNo: 'MOV-2026-0002',
+      movementType: 'Purchase Receipt',
+      movementDirection: 'Stock In',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseName: 'Desert Mandi Yard A',
+      commodity: 'Bajra',
+      packagingUom: 'Bag',
+      quantity: 150,
+      totalWeightMt: 3,
+      averageWeightKg: 20,
+      sourceRef: 'SAU-2026-0001',
+      truckNo: 'TRK-2026-0002',
+      movementDate: '2026-11-06',
+      recordedAt: '2026-11-06 17:45',
+      recordedBy: 'Sauda Admin',
+      stockBalanceUnitsAfter: 190,
+      stockBalanceWeightMtAfter: 3.8,
+    },
+    {
+      id: 'MOV-001',
+      movementNo: 'MOV-2026-0001',
+      movementType: 'Purchase Receipt',
+      movementDirection: 'Stock In',
+      clientFirm: 'Desert Fresh Traders',
+      warehouseName: 'Desert Mandi Yard A',
+      commodity: 'Bajra',
+      packagingUom: 'Bag',
+      quantity: 40,
+      totalWeightMt: 0.8,
+      averageWeightKg: 20,
+      sourceRef: 'SAU-2026-0001',
+      truckNo: 'TRK-2026-0001',
+      movementDate: '2026-11-05',
+      recordedAt: '2026-11-05 15:10',
+      recordedBy: 'Sauda Admin',
+      stockBalanceUnitsAfter: 40,
+      stockBalanceWeightMtAfter: 0.8,
     },
   ];
 
@@ -1660,6 +2014,12 @@ export class SaudaErpMockService {
     this.initialWarehouses,
   );
   private usersSubject = new BehaviorSubject<UserRecord[]>(this.initialUsers);
+  private stockAdjustmentsSubject = new BehaviorSubject<StockAdjustmentRecord[]>(
+    this.initialStockAdjustments,
+  );
+  private stockMovementsSubject = new BehaviorSubject<StockMovementRecord[]>(
+    this.initialStockMovements,
+  );
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -1668,6 +2028,8 @@ export class SaudaErpMockService {
   readonly buyers$ = this.buyersSubject.asObservable();
   readonly commodities$ = this.commoditiesSubject.asObservable();
   readonly inventory$ = this.inventorySubject.asObservable();
+  readonly stockAdjustments$ = this.stockAdjustmentsSubject.asObservable();
+  readonly stockMovements$ = this.stockMovementsSubject.asObservable();
   readonly invCategories$ = this.invCategoriesSubject.asObservable();
   readonly invSubCategories$ = this.invSubCategoriesSubject.asObservable();
   readonly invProducts$ = this.invProductsSubject.asObservable();
@@ -3131,6 +3493,7 @@ export class SaudaErpMockService {
   adjustInventoryStock(payload: {
     productId: string;
     clientFirm: string;
+    warehouseId?: string;
     packagingUom?: PackagingUom;
     action: 'Stock In' | 'Stock Out';
     units: number;
@@ -3162,11 +3525,20 @@ export class SaudaErpMockService {
       this.resolveProductHierarchy(product);
     const packagingUom = payload.packagingUom || product.packagingUom;
     const now = this.formatTimestamp();
+
+    const warehouse = this.warehousesSubject.value.find(
+      (w) => w.id === payload.warehouseId || w.name.toLowerCase() === (payload.warehouseId || '').toLowerCase(),
+    ) || this.warehousesSubject.value[0];
+    const warehouseId = warehouse?.id || 'WH-001';
+    const warehouseName = warehouse?.name || 'Desert Mandi Yard A';
+    const isActiveWarehouse = warehouse ? warehouse.isActive : true;
+
     const existing = this.inventorySubject.value.find(
       (i) =>
         (i.productId === product.id ||
           (!i.productId && i.commodity.toLowerCase() === commodity.toLowerCase())) &&
-        i.clientFirm.toLowerCase() === payload.clientFirm.toLowerCase(),
+        i.clientFirm.toLowerCase() === payload.clientFirm.toLowerCase() &&
+        (i.warehouseId === warehouseId || i.warehouseName.toLowerCase() === warehouseName.toLowerCase()),
     );
 
     const sign = payload.action === 'Stock In' ? 1 : -1;
@@ -3177,13 +3549,13 @@ export class SaudaErpMockService {
       if (!existing) {
         return {
           ok: false,
-          message: `No stock record exists for ${product.name} under ${payload.clientFirm}.`,
+          message: `No stock record exists for ${product.name} under ${payload.clientFirm} in ${warehouseName}.`,
         };
       }
       if (Number(payload.weightMt) > existing.availableWeightMt) {
         return {
           ok: false,
-          message: `Cannot dispatch ${payload.weightMt} MT. Only ${existing.availableWeightMt} MT available.`,
+          message: `Cannot dispatch ${payload.weightMt} MT. Only ${existing.availableWeightMt} MT available in ${warehouseName}.`,
         };
       }
     }
@@ -3200,8 +3572,18 @@ export class SaudaErpMockService {
     };
 
     if (existing) {
+      const newUnits = Math.max(0, existing.availableUnits + unitsDelta);
+      const newWeight = Math.max(
+        0,
+        Number((existing.availableWeightMt + weightDelta).toFixed(3)),
+      );
+      const newAvgWeight = newUnits > 0 ? Number(((newWeight * 1000) / newUnits).toFixed(2)) : 0;
+
       const updated: InventoryRecord = {
         ...existing,
+        warehouseId,
+        warehouseName,
+        isActiveWarehouse,
         productId: product.id,
         productName: product.name,
         categoryId,
@@ -3209,11 +3591,9 @@ export class SaudaErpMockService {
         subCategoryName,
         commodity,
         packagingUom,
-        availableUnits: Math.max(0, existing.availableUnits + unitsDelta),
-        availableWeightMt: Math.max(
-          0,
-          Number((existing.availableWeightMt + weightDelta).toFixed(3)),
-        ),
+        availableUnits: newUnits,
+        availableWeightMt: newWeight,
+        averageWeightKg: newAvgWeight,
         minThresholdMt:
           payload.minThresholdMt !== undefined
             ? Number(payload.minThresholdMt)
@@ -3228,13 +3608,20 @@ export class SaudaErpMockService {
       );
       return {
         ok: true,
-        message: `${payload.action} updated for ${product.name} (${existing.clientFirm}).`,
+        message: `${payload.action} updated for ${product.name} (${existing.clientFirm}) in ${warehouseName}.`,
       };
     }
 
     const nextNum = this.inventorySubject.value.length + 1;
+    const initialUnits = Number(payload.units);
+    const initialWeight = Number(payload.weightMt);
+    const initialAvgWeight = initialUnits > 0 ? Number(((initialWeight * 1000) / initialUnits).toFixed(2)) : 0;
+
     const newItem: InventoryRecord = {
       id: `INV-${String(nextNum).padStart(3, '0')}`,
+      warehouseId,
+      warehouseName,
+      isActiveWarehouse,
       productId: product.id,
       productName: product.name,
       categoryId,
@@ -3243,8 +3630,9 @@ export class SaudaErpMockService {
       commodity,
       clientFirm: payload.clientFirm,
       packagingUom,
-      availableUnits: Number(payload.units),
-      availableWeightMt: Number(payload.weightMt),
+      availableUnits: initialUnits,
+      availableWeightMt: initialWeight,
+      averageWeightKg: initialAvgWeight,
       minThresholdMt:
         payload.minThresholdMt !== undefined
           ? Number(payload.minThresholdMt)
@@ -3256,7 +3644,361 @@ export class SaudaErpMockService {
     this.inventorySubject.next([newItem, ...this.inventorySubject.value]);
     return {
       ok: true,
-      message: `Inventory stock added for ${product.name} (${payload.clientFirm}).`,
+      message: `Inventory stock added for ${product.name} (${payload.clientFirm}) in ${warehouseName}.`,
+    };
+  }
+
+  // ── Stock Adjustments (UC-INV-04 & UC-INV-05) ──
+
+  createStockAdjustment(
+    payload: {
+      clientFirm: string;
+      warehouseId: string;
+      commodity: string;
+      productId?: string;
+      adjustmentType: 'Increase' | 'Decrease';
+      packagingUom: PackagingUom;
+      quantity: number;
+      totalWeightMt: number;
+      reason: string;
+      adjustmentDate?: string;
+    },
+    makerRole: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)',
+    makerName: string,
+  ): ActionResult {
+    if (!payload.clientFirm || !payload.warehouseId || !payload.commodity) {
+      return {
+        ok: false,
+        message: 'Client Firm, Warehouse and Commodity are mandatory.',
+      };
+    }
+
+    const qty = Number(payload.quantity);
+    const weight = Number(payload.totalWeightMt);
+    if (!qty || qty <= 0 || !weight || weight <= 0) {
+      return {
+        ok: false,
+        message: 'Quantity (units) and Total Weight (MT) must be greater than zero.',
+      };
+    }
+
+    const reason = (payload.reason || '').trim();
+    if (!reason) {
+      return {
+        ok: false,
+        message: 'Reason for stock adjustment is mandatory.',
+      };
+    }
+
+    const warehouse = this.warehousesSubject.value.find(
+      (w) => w.id === payload.warehouseId || w.name.toLowerCase() === payload.warehouseId.toLowerCase(),
+    );
+    const warehouseId = warehouse?.id || payload.warehouseId;
+    const warehouseName = warehouse?.name || payload.warehouseId;
+    const isActiveWarehouse = warehouse ? warehouse.isActive : true;
+
+    // For Decrease adjustments: validate quantity and weight independently against available stock
+    if (payload.adjustmentType === 'Decrease') {
+      const existing = this.inventorySubject.value.find(
+        (i) =>
+          i.clientFirm.toLowerCase() === payload.clientFirm.toLowerCase() &&
+          (i.warehouseId === warehouseId || i.warehouseName.toLowerCase() === warehouseName.toLowerCase()) &&
+          i.commodity.toLowerCase() === payload.commodity.toLowerCase(),
+      );
+
+      const availableUnits = existing ? existing.availableUnits : 0;
+      const availableWeight = existing ? existing.availableWeightMt : 0;
+
+      const qtyExceeded = qty > availableUnits;
+      const weightExceeded = weight > availableWeight;
+
+      if (qtyExceeded && weightExceeded) {
+        return {
+          ok: false,
+          message: `Requested quantity (${qty} ${payload.packagingUom}) exceeds available (${availableUnits} ${payload.packagingUom}) AND requested weight (${weight} MT) exceeds available (${availableWeight} MT) in ${warehouseName}.`,
+        };
+      }
+      if (qtyExceeded) {
+        return {
+          ok: false,
+          message: `Requested quantity (${qty} ${payload.packagingUom}) exceeds available stock (${availableUnits} ${payload.packagingUom}) in ${warehouseName}.`,
+        };
+      }
+      if (weightExceeded) {
+        return {
+          ok: false,
+          message: `Requested weight (${weight} MT) exceeds available weight (${availableWeight} MT) in ${warehouseName}.`,
+        };
+      }
+    }
+
+    // Resolve product / category if applicable
+    const matchedProduct = payload.productId
+      ? this.invProductsSubject.value.find((p) => p.id === payload.productId)
+      : this.invProductsSubject.value.find(
+          (p) =>
+            p.commodityName?.toLowerCase() === payload.commodity.toLowerCase() ||
+            p.name.toLowerCase().includes(payload.commodity.toLowerCase()),
+        );
+
+    const now = this.formatTimestamp();
+    const adjDate = payload.adjustmentDate || now.slice(0, 10);
+    const currentAdjustments = this.stockAdjustmentsSubject.value;
+    const nextSeq = currentAdjustments.length + 1;
+    const adjNo = `ADJ-2026-${String(nextSeq).padStart(4, '0')}`;
+
+    const averageWeightKg = Number(((weight * 1000) / qty).toFixed(2));
+
+    const newAdjustment: StockAdjustmentRecord = {
+      id: `ADJ-REC-${Date.now().toString().slice(-5)}`,
+      adjNo,
+      clientFirm: payload.clientFirm,
+      warehouseId,
+      warehouseName,
+      isActiveWarehouse,
+      commodity: payload.commodity,
+      productId: matchedProduct?.id || payload.productId,
+      productName: matchedProduct?.name || payload.commodity,
+      adjustmentType: payload.adjustmentType,
+      packagingUom: payload.packagingUom,
+      quantity: qty,
+      totalWeightMt: Number(weight.toFixed(3)),
+      averageWeightKg,
+      reason,
+      adjustmentDate: adjDate,
+      submittedAt: now,
+      makerRole,
+      makerName: makerName || 'Operations Executive',
+      status: 'Pending Approval',
+    };
+
+    // Pending requests DO NOT affect inventory at creation (UC-INV-04)
+    this.stockAdjustmentsSubject.next([newAdjustment, ...currentAdjustments]);
+
+    return {
+      ok: true,
+      message: `Stock Adjustment request ${adjNo} created successfully with status "Pending Approval".`,
+    };
+  }
+
+  approveStockAdjustment(
+    adjustmentId: string,
+    checkerRole: string,
+    checkerName: string,
+  ): ActionResult {
+    const list = this.stockAdjustmentsSubject.value;
+    const adj = list.find((a) => a.id === adjustmentId || a.adjNo === adjustmentId);
+    if (!adj) {
+      return { ok: false, message: 'Stock Adjustment request not found.' };
+    }
+
+    if (adj.status !== 'Pending Approval') {
+      return {
+        ok: false,
+        message: `Request is already ${adj.status}. Only Pending Approval requests can be reviewed.`,
+      };
+    }
+
+    // Segregation of duties: Maker cannot approve their own request (UC-INV-05)
+    if (checkerName.trim().toLowerCase() === adj.makerName.trim().toLowerCase()) {
+      return {
+        ok: false,
+        message: `Segregation of duties: Maker (${adj.makerName}) cannot approve their own adjustment request. Another Admin must review.`,
+      };
+    }
+
+    const now = this.formatTimestamp();
+    const inventoryList = [...this.inventorySubject.value];
+    const existingIdx = inventoryList.findIndex(
+      (i) =>
+        i.clientFirm.toLowerCase() === adj.clientFirm.toLowerCase() &&
+        (i.warehouseId === adj.warehouseId || i.warehouseName.toLowerCase() === adj.warehouseName.toLowerCase()) &&
+        i.commodity.toLowerCase() === adj.commodity.toLowerCase(),
+    );
+
+    const sign = adj.adjustmentType === 'Increase' ? 1 : -1;
+    const unitsDelta = sign * adj.quantity;
+    const weightDelta = Number((sign * adj.totalWeightMt).toFixed(3));
+
+    // Re-validate Decrease against latest stock at approval time (UC-INV-05)
+    if (adj.adjustmentType === 'Decrease') {
+      if (existingIdx < 0) {
+        return {
+          ok: false,
+          message: `Approval blocked: No stock record found in ${adj.warehouseName} for ${adj.commodity} (${adj.clientFirm}). Request remains Pending Approval.`,
+        };
+      }
+      const existing = inventoryList[existingIdx];
+      if (adj.quantity > existing.availableUnits || adj.totalWeightMt > existing.availableWeightMt) {
+        return {
+          ok: false,
+          message: `Approval blocked: Current stock (${existing.availableUnits} ${existing.packagingUom}, ${existing.availableWeightMt} MT) is insufficient for requested decrease. Request remains Pending Approval.`,
+        };
+      }
+    }
+
+    let balanceUnitsAfter = 0;
+    let balanceWeightAfter = 0;
+
+    const logEntry: InventoryLogEntry = {
+      id: `LOG-ADJ-${Date.now().toString().slice(-5)}`,
+      date: now,
+      action: adj.adjustmentType === 'Increase' ? 'Stock In' : 'Stock Out',
+      referenceNo: adj.adjNo,
+      unitsChange: unitsDelta,
+      weightMtChange: weightDelta,
+      remarks: `Stock Adjustment (${adj.adjNo}): ${adj.reason}`,
+      doneBy: `${checkerName} (Checker)`,
+    };
+
+    if (existingIdx >= 0) {
+      const existing = inventoryList[existingIdx];
+      balanceUnitsAfter = Math.max(0, existing.availableUnits + unitsDelta);
+      balanceWeightAfter = Math.max(
+        0,
+        Number((existing.availableWeightMt + weightDelta).toFixed(3)),
+      );
+      const avgWeight = balanceUnitsAfter > 0 ? Number(((balanceWeightAfter * 1000) / balanceUnitsAfter).toFixed(2)) : 0;
+
+      inventoryList[existingIdx] = {
+        ...existing,
+        availableUnits: balanceUnitsAfter,
+        availableWeightMt: balanceWeightAfter,
+        averageWeightKg: avgWeight,
+        lastUpdated: now,
+        logs: [logEntry, ...existing.logs],
+      };
+    } else {
+      // New inventory balance lot created by Increase
+      balanceUnitsAfter = Math.max(0, unitsDelta);
+      balanceWeightAfter = Math.max(0, weightDelta);
+      const avgWeight = balanceUnitsAfter > 0 ? Number(((balanceWeightAfter * 1000) / balanceUnitsAfter).toFixed(2)) : 0;
+      const nextNum = inventoryList.length + 1;
+
+      const newInv: InventoryRecord = {
+        id: `INV-${String(nextNum).padStart(3, '0')}`,
+        warehouseId: adj.warehouseId,
+        warehouseName: adj.warehouseName,
+        isActiveWarehouse: adj.isActiveWarehouse,
+        productId: adj.productId || '',
+        productName: adj.productName || adj.commodity,
+        categoryId: '',
+        categoryName: 'Stock Lot',
+        subCategoryName: '—',
+        commodity: adj.commodity,
+        clientFirm: adj.clientFirm,
+        packagingUom: adj.packagingUom,
+        availableUnits: balanceUnitsAfter,
+        availableWeightMt: balanceWeightAfter,
+        averageWeightKg: avgWeight,
+        minThresholdMt: 2,
+        lastUpdated: now,
+        logs: [logEntry],
+      };
+      inventoryList.unshift(newInv);
+    }
+
+    // Atomic update of stock
+    this.inventorySubject.next(inventoryList);
+
+    // Update adjustment status
+    const updatedAdj: StockAdjustmentRecord = {
+      ...adj,
+      status: 'Approved',
+      checkerRole,
+      checkerName,
+      reviewedAt: now,
+    };
+    this.stockAdjustmentsSubject.next(
+      list.map((a) => (a.id === adj.id ? updatedAdj : a)),
+    );
+
+    // Append to completed stock movements (UC-INV-06)
+    const nextMovSeq = this.stockMovementsSubject.value.length + 1;
+    const newMovement: StockMovementRecord = {
+      id: `MOV-${Date.now().toString().slice(-5)}`,
+      movementNo: `MOV-2026-${String(nextMovSeq).padStart(4, '0')}`,
+      movementType: 'Stock Adjustment',
+      movementDirection: adj.adjustmentType === 'Increase' ? 'Stock In' : 'Stock Out',
+      clientFirm: adj.clientFirm,
+      warehouseName: adj.warehouseName,
+      commodity: adj.commodity,
+      packagingUom: adj.packagingUom,
+      quantity: adj.quantity,
+      totalWeightMt: adj.totalWeightMt,
+      averageWeightKg: adj.averageWeightKg,
+      sourceRef: adj.adjNo,
+      movementDate: adj.adjustmentDate,
+      recordedAt: now,
+      recordedBy: checkerName,
+      makerCheckerDetails: `Maker: ${adj.makerName} | Checker: ${checkerName}`,
+      stockBalanceUnitsAfter: balanceUnitsAfter,
+      stockBalanceWeightMtAfter: balanceWeightAfter,
+    };
+    this.stockMovementsSubject.next([
+      newMovement,
+      ...this.stockMovementsSubject.value,
+    ]);
+
+    return {
+      ok: true,
+      message: `Stock Adjustment ${adj.adjNo} Approved successfully. Live inventory updated.`,
+    };
+  }
+
+  rejectStockAdjustment(
+    adjustmentId: string,
+    rejectionReason: string,
+    checkerRole: string,
+    checkerName: string,
+  ): ActionResult {
+    const list = this.stockAdjustmentsSubject.value;
+    const adj = list.find((a) => a.id === adjustmentId || a.adjNo === adjustmentId);
+    if (!adj) {
+      return { ok: false, message: 'Stock Adjustment request not found.' };
+    }
+
+    if (adj.status !== 'Pending Approval') {
+      return {
+        ok: false,
+        message: `Request is already ${adj.status}. Only Pending Approval requests can be reviewed.`,
+      };
+    }
+
+    // Segregation of duties: Maker cannot reject their own request
+    if (checkerName.trim().toLowerCase() === adj.makerName.trim().toLowerCase()) {
+      return {
+        ok: false,
+        message: `Segregation of duties: Maker (${adj.makerName}) cannot review their own adjustment request. Another Admin must review.`,
+      };
+    }
+
+    const trimmedReason = (rejectionReason || '').trim();
+    if (!trimmedReason) {
+      return {
+        ok: false,
+        message: 'Rejection reason is mandatory.',
+      };
+    }
+
+    const now = this.formatTimestamp();
+    const updatedAdj: StockAdjustmentRecord = {
+      ...adj,
+      status: 'Rejected',
+      checkerRole,
+      checkerName,
+      reviewedAt: now,
+      rejectionReason: trimmedReason,
+    };
+
+    // Rejected adjustments DO NOT change inventory and are NOT added to completed stock movements (UC-INV-05, UC-INV-06)
+    this.stockAdjustmentsSubject.next(
+      list.map((a) => (a.id === adj.id ? updatedAdj : a)),
+    );
+
+    return {
+      ok: true,
+      message: `Stock Adjustment ${adj.adjNo} has been Rejected. Inventory remains unchanged.`,
     };
   }
 
@@ -3321,6 +4063,13 @@ export class SaudaErpMockService {
     const now = this.formatTimestamp();
     let list = [...this.inventorySubject.value];
 
+    const warehouse = this.warehousesSubject.value.find(
+      (w) => w.name.toLowerCase() === (truck.warehouse || '').toLowerCase() || w.id === truck.warehouse,
+    );
+    const warehouseName = warehouse ? warehouse.name : (truck.warehouse || 'Desert Mandi Yard A');
+    const warehouseId = warehouse ? warehouse.id : 'WH-001';
+    const isActiveWarehouse = warehouse ? warehouse.isActive : true;
+
     for (const item of truck.commodityItems) {
       const itemWeightMt = Number(
         (item.weightUom === 'KG'
@@ -3362,7 +4111,7 @@ export class SaudaErpMockService {
           : 'Stock Out';
       const remarks = isReversal
         ? `Reversed ${truck.entryNo} (${truck.status}) stock impact for ${sauda.saudaNo}`
-        : `Auto ${sauda.saudaType === 'Purchase' ? 'inward' : 'dispatch'} from ${truck.entryNo} (${truck.status}) — ${sauda.saudaNo}`;
+        : `Auto ${sauda.saudaType === 'Purchase' ? 'inward' : 'dispatch'} from ${truck.entryNo} (${truck.status}) — ${sauda.saudaNo} at ${warehouseName}`;
 
       const logEntry: InventoryLogEntry = {
         id: `LOG-${Date.now().toString().slice(-5)}-${Math.floor(Math.random() * 90 + 10)}`,
@@ -3381,31 +4130,51 @@ export class SaudaErpMockService {
             ? i.productId === productId ||
               (!i.productId && i.commodity.toLowerCase() === lowerComm)
             : i.commodity.toLowerCase() === lowerComm) &&
-          i.clientFirm.toLowerCase() === sauda.clientFirm.toLowerCase(),
+          i.clientFirm.toLowerCase() === sauda.clientFirm.toLowerCase() &&
+          i.warehouseName.toLowerCase() === warehouseName.toLowerCase(),
       );
+
+      let newUnits = 0;
+      let newWeight = 0;
+      let newAvgWeight = 0;
 
       if (existingIdx >= 0) {
         const existing = list[existingIdx];
+        newUnits = Math.max(0, existing.availableUnits + unitsDelta);
+        newWeight = Math.max(
+          0,
+          Number((existing.availableWeightMt + weightDelta).toFixed(3)),
+        );
+        newAvgWeight = newUnits > 0 ? Number(((newWeight * 1000) / newUnits).toFixed(2)) : 0;
+
         list[existingIdx] = {
           ...existing,
+          warehouseId,
+          warehouseName,
+          isActiveWarehouse,
           productId: productId || existing.productId,
           productName: productName || existing.productName,
           categoryId: hierarchy.categoryId || existing.categoryId,
           categoryName: hierarchy.categoryName || existing.categoryName,
           subCategoryName: hierarchy.subCategoryName || existing.subCategoryName,
-          availableUnits: Math.max(0, existing.availableUnits + unitsDelta),
-          availableWeightMt: Math.max(
-            0,
-            Number((existing.availableWeightMt + weightDelta).toFixed(3)),
-          ),
+          availableUnits: newUnits,
+          availableWeightMt: newWeight,
+          averageWeightKg: newAvgWeight,
           lastUpdated: now,
           logs: [logEntry, ...existing.logs],
         };
       } else {
         const nextNum = list.length + 1;
+        newUnits = Math.max(0, unitsDelta);
+        newWeight = Math.max(0, weightDelta);
+        newAvgWeight = newUnits > 0 ? Number(((newWeight * 1000) / newUnits).toFixed(2)) : 0;
+
         list = [
           {
             id: `INV-${String(nextNum).padStart(3, '0')}`,
+            warehouseId,
+            warehouseName,
+            isActiveWarehouse,
             productId,
             productName,
             categoryId: hierarchy.categoryId,
@@ -3414,14 +4183,41 @@ export class SaudaErpMockService {
             commodity: item.commodity,
             clientFirm: sauda.clientFirm,
             packagingUom: item.packagingUom || matchedProduct?.packagingUom || 'Bag',
-            availableUnits: Math.max(0, unitsDelta),
-            availableWeightMt: Math.max(0, weightDelta),
+            availableUnits: newUnits,
+            availableWeightMt: newWeight,
+            averageWeightKg: newAvgWeight,
             minThresholdMt: 2,
             lastUpdated: now,
             logs: [logEntry],
           },
           ...list,
         ];
+      }
+
+      // Record in Stock Movement History if not a reversal (UC-INV-06)
+      if (!isReversal) {
+        const nextMovSeq = this.stockMovementsSubject.value.length + 1;
+        const movRecord: StockMovementRecord = {
+          id: `MOV-${Date.now().toString().slice(-5)}-${Math.floor(Math.random() * 90 + 10)}`,
+          movementNo: `MOV-2026-${String(nextMovSeq).padStart(4, '0')}`,
+          movementType: sauda.saudaType === 'Purchase' ? 'Purchase Receipt' : 'Sales Dispatch',
+          movementDirection: effectiveSign >= 0 ? 'Stock In' : 'Stock Out',
+          clientFirm: sauda.clientFirm,
+          warehouseName,
+          commodity: item.commodity,
+          packagingUom: item.packagingUom || matchedProduct?.packagingUom || 'Bag',
+          quantity: Math.abs(unitsDelta),
+          totalWeightMt: Math.abs(weightDelta),
+          averageWeightKg: newAvgWeight,
+          sourceRef: sauda.saudaNo,
+          truckNo: truck.entryNo,
+          movementDate: truck.dispatchDate || now.slice(0, 10),
+          recordedAt: now,
+          recordedBy: 'Truck Auto-Sync',
+          stockBalanceUnitsAfter: newUnits,
+          stockBalanceWeightMtAfter: newWeight,
+        };
+        this.stockMovementsSubject.next([movRecord, ...this.stockMovementsSubject.value]);
       }
     }
 
