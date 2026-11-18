@@ -124,8 +124,8 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe((params) => {
-        if (params['action'] === 'create') {
-          this.openCreateForm();
+        if (params['action'] === 'create' || params['saudaId']) {
+          this.openCreateForm(params['saudaId']);
         }
       });
   }
@@ -139,7 +139,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     const today = new Date().toISOString().slice(0, 10);
     this.truckForm = this.fb.group({
       saudaId: ['', Validators.required],
-      warehouse: [''],
+      warehouse: ['', Validators.required],
       dispatchDate: [today, Validators.required],
       vehicleNo: [
         '',
@@ -251,6 +251,16 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     return this.activeTrucksList.filter((t) => t.saudaType === 'Sales').length;
   }
 
+  get deliveredCount(): number {
+    return this.activeTrucksList.filter((t) => t.status === 'Delivered').length;
+  }
+
+  get inTransitCount(): number {
+    return this.activeTrucksList.filter(
+      (t) => t.status === 'In Transit' || t.status === 'Loaded',
+    ).length;
+  }
+
   get brokerageLinkedCount(): number {
     return this.activeTrucksList.filter((t) => t.saudaType === 'Brokerage')
       .length;
@@ -349,13 +359,81 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   // ── Helpers for Form ──
   get eligibleSaudasForForm(): SaudaRecord[] {
     return this.allSaudas.filter((s) => {
-      if (s.status === 'Voided') return false;
+      if (s.status === 'Voided' || s.saudaType === 'Brokerage') return false;
       const available = this.erpService.getRemainingQtyMt(
         s.id,
         this.isEditMode ? this.selectedTruck?.id : undefined,
       );
       return available > 0 || s.id === this.truckForm?.get('saudaId')?.value;
     });
+  }
+
+  get selectedWarehouse(): string {
+    return this.truckForm?.get('warehouse')?.value || '';
+  }
+
+  get availableWarehouseStockMt(): number {
+    const sauda = this.selectedLinkedSauda;
+    const wh = this.selectedWarehouse;
+    if (!sauda || !wh) return 0;
+
+    const rawItems = (this.truckForm?.getRawValue()?.commodityItems ||
+      []) as CommodityLineItem[];
+    if (rawItems.length === 0) return 0;
+
+    let totalAvail = 0;
+    for (const item of rawItems) {
+      if (!item.commodity) continue;
+      let avail = this.erpService.getWarehouseCommodityStock(
+        sauda.clientFirm,
+        wh,
+        item.commodity,
+      );
+      if (
+        this.isEditMode &&
+        this.selectedTruck &&
+        (this.selectedTruck.warehouse || '').trim().toLowerCase() ===
+          wh.trim().toLowerCase()
+      ) {
+        const prev = this.selectedTruck.commodityItems.find(
+          (ci) =>
+            ci.commodity.trim().toLowerCase() ===
+            item.commodity.trim().toLowerCase(),
+        );
+        if (prev) {
+          avail += this.erpService.convertItemToMt(prev);
+        }
+      }
+      totalAvail += avail;
+    }
+    return Number(totalAvail.toFixed(3));
+  }
+
+  getWarehouseStockForItem(commodityName: string): number {
+    const sauda = this.selectedLinkedSauda;
+    const wh = this.selectedWarehouse;
+    if (!sauda || !wh || !commodityName) return 0;
+    let avail = this.erpService.getWarehouseCommodityStock(
+      sauda.clientFirm,
+      wh,
+      commodityName,
+    );
+    if (
+      this.isEditMode &&
+      this.selectedTruck &&
+      (this.selectedTruck.warehouse || '').trim().toLowerCase() ===
+        wh.trim().toLowerCase()
+    ) {
+      const prev = this.selectedTruck.commodityItems.find(
+        (ci) =>
+          ci.commodity.trim().toLowerCase() ===
+          commodityName.trim().toLowerCase(),
+      );
+      if (prev) {
+        avail += this.erpService.convertItemToMt(prev);
+      }
+    }
+    return Number(avail.toFixed(3));
   }
 
   get selectedLinkedSauda(): SaudaRecord | undefined {
@@ -398,19 +476,36 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.viewMode = 'details';
   }
 
-  openCreateForm(): void {
+  openCreateForm(preselectedSaudaId?: string): void {
     const today = new Date().toISOString().slice(0, 10);
     this.isEditMode = false;
     this.selectedTruck = null;
     this.formError = '';
 
-    const firstAvailable = this.allSaudas.find(
-      (s) =>
-        s.status !== 'Voided' && this.erpService.getRemainingQtyMt(s.id) > 0,
-    );
+    let targetSauda: SaudaRecord | undefined;
+    if (preselectedSaudaId) {
+      targetSauda = this.allSaudas.find((s) => s.id === preselectedSaudaId);
+      if (targetSauda && targetSauda.saudaType === 'Brokerage') {
+        this.notificationService.show(
+          'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12).',
+          'error',
+          4000,
+        );
+        targetSauda = undefined;
+      }
+    }
+
+    if (!targetSauda) {
+      targetSauda = this.allSaudas.find(
+        (s) =>
+          s.status !== 'Voided' &&
+          s.saudaType !== 'Brokerage' &&
+          this.erpService.getRemainingQtyMt(s.id) > 0,
+      );
+    }
 
     this.commodityRows.clear();
-    const firstItem = firstAvailable?.commodityItems[0];
+    const firstItem = targetSauda?.commodityItems[0];
     this.commodityRows.push(
       this.createCommodityRow(
         firstItem
@@ -426,7 +521,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     );
 
     this.truckForm.reset({
-      saudaId: firstAvailable?.id || '',
+      saudaId: targetSauda?.id || '',
       warehouse: this.allWarehouses[0]?.name || '',
       dispatchDate: today,
       vehicleNo: '',

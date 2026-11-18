@@ -2420,6 +2420,53 @@ export class SaudaErpMockService {
     return Number(totalMt.toFixed(3));
   }
 
+  convertItemToMt(item: CommodityLineItem): number {
+    const wt = Number(item.actualWeight || 0);
+    if (item.weightUom === 'KG') return Number((wt / 1000).toFixed(3));
+    if (item.weightUom === 'Quintal') return Number((wt / 10).toFixed(3));
+    return Number(wt.toFixed(3));
+  }
+
+  getWarehouseCommodityStock(
+    clientFirm: string,
+    warehouseName: string,
+    commodityName: string,
+  ): number {
+    if (!warehouseName || !commodityName) return 0;
+    const whTrimmed = warehouseName.trim().toLowerCase();
+    const commTrimmed = commodityName.trim().toLowerCase();
+    const firmTrimmed = (clientFirm || '').trim().toLowerCase();
+
+    const matchedProduct = this.invProductsSubject.value.find(
+      (p) =>
+        (p.commodityName && p.commodityName.toLowerCase() === commTrimmed) ||
+        p.name.toLowerCase().includes(commTrimmed) ||
+        commTrimmed.includes(p.name.toLowerCase()),
+    );
+    const productId = matchedProduct?.id || '';
+
+    const matchingRecords = this.inventorySubject.value.filter((inv) => {
+      const matchWh =
+        inv.warehouseName.trim().toLowerCase() === whTrimmed ||
+        inv.warehouseId.trim().toLowerCase() === whTrimmed;
+      const matchFirm =
+        !firmTrimmed || inv.clientFirm.trim().toLowerCase() === firmTrimmed;
+      const matchComm = productId
+        ? inv.productId === productId ||
+          (!inv.productId && inv.commodity.trim().toLowerCase() === commTrimmed)
+        : inv.commodity.trim().toLowerCase() === commTrimmed ||
+          inv.productName.trim().toLowerCase().includes(commTrimmed) ||
+          commTrimmed.includes(inv.commodity.trim().toLowerCase());
+      return matchWh && matchFirm && matchComm;
+    });
+
+    const total = matchingRecords.reduce(
+      (sum, r) => sum + (Number(r.availableWeightMt) || 0),
+      0,
+    );
+    return Number(total.toFixed(3));
+  }
+
   // ── Sauda Operations ──
 
   createSauda(
@@ -3064,6 +3111,30 @@ export class SaudaErpMockService {
         message: 'Cannot assign a truck to a Voided Sauda contract.',
       };
     }
+    if (sauda.saudaType === 'Brokerage') {
+      return {
+        ok: false,
+        message: 'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
+      };
+    }
+    if (!payload.warehouse || !payload.warehouse.trim()) {
+      return {
+        ok: false,
+        message: 'Warehouse selection is mandatory for every truck entry (BR-TF-04, BR-TF-05, EX-04).',
+      };
+    }
+    const warehouseName = payload.warehouse.trim();
+    const wh = this.warehousesSubject.value.find(
+      (w) =>
+        w.name.trim().toLowerCase() === warehouseName.toLowerCase() ||
+        w.id.trim().toLowerCase() === warehouseName.toLowerCase(),
+    );
+    if (!wh || !wh.isActive) {
+      return {
+        ok: false,
+        message: `Selected warehouse "${warehouseName}" is inactive or invalid (EX-05).`,
+      };
+    }
     if (!payload.commodityItems || payload.commodityItems.length === 0) {
       return { ok: false, message: 'At least one commodity row is required.' };
     }
@@ -3104,6 +3175,22 @@ export class SaudaErpMockService {
         ok: false,
         message: `Total truck weight (${loadedQtyMt} MT) exceeds remaining Sauda balance (${remaining} MT).`,
       };
+    }
+    if (sauda.saudaType === 'Sales') {
+      for (const item of payload.commodityItems) {
+        const itemMt = this.convertItemToMt(item);
+        const availableStock = this.getWarehouseCommodityStock(
+          sauda.clientFirm,
+          payload.warehouse,
+          item.commodity,
+        );
+        if (itemMt > availableStock) {
+          return {
+            ok: false,
+            message: `Insufficient stock in ${payload.warehouse} for ${item.commodity}. Available: ${availableStock.toFixed(2)} MT, Requested: ${itemMt.toFixed(2)} MT (BR-TF-10, EX-06).`,
+          };
+        }
+      }
     }
     if (payload.expectedArrivalDate && payload.expectedArrivalDate < payload.dispatchDate) {
       return {
@@ -3207,6 +3294,30 @@ export class SaudaErpMockService {
         message: 'Linked Sauda must be active and non-voided.',
       };
     }
+    if (sauda.saudaType === 'Brokerage') {
+      return {
+        ok: false,
+        message: 'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
+      };
+    }
+    if (!payload.warehouse || !payload.warehouse.trim()) {
+      return {
+        ok: false,
+        message: 'Warehouse selection is mandatory for every truck entry (BR-TF-04, BR-TF-05, EX-04).',
+      };
+    }
+    const warehouseName = payload.warehouse.trim();
+    const wh = this.warehousesSubject.value.find(
+      (w) =>
+        w.name.trim().toLowerCase() === warehouseName.toLowerCase() ||
+        w.id.trim().toLowerCase() === warehouseName.toLowerCase(),
+    );
+    if (!wh || !wh.isActive) {
+      return {
+        ok: false,
+        message: `Selected warehouse "${warehouseName}" is inactive or invalid (EX-05).`,
+      };
+    }
     if (!payload.commodityItems || payload.commodityItems.length === 0) {
       return { ok: false, message: 'At least one commodity row is required.' };
     }
@@ -3247,6 +3358,36 @@ export class SaudaErpMockService {
         ok: false,
         message: `Total truck weight (${loadedQtyMt} MT) exceeds available Sauda balance (${remaining} MT).`,
       };
+    }
+    if (sauda.saudaType === 'Sales') {
+      for (const item of payload.commodityItems) {
+        const itemMt = this.convertItemToMt(item);
+        let availableStock = this.getWarehouseCommodityStock(
+          sauda.clientFirm,
+          payload.warehouse,
+          item.commodity,
+        );
+        if (
+          this.isDispatchedTruckStatus(existing.status) &&
+          (existing.warehouse || '').trim().toLowerCase() ===
+            payload.warehouse.trim().toLowerCase()
+        ) {
+          const prevItem = existing.commodityItems.find(
+            (ci) =>
+              ci.commodity.trim().toLowerCase() ===
+              item.commodity.trim().toLowerCase(),
+          );
+          if (prevItem) {
+            availableStock += this.convertItemToMt(prevItem);
+          }
+        }
+        if (itemMt > availableStock) {
+          return {
+            ok: false,
+            message: `Insufficient stock in ${payload.warehouse} for ${item.commodity}. Available: ${availableStock.toFixed(2)} MT, Requested: ${itemMt.toFixed(2)} MT (BR-TF-10, EX-06).`,
+          };
+        }
+      }
     }
     if (payload.expectedArrivalDate && payload.expectedArrivalDate < payload.dispatchDate) {
       return {
