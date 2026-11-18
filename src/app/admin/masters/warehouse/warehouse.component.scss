@@ -1,5 +1,167 @@
 @use '../../sauda-management/sauda-management.component.scss' as *;
 
+// ── Top KPI Overview Strip ──
+.warehouse-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+
+  &.kpi-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  &.kpi-green {
+    background: #ecfdf5;
+    color: #059669;
+  }
+
+  &.kpi-amber {
+    background: #fffbeb;
+    color: #d97706;
+  }
+
+  &.kpi-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .kpi-val {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+
+  .text-green { color: #059669; }
+  .text-amber { color: #d97706; }
+  .text-purple { color: #7c3aed; }
+}
+
+// ── Filter & Search Toolbar ──
+.filter-left-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+}
+
+.filter-select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+// ── Table Styling ──
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #2563eb;
+  }
+}
+
+.wh-id-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  font-family: monospace;
+}
+
+.wh-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .wh-name-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .wh-address-sub {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+  }
+}
+
 .city-pill {
   display: inline-flex;
   align-items: center;
@@ -10,6 +172,23 @@
   padding: 3px 9px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.contact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+
+  .contact-name {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .contact-phone {
+    font-size: 11.5px;
+    color: #64748b;
+  }
 }
 
 .status-toggle-btn {
@@ -58,6 +237,24 @@
   opacity: 0.65;
 }
 
+.btn-view {
+  color: #0284c7;
+
+  &:hover:not(:disabled) {
+    background: #e0f2fe;
+    border-color: #bae6fd;
+  }
+}
+
+.btn-edit {
+  color: #2563eb;
+
+  &:hover:not(:disabled) {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+}
+
 .btn-activate {
   color: #10b981;
 
@@ -67,3 +264,189 @@
   }
 }
 
+.btn-void {
+  color: #ef4444;
+
+  &:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+}
+
+// ── Modals & Form Styles ──
+.modal-panel {
+  &.modal-sm {
+    max-width: 480px;
+  }
+  &.modal-md {
+    max-width: 580px;
+  }
+  &.modal-lg {
+    max-width: 820px;
+  }
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.shared-notice-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.4;
+  margin-top: 14px;
+}
+
+.field-error {
+  display: block;
+  font-size: 11.5px;
+  color: #dc2626;
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+// ── View Warehouse Modal Details ──
+.view-avatar-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.view-security-banner {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 14px;
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+
+  &.full-width-item {
+    grid-column: 1 / -1;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+  }
+
+  .detail-val {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+    word-break: break-all;
+  }
+}
+
+.audit-metadata-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 14px;
+
+  .audit-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+
+  .audit-row {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 3px;
+
+    strong {
+      color: #1e293b;
+      margin-left: 4px;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ── Deactivation Safeguard Box & Confirmation ──
+.deactivation-blocked-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 14px;
+
+  .blocker-list {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+  }
+
+  .resolution-note {
+    background: #ffffff;
+    border: 1px solid #fee2e2;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+  }
+}
+
+.confirm-message-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.btn-danger-confirm {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+
+  &:hover {
+    background: #b91c1c !important;
+  }
+}

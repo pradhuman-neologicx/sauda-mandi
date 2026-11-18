@@ -97,11 +97,11 @@ export const ADMIN_ROUTES: Routes = [
         ],
       },
       {
-        path: 'event-category',
+        path: 'user-management',
         canActivate: [AuthGuard],
         loadComponent: () =>
-          import('./event-category/event-category.component').then(
-            (c) => c.EventCategoryComponent,
+          import('./user-management/user-management.component').then(
+            (c) => c.UserManagementComponent,
           ),
       },
     ],

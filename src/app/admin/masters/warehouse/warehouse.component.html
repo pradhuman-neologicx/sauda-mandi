@@ -2,10 +2,10 @@
   <!-- Header -->
   <div class="erp-header">
     <div>
-      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Masters</div>
+      <div class="erp-breadcrumb">JP-BROKERS ERP &bull; Masters</div>
       <h1 class="erp-title">Warehouse Master</h1>
       <p class="erp-subtitle">
-        Manage storage warehouses, mandi yards and depot locations with city mappings
+        Company-owned storage facilities, mandi yards and depot locations shared across all configured client firms
       </p>
     </div>
 
@@ -17,23 +17,80 @@
     </div>
   </div>
 
-  <!-- Limit & Compact Right-Aligned Search -->
+  <!-- Top KPI Overview Strip -->
+  <div class="warehouse-kpi-grid mb-4">
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-blue">
+        <i class="fa-solid fa-warehouse"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Warehouses</span>
+        <span class="kpi-val">{{ totalCount }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-green">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Active / Operational</span>
+        <span class="kpi-val text-green">{{ activeCount }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-amber">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Inactive / Decommissioned</span>
+        <span class="kpi-val text-amber">{{ inactiveCount }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-purple">
+        <i class="fa-solid fa-location-dot"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Cities / Mandi Hubs</span>
+        <span class="kpi-val text-purple">{{ citiesCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar (UC-WH-02) -->
   <div class="erp-card filter-card mb-4">
     <div class="filter-toolbar">
-      <div class="table-size-selector">
-        <span>Show</span>
-        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
-          @for (size of tableSizes; track size) {
-          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
-          }
-        </select>
-        <span>entries</span>
+      <div class="filter-left-group">
+        <div class="table-size-selector">
+          <span>Show</span>
+          <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+            @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+            }
+          </select>
+          <span>entries</span>
+        </div>
+
+        <!-- Status Filter Dropdown shifted to Sr. No. side -->
+        <div class="filter-group">
+          <select class="filter-select" [(ngModel)]="statusFilter" name="statusFilter"
+            (ngModelChange)="onStatusFilterChange()">
+            <option value="all">All Statuses</option>
+            <option value="Active">Active Only</option>
+            <option value="Inactive">Inactive Only</option>
+          </select>
+        </div>
       </div>
 
       <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <!-- Search Box (by Name or City or Supervisor) -->
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search Warehouse or City..." />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search Warehouse, City, Supervisor..." />
         </div>
 
         <button type="submit" class="btn-erp-primary">
@@ -50,26 +107,48 @@
     </div>
   </div>
 
-  <!-- Table Card -->
+  <!-- Warehouse Records Table -->
   <div class="erp-card">
     <div class="table-responsive">
       <table class="erp-table">
         <thead>
           <tr>
-            <th style="width: 80px">S.No.</th>
-            <th>Warehouse Name</th>
-            <th>City</th>
-            <th>Created Date</th>
-            <th class="text-center" style="width: 140px">Status</th>
+            <th style="width: 70px">S.No.</th>
+            <th class="sortable-th" (click)="setSort('name')">
+              <span>Warehouse Name & Address</span>
+              @if (sortField === 'name') {
+              <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
+              }
+            </th>
+            <th class="sortable-th" (click)="setSort('city')">
+              <span>City / Mandi Hub</span>
+              @if (sortField === 'city') {
+              <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
+              }
+            </th>
+            <th>Supervisor / Contact</th>
+            <th class="sortable-th" (click)="setSort('createdAt')">
+              <span>Created Date</span>
+              @if (sortField === 'createdAt') {
+              <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
+              }
+            </th>
+            <th class="text-center sortable-th" style="width: 140px" (click)="setSort('status')">
+              <span>Status</span>
+              @if (sortField === 'status') {
+              <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
+              }
+            </th>
             <th class="text-center" style="width: 150px">Actions</th>
           </tr>
         </thead>
         <tbody>
           @if (filteredWarehouses.length === 0) {
           <tr>
-            <td colspan="6" class="empty-state">
+            <td colspan="7" class="empty-state">
               <i class="fa-solid fa-warehouse mb-2"></i>
-              <div>No warehouse records found.</div>
+              <div class="fw-semibold">No warehouse records found.</div>
+              <div class="text-muted small">Try adjusting your search query or status filter.</div>
             </td>
           </tr>
           } @else {
@@ -87,27 +166,58 @@
           ) {
           <tr [class.inactive-row]="!w.isActive">
             <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
-            <td class="fw-semibold text-dark">{{ w.name }}</td>
+            <td>
+              <div class="wh-name-cell">
+                <span class="wh-name-text">{{ w.name }}</span>
+                <span class="wh-address-sub">
+                  <i class="fa-solid fa-location-arrow me-1"></i>{{ w.address }}
+                </span>
+              </div>
+            </td>
             <td>
               <span class="city-pill">
-                <i class="fa-solid fa-location-dot me-1"></i>{{ w.city }}
+                <i class="fa-solid fa-map-pin me-1"></i>{{ w.city }}
               </span>
+            </td>
+            <td>
+              @if (w.contactPerson || w.contactPhone) {
+              <div class="contact-cell">
+                @if (w.contactPerson) {
+                <span class="contact-name"><i class="fa-regular fa-user me-1"></i>{{ w.contactPerson }}</span>
+                }
+                @if (w.contactPhone) {
+                <span class="contact-phone"><i class="fa-solid fa-phone me-1"></i>{{ w.contactPhone }}</span>
+                }
+              </div>
+              } @else {
+              <span class="text-muted small">-</span>
+              }
             </td>
             <td class="num">{{ w.createdAt }}</td>
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="w.isActive ? 'is-active' : 'is-inactive'"
-                (click)="toggleStatus(w)">
+                (click)="promptStatusToggle(w)" [title]="w.isActive ? 'Click to Deactivate' : 'Click to Activate'">
                 <span class="dot"></span>
                 <span>{{ w.isActive ? 'Active' : 'Inactive' }}</span>
               </button>
             </td>
             <td class="text-center">
               <div class="action-group">
-                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(w)" title="Edit Warehouse">
+                <!-- View Warehouse Details (UC-WH-02) -->
+                <button type="button" class="icon-btn btn-view" (click)="openViewDetails(w)"
+                  title="View Warehouse Profile">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+
+                <!-- Edit Warehouse (UC-WH-03) -->
+                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(w)"
+                  title="Edit Warehouse Master">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
+
+                <!-- Status Toggle (UC-WH-03) -->
                 <button type="button" class="icon-btn" [ngClass]="w.isActive ? 'btn-void' : 'btn-activate'"
-                  (click)="toggleStatus(w)" [title]="w.isActive ? 'Deactivate' : 'Activate'">
+                  (click)="promptStatusToggle(w)" [title]="w.isActive ? 'Deactivate Warehouse' : 'Activate Warehouse'">
                   <i class="fa-solid" [ngClass]="w.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
                 </button>
               </div>
@@ -130,16 +240,21 @@
   </div>
 </div>
 
-<!-- Add / Edit Warehouse Modal -->
+<!-- ==================================================================== -->
+<!-- MODAL 1: Add / Edit Warehouse Modal (UC-WH-01 & UC-WH-03)            -->
+<!-- ==================================================================== -->
 @if (isModalOpen) {
 <div class="modal-backdrop-erp" (click)="closeModal()">
   <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
     <div class="modal-header-erp">
       <div>
         <h3 class="modal-title-erp">
-          {{ isEdit ? 'Edit Warehouse' : 'Add Warehouse' }}
+          {{ isEdit ? 'Edit Warehouse Master' : 'Create New Warehouse' }}
         </h3>
-        <p class="modal-sub-erp">Warehouse storage location and city mapping</p>
+        <p class="modal-sub-erp">
+          {{ isEdit ? 'Update warehouse premises, address and yard supervisor details' : 'Register a new company-owned
+          warehouse shared across all client firms' }}
+        </p>
       </div>
       <button type="button" class="close-btn" (click)="closeModal()">
         <i class="fa-solid fa-xmark"></i>
@@ -149,19 +264,72 @@
     <form [formGroup]="warehouseForm" (ngSubmit)="submitWarehouse()">
       <div class="modal-body-erp">
         @if (formError) {
-        <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
+        <div class="alert-erp alert-danger-erp mb-3">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>
+          <span>{{ formError }}</span>
+        </div>
         }
 
+        <!-- Warehouse Name -->
         <div class="field-group mb-3">
-          <label>Warehouse Name <span class="req">*</span></label>
+          <label>Warehouse / Yard Name <span class="req">*</span></label>
           <input type="text" formControlName="name" class="erp-input"
-            placeholder="e.g. Desert Mandi Yard A, Central Cold Storage" />
+            placeholder="e.g. Desert Mandi Yard A, Central Cold Hub" />
+          @if (warehouseForm.get('name')?.touched && warehouseForm.get('name')?.invalid) {
+          <span class="field-error">Warehouse name is required (minimum 2 characters).</span>
+          }
         </div>
 
-        <div class="field-group">
-          <label>City <span class="req">*</span></label>
-          <input type="text" formControlName="city" class="erp-input"
-            placeholder="e.g. Jodhpur, Jaipur, Bikaner, Kota" />
+        <!-- Warehouse Address -->
+        <div class="field-group mb-3">
+          <label>Warehouse Physical Address <span class="req">*</span></label>
+          <input type="text" formControlName="address" class="erp-input"
+            placeholder="e.g. Plot 12-15, Mandi Yard Phase 1, Basni Industrial Area" />
+          @if (warehouseForm.get('address')?.touched && warehouseForm.get('address')?.invalid) {
+          <span class="field-error">Physical address is required (minimum 3 characters).</span>
+          }
+        </div>
+
+        <!-- City / Mandi Area & Contact Person in 2 Columns -->
+        <div class="form-row-2 mb-3">
+          <div class="field-group">
+            <label>City / Mandi Hub <span class="req">*</span></label>
+            <input type="text" formControlName="city" class="erp-input"
+              placeholder="e.g. Jodhpur, Jaipur, Bikaner, Kota" />
+            @if (warehouseForm.get('city')?.touched && warehouseForm.get('city')?.invalid) {
+            <span class="field-error">City is required (minimum 2 characters).</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Supervisor / Contact Person <span class="opt">(Optional)</span></label>
+            <input type="text" formControlName="contactPerson" class="erp-input" placeholder="e.g. Kailash Choudhary" />
+          </div>
+        </div>
+
+        <!-- Contact Phone & Remarks in 2 Columns -->
+        <div class="form-row-2 mb-3">
+          <div class="field-group">
+            <label>Contact Phone <span class="opt">(Optional)</span></label>
+            <input type="text" formControlName="contactPhone" class="erp-input" placeholder="10-digit mobile number"
+              maxlength="10" />
+            @if (warehouseForm.get('contactPhone')?.touched && warehouseForm.get('contactPhone')?.invalid) {
+            <span class="field-error">Please enter a valid 10-digit mobile number.</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Description / Capacity Notes <span class="opt">(Optional)</span></label>
+            <input type="text" formControlName="remarks" class="erp-input"
+              placeholder="e.g. 500 MT covered storage, weighbridge available" />
+          </div>
+        </div>
+
+        <!-- Business Context Notice Box -->
+        <div class="shared-notice-box">
+          <i class="fa-solid fa-circle-info text-primary me-2"></i>
+          <span>Warehouses are company-owned and shared across all configured client firms. Creating or modifying master
+            records does not alter inventory balances.</span>
         </div>
       </div>
 
@@ -175,6 +343,202 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 2: View Warehouse Details Read-Only Profile (UC-WH-02)         -->
+<!-- ==================================================================== -->
+@if (isViewModalOpen && viewingWarehouse) {
+<div class="modal-backdrop-erp" (click)="closeViewDetails()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div class="d-flex align-items-center gap-2">
+        <div class="view-avatar-box">
+          <i class="fa-solid fa-warehouse"></i>
+        </div>
+        <div>
+          <h3 class="modal-title-erp">{{ viewingWarehouse.name }}</h3>
+          <span class="wh-id-badge">{{ viewingWarehouse.id }}</span>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewDetails()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <div class="view-security-banner mb-3">
+        <i class="fa-solid fa-building me-2 text-primary"></i>
+        <span>Company-owned master warehouse shared across all configured client firms.</span>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Warehouse ID</span>
+          <span class="detail-val">{{ viewingWarehouse.id }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Operating Status</span>
+          <div>
+            <span class="status-toggle-btn" [ngClass]="viewingWarehouse.isActive ? 'is-active' : 'is-inactive'">
+              <span class="dot"></span>
+              <span>{{ viewingWarehouse.isActive ? 'Active (Operational)' : 'Inactive (Decommissioned)' }}</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">City / Mandi Hub</span>
+          <span class="detail-val fw-semibold text-dark">
+            <i class="fa-solid fa-location-dot text-danger me-1"></i>{{ viewingWarehouse.city }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Contact Person / Supervisor</span>
+          <span class="detail-val">{{ viewingWarehouse.contactPerson || 'Not Specified' }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Contact Phone</span>
+          <span class="detail-val">
+            @if (viewingWarehouse.contactPhone) {
+            <i class="fa-solid fa-phone me-1 text-secondary"></i>+91 {{ viewingWarehouse.contactPhone }}
+            } @else {
+            <span class="text-muted">Not Provided</span>
+            }
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Storage Type / Notes</span>
+          <span class="detail-val">{{ viewingWarehouse.remarks || 'Standard Mandi Godown' }}</span>
+        </div>
+
+        <div class="detail-item full-width-item">
+          <span class="detail-label">Physical Premises Address</span>
+          <span class="detail-val text-dark">{{ viewingWarehouse.address }}</span>
+        </div>
+      </div>
+
+      <!-- Audit Metadata Section -->
+      <div class="audit-metadata-box mt-3">
+        <div class="audit-title">System Audit Trail</div>
+        <div class="audit-row">
+          <span>Created:</span>
+          <strong>{{ viewingWarehouse.createdAt }} by {{ viewingWarehouse.createdBy }}</strong>
+        </div>
+        <div class="audit-row">
+          <span>Last Updated:</span>
+          <strong>{{ viewingWarehouse.updatedAt }} by {{ viewingWarehouse.updatedBy }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeViewDetails()">
+        Close
+      </button>
+      <button type="button" class="btn-erp-primary" (click)="closeViewDetails(); openEditModal(viewingWarehouse)">
+        <i class="fa-solid fa-pencil"></i>
+        <span>Edit Warehouse</span>
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 3: Status Confirmation Modal (UC-WH-03 with Safeguards)        -->
+<!-- ==================================================================== -->
+@if (isStatusModalOpen && statusTargetWarehouse) {
+<div class="modal-backdrop-erp" (click)="closeStatusModal()">
+  <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ statusTargetWarehouse.isActive ? 'Deactivate Warehouse' : 'Activate Warehouse' }}
+        </h3>
+        <p class="modal-sub-erp">{{ statusTargetWarehouse.name }} ({{ statusTargetWarehouse.id }})</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeStatusModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      @if (statusModalError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>{{ statusModalError }}</span>
+      </div>
+      }
+
+      @if (statusTargetWarehouse.isActive) {
+      <!-- DEACTIVATION FLOW -->
+      @if (deactivationCheck && !deactivationCheck.canDeactivate) {
+      <!-- Deactivation Blocked Warning (BR-WH 8a, 8b, 8c) -->
+      <div class="deactivation-blocked-box">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="fa-solid fa-circle-xmark text-danger fs-5"></i>
+          <span class="fw-bold text-danger">Deactivation Blocked</span>
+        </div>
+        <p class="small text-dark mb-2">
+          This warehouse cannot be deactivated due to active operational dependencies:
+        </p>
+        <ul class="blocker-list mb-2">
+          @for (reason of deactivationCheck.reasons; track reason) {
+          <li class="small text-danger">{{ reason }}</li>
+          }
+        </ul>
+        <div class="resolution-note small text-muted">
+          <i class="fa-solid fa-info-circle me-1 text-primary"></i>
+          Please dispatch/adjust remaining stock and complete pending truck receipts before deactivating.
+        </div>
+      </div>
+      } @else {
+      <!-- Clean Deactivation Confirmation Prompt -->
+      <div class="confirm-message-box">
+        <p class="text-danger fw-semibold mb-2">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i>
+          Are you sure you want to deactivate this warehouse?
+        </p>
+        <p class="small text-muted mb-0">
+          Deactivating will immediately prevent this warehouse from being selected for new truck receipts or dispatches.
+          Historical records and stock logs remain safely preserved.
+        </p>
+      </div>
+      }
+      } @else {
+      <!-- ACTIVATION FLOW -->
+      <div class="confirm-message-box">
+        <p class="text-success fw-semibold mb-2">
+          <i class="fa-solid fa-circle-check me-1"></i>
+          Activate this warehouse location?
+        </p>
+        <p class="small text-muted mb-0">
+          This warehouse will immediately become available for selection during truck receipts and dispatches across all
+          configured client firms.
+        </p>
+      </div>
+      }
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeStatusModal()">
+        {{ deactivationCheck && !deactivationCheck.canDeactivate ? 'Close' : 'Cancel' }}
+      </button>
+
+      @if (!statusTargetWarehouse.isActive || (deactivationCheck && deactivationCheck.canDeactivate)) {
+      <button type="button" class="btn-erp-primary"
+        [ngClass]="statusTargetWarehouse.isActive ? 'btn-danger-confirm' : ''" (click)="confirmStatusToggle()">
+        <span>{{ statusTargetWarehouse.isActive ? 'Yes, Deactivate' : 'Yes, Activate' }}</span>
+      </button>
+      }
+    </div>
   </div>
 </div>
 }

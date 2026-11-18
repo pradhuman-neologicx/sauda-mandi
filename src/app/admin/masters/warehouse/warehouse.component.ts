@@ -16,6 +16,8 @@ import {
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
+export type WarehouseSortField = 'id' | 'name' | 'city' | 'status' | 'createdAt';
+
 @Component({
   selector: 'app-warehouse',
   standalone: true,
@@ -29,22 +31,43 @@ export class WarehouseComponent implements OnInit, OnDestroy {
   warehouses: WarehouseRecord[] = [];
   filteredWarehouses: WarehouseRecord[] = [];
 
-  // Search (on Search button click)
+  // Search & Filter controls (UC-WH-02)
   searchTerm = '';
   appliedSearchTerm = '';
+  statusFilter: 'all' | 'Active' | 'Inactive' = 'all';
+  appliedStatusFilter: 'all' | 'Active' | 'Inactive' = 'all';
   showReset = false;
+
+  // Sorting
+  sortField: WarehouseSortField = 'name';
+  sortAsc = true;
 
   // Pagination
   page = 1;
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
-  // Modal states
+  // Modal 1: Add / Edit Warehouse Modal (UC-WH-01 & UC-WH-03)
   isModalOpen = false;
   isEdit = false;
   selectedWarehouse: WarehouseRecord | null = null;
   warehouseForm!: FormGroup;
   formError = '';
+
+  // Modal 2: View Warehouse Details Read-Only Modal (UC-WH-02)
+  isViewModalOpen = false;
+  viewingWarehouse: WarehouseRecord | null = null;
+
+  // Modal 3: Activate / Deactivate Confirmation Modal (UC-WH-03 with Safeguards)
+  isStatusModalOpen = false;
+  statusTargetWarehouse: WarehouseRecord | null = null;
+  deactivationCheck: {
+    canDeactivate: boolean;
+    reasons: string[];
+    stockDetails?: string;
+    pendingTrucks?: string[];
+  } | null = null;
+  statusModalError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -53,10 +76,7 @@ export class WarehouseComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.warehouseForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      city: ['', [Validators.required, Validators.minLength(2)]],
-    });
+    this.initForm();
 
     this.erpService.warehouses$
       .pipe(takeUntil(this.destroy$))
@@ -71,30 +91,128 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private initForm(): void {
+    this.warehouseForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      address: ['', [Validators.required, Validators.minLength(3)]],
+      city: ['', [Validators.required, Validators.minLength(2)]],
+      contactPerson: [''],
+      contactPhone: [
+        '',
+        [Validators.pattern('^[0-9]{10}$')],
+      ],
+      remarks: [''],
+    });
+  }
+
+  // ── KPI Summary Calculations ──
+  get totalCount(): number {
+    return this.warehouses.length;
+  }
+
+  get activeCount(): number {
+    return this.warehouses.filter((w) => w.isActive).length;
+  }
+
+  get inactiveCount(): number {
+    return this.warehouses.filter((w) => !w.isActive).length;
+  }
+
+  get citiesCount(): number {
+    const set = new Set(this.warehouses.map((w) => w.city.toLowerCase().trim()));
+    return set.size;
+  }
+
+  // ── Search & Filter Logic ──
   onSearch(): void {
     this.appliedSearchTerm = this.searchTerm.trim();
-    this.showReset = !!this.appliedSearchTerm;
+    this.appliedStatusFilter = this.statusFilter;
+    this.showReset = !!this.appliedSearchTerm || this.appliedStatusFilter !== 'all';
     this.page = 1;
     this.applyFilters();
+  }
+
+  onStatusFilterChange(): void {
+    this.onSearch();
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.appliedSearchTerm = '';
+    this.statusFilter = 'all';
+    this.appliedStatusFilter = 'all';
     this.showReset = false;
     this.page = 1;
     this.applyFilters();
   }
 
-  applyFilters(): void {
-    const q = this.appliedSearchTerm.toLowerCase();
-    this.filteredWarehouses = this.warehouses.filter((w) =>
-      !q
-        ? true
-        : w.name.toLowerCase().includes(q) || w.city.toLowerCase().includes(q),
-    );
+  setSort(field: WarehouseSortField): void {
+    if (this.sortField === field) {
+      this.sortAsc = !this.sortAsc;
+    } else {
+      this.sortField = field;
+      this.sortAsc = true;
+    }
+    this.applyFilters();
   }
 
+  applyFilters(): void {
+    const q = this.appliedSearchTerm.toLowerCase();
+    const st = this.appliedStatusFilter;
+
+    let result = this.warehouses.filter((w) => {
+      const matchSearch =
+        !q ||
+        w.name.toLowerCase().includes(q) ||
+        w.id.toLowerCase().includes(q) ||
+        w.city.toLowerCase().includes(q) ||
+        (w.contactPerson && w.contactPerson.toLowerCase().includes(q));
+
+      const matchStatus =
+        st === 'all' ||
+        (st === 'Active' && w.isActive) ||
+        (st === 'Inactive' && !w.isActive);
+
+      return matchSearch && matchStatus;
+    });
+
+    // Sort
+    result.sort((a, b) => {
+      let valA: string | boolean = '';
+      let valB: string | boolean = '';
+
+      switch (this.sortField) {
+        case 'id':
+          valA = a.id;
+          valB = b.id;
+          break;
+        case 'name':
+          valA = a.name.toLowerCase();
+          valB = b.name.toLowerCase();
+          break;
+        case 'city':
+          valA = a.city.toLowerCase();
+          valB = b.city.toLowerCase();
+          break;
+        case 'status':
+          valA = a.isActive ? 'Active' : 'Inactive';
+          valB = b.isActive ? 'Active' : 'Inactive';
+          break;
+        case 'createdAt':
+          valA = a.createdAt;
+          valB = b.createdAt;
+          break;
+      }
+
+      if (valA < valB) return this.sortAsc ? -1 : 1;
+      if (valA > valB) return this.sortAsc ? 1 : -1;
+      return 0;
+    });
+
+    this.filteredWarehouses = result;
+  }
+
+  // ── Pagination Helpers ──
   get itemsPerPageCount(): number {
     return this.tableSize === 'all'
       ? Math.max(1, this.filteredWarehouses.length)
@@ -117,11 +235,19 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.page = 1;
   }
 
+  // ── UC-WH-01 & UC-WH-03: Create & Edit Warehouse ──
   openAddModal(): void {
     this.isEdit = false;
     this.selectedWarehouse = null;
     this.formError = '';
-    this.warehouseForm.reset({ name: '', city: '' });
+    this.warehouseForm.reset({
+      name: '',
+      address: '',
+      city: '',
+      contactPerson: '',
+      contactPhone: '',
+      remarks: '',
+    });
     this.isModalOpen = true;
   }
 
@@ -129,7 +255,14 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.isEdit = true;
     this.selectedWarehouse = w;
     this.formError = '';
-    this.warehouseForm.reset({ name: w.name, city: w.city });
+    this.warehouseForm.reset({
+      name: w.name,
+      address: w.address,
+      city: w.city,
+      contactPerson: w.contactPerson || '',
+      contactPhone: w.contactPhone || '',
+      remarks: w.remarks || '',
+    });
     this.isModalOpen = true;
   }
 
@@ -142,28 +275,74 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     this.formError = '';
     if (this.warehouseForm.invalid) {
       this.warehouseForm.markAllAsTouched();
-      this.formError = 'Please enter Warehouse Name and City (min 2 characters each).';
+      this.formError = 'Please fill all mandatory fields (Name, Address, City) with valid values.';
       return;
     }
-    const { name, city } = this.warehouseForm.value;
+
+    const val = this.warehouseForm.value;
     const res =
       this.isEdit && this.selectedWarehouse
-        ? this.erpService.updateWarehouse(this.selectedWarehouse.id, name, city)
-        : this.erpService.createWarehouse(name, city);
+        ? this.erpService.updateWarehouse(this.selectedWarehouse.id, val)
+        : this.erpService.createWarehouse(val);
 
     if (!res.ok) {
       this.formError = res.message;
       return;
     }
+
     this.notificationService.show(res.message, 'success', 2500);
     this.closeModal();
   }
 
-  toggleStatus(w: WarehouseRecord): void {
-    const res = this.erpService.toggleWarehouseStatus(w.id);
-    if (res.ok) {
-      this.notificationService.show(res.message, 'success', 2500);
+  // ── UC-WH-02: View Warehouse Details ──
+  openViewDetails(w: WarehouseRecord): void {
+    this.viewingWarehouse = w;
+    this.isViewModalOpen = true;
+  }
+
+  closeViewDetails(): void {
+    this.isViewModalOpen = false;
+    this.viewingWarehouse = null;
+  }
+
+  // ── UC-WH-03: Status Change Confirmation with Safeguards ──
+  promptStatusToggle(w: WarehouseRecord): void {
+    this.statusTargetWarehouse = w;
+    this.statusModalError = '';
+
+    if (w.isActive) {
+      // Check physical stock & pending fulfilments (BR-WH 8a, 8b, 8c)
+      this.deactivationCheck = this.erpService.canDeactivateWarehouse(w.id);
+    } else {
+      this.deactivationCheck = null; // Activation has no stock block
     }
+
+    this.isStatusModalOpen = true;
+  }
+
+  closeStatusModal(): void {
+    this.isStatusModalOpen = false;
+    this.statusTargetWarehouse = null;
+    this.deactivationCheck = null;
+    this.statusModalError = '';
+  }
+
+  confirmStatusToggle(): void {
+    if (!this.statusTargetWarehouse) return;
+
+    if (this.statusTargetWarehouse.isActive && this.deactivationCheck && !this.deactivationCheck.canDeactivate) {
+      this.statusModalError =
+        'Deactivation blocked: Clear physical inventory and pending truck fulfilments before deactivating.';
+      return;
+    }
+
+    const res = this.erpService.toggleWarehouseStatus(this.statusTargetWarehouse.id);
+    if (!res.ok) {
+      this.statusModalError = res.message;
+      return;
+    }
+
+    this.notificationService.show(res.message, 'success', 2500);
+    this.closeStatusModal();
   }
 }
-

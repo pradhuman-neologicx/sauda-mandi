@@ -1,246 +1,549 @@
-<div class="erp-page">
-  <!-- Top Header -->
-  <div class="erp-header">
-    <div>
-      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Phase 1 Overview</div>
-      <h1 class="erp-title">Operations Dashboard</h1>
-      <p class="erp-subtitle">
-        Live summary of Sauda contracts and Truck movements (sample prototype data)
-      </p>
+<div class="dash-container">
+  <!-- 1. Top Filter Bar -->
+  <div class="dash-top-bar">
+    <div class="dash-filter-group">
+      <label class="dash-filter-label">Firm</label>
+      <div class="dash-select-wrap">
+        <select [(ngModel)]="selectedFirm" class="dash-select">
+          @for (f of firmsList; track f) {
+          <option [value]="f">{{ f }}</option>
+          }
+        </select>
+        <i class="fa-solid fa-chevron-down dash-caret"></i>
+      </div>
     </div>
 
-    <div class="erp-actions">
-      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="btn-erp-primary">
-        <i class="fa-solid fa-plus"></i>
-        <span>New Sauda</span>
+    <div class="dash-filter-group period-group">
+      <label class="dash-filter-label">Period</label>
+      <div class="dash-select-wrap period-wrap">
+        <i class="fa-regular fa-calendar cal-prefix-icon"></i>
+        <select [(ngModel)]="selectedPeriod" class="dash-select period-select">
+          @for (p of periodOptions; track p) {
+          <option [value]="p">{{ p }}</option>
+          }
+        </select>
+        <i class="fa-solid fa-chevron-down dash-caret"></i>
+      </div>
+    </div>
+
+    <button type="button" class="btn-dash-apply" (click)="applyFilters()">
+      Apply
+    </button>
+  </div>
+
+  <!-- 2. KPI Metric Cards (Row of 4) -->
+  <div class="kpi-cards-grid">
+    <!-- Card 1: Total Purchases -->
+    <div class="kpi-card-item kpi-purchases">
+      <div class="kpi-icon-box icon-purchases">
+        <i class="fa-solid fa-cart-shopping"></i>
+      </div>
+      <div class="kpi-text-col">
+        <div class="kpi-label">Total Purchases</div>
+        <div class="kpi-value">{{ kpi.totalPurchases }}</div>
+      </div>
+    </div>
+
+    <!-- Card 2: Total Sales -->
+    <div class="kpi-card-item kpi-sales">
+      <div class="kpi-icon-box icon-sales">
+        <i class="fa-solid fa-cart-shopping"></i>
+      </div>
+      <div class="kpi-text-col">
+        <div class="kpi-label">Total Sales</div>
+        <div class="kpi-value">{{ kpi.totalSales }}</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Money to Receive -->
+    <div class="kpi-card-item kpi-receive">
+      <div class="kpi-icon-box icon-receive">
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+      </div>
+      <div class="kpi-text-col">
+        <div class="kpi-label">Money to Receive</div>
+        <div class="kpi-value">{{ kpi.moneyToReceive }}</div>
+      </div>
+    </div>
+
+    <!-- Card 4: Money to Pay -->
+    <div class="kpi-card-item kpi-pay">
+      <div class="kpi-icon-box icon-pay">
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+      </div>
+      <div class="kpi-text-col">
+        <div class="kpi-label">Money to Pay</div>
+        <div class="kpi-value">{{ kpi.moneyToPay }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Quick Actions Row -->
+  <div class="quick-actions-card">
+    <div class="qa-leading">
+      <i class="fa-solid fa-bolt qa-bolt-icon"></i>
+      <div class="qa-title-stack">
+        <span>Quick</span>
+        <span>Actions</span>
+      </div>
+      <div class="qa-divider"></div>
+    </div>
+
+    <div class="qa-buttons-wrap">
+      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="qa-pill-btn">
+        <i class="fa-solid fa-handshake qa-btn-icon"></i>
+        <span>Create Sauda</span>
       </a>
-      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="btn-erp-outline">
-        <i class="fa-solid fa-truck-fast"></i>
-        <span>New Truck Entry</span>
+
+      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="qa-pill-btn">
+        <i class="fa-solid fa-truck qa-btn-icon"></i>
+        <span>Record Truck</span>
+      </a>
+
+      <button type="button" class="qa-pill-btn" (click)="openCreateInvoice()">
+        <i class="fa-regular fa-file-lines qa-btn-icon"></i>
+        <span>Create Invoice</span>
+      </button>
+
+      <a routerLink="/admin/party-ledger" class="qa-pill-btn">
+        <i class="fa-solid fa-wallet qa-btn-icon"></i>
+        <span>Record Payment</span>
+      </a>
+
+      <a routerLink="/admin/party-ledger" class="qa-pill-btn">
+        <i class="fa-solid fa-user-plus qa-btn-icon"></i>
+        <span>Add Party</span>
+      </a>
+
+      <a routerLink="/admin/inventory-management/inventory" class="qa-pill-btn">
+        <i class="fa-solid fa-warehouse qa-btn-icon"></i>
+        <span>View Stock</span>
       </a>
     </div>
   </div>
 
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-label">Active Sauda Contracts</span>
-        <span class="kpi-icon icon-blue">
-          <i class="fa-solid fa-file-contract"></i>
-        </span>
+  <!-- 4. Middle Section (Two Cards) -->
+  <div class="dash-grid-two">
+    <!-- Today's Work / Action Centre -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <i class="fa-regular fa-clipboard card-title-icon"></i>
+        <h2 class="dash-card-title">Today's Work / Action Centre</h2>
       </div>
-      <div class="kpi-value">{{ activeSaudaCount }}</div>
 
+      <div class="action-centre-list">
+        <!-- Item 1 -->
+        <a routerLink="/admin/sauda-management" class="ac-row">
+          <div class="ac-leading">
+            <div class="ac-icon-wrap">
+              <i class="fa-solid fa-truck"></i>
+            </div>
+            <span class="ac-label">Saudas Pending Truck Fulfilment</span>
+          </div>
+          <div class="ac-trailing">
+            <span class="ac-badge badge-amber">{{ actionCentre.saudasPendingFulfilment }}</span>
+            <i class="fa-solid fa-chevron-right ac-chevron"></i>
+          </div>
+        </a>
+
+        <!-- Item 2 -->
+        <a routerLink="/admin/truck-management" class="ac-row">
+          <div class="ac-leading">
+            <div class="ac-icon-wrap">
+              <i class="fa-solid fa-truck"></i>
+            </div>
+            <span class="ac-label">Trucks Expected Today (Receipt / Dispatch)</span>
+          </div>
+          <div class="ac-trailing">
+            <span class="ac-badge badge-blue">{{ actionCentre.trucksExpectedToday }}</span>
+            <i class="fa-solid fa-chevron-right ac-chevron"></i>
+          </div>
+        </a>
+
+        <!-- Item 3 -->
+        <a routerLink="/admin/sauda-management" class="ac-row">
+          <div class="ac-leading">
+            <div class="ac-icon-wrap">
+              <i class="fa-regular fa-file-lines"></i>
+            </div>
+            <span class="ac-label">Invoices Pending Creation</span>
+          </div>
+          <div class="ac-trailing">
+            <span class="ac-badge badge-blue">{{ actionCentre.invoicesPendingCreation }}</span>
+            <i class="fa-solid fa-chevron-right ac-chevron"></i>
+          </div>
+        </a>
+
+        <!-- Item 4 -->
+        <a routerLink="/admin/party-ledger" class="ac-row">
+          <div class="ac-leading">
+            <div class="ac-icon-wrap">
+              <i class="fa-regular fa-file-lines"></i>
+            </div>
+            <span class="ac-label">Invoices Awaiting Payment</span>
+          </div>
+          <div class="ac-trailing">
+            <span class="ac-badge badge-red">{{ actionCentre.invoicesAwaitingPayment }}</span>
+            <i class="fa-solid fa-chevron-right ac-chevron"></i>
+          </div>
+        </a>
+      </div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-label">Pending Balance Qty</span>
-        <span class="kpi-icon icon-amber">
-          <i class="fa-solid fa-scale-balanced"></i>
-        </span>
-      </div>
-      <div class="kpi-value">{{ totalPendingMt | number: '1.0-2' }} MT</div>
-
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-label">Active Truck Entries</span>
-        <span class="kpi-icon icon-green">
-          <i class="fa-solid fa-truck"></i>
-        </span>
-      </div>
-      <div class="kpi-value">{{ activeTruckCount }}</div>
-
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-label">Active Contract Value</span>
-        <span class="kpi-icon icon-navy">
-          <i class="fa-solid fa-indian-rupee-sign"></i>
-        </span>
-      </div>
-      <div class="kpi-value">
-        {{ totalContractValueInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+    <!-- Payment Due / Summary -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <i class="fa-solid fa-coins card-title-icon"></i>
+        <h2 class="dash-card-title">Payment Due / Summary</h2>
       </div>
 
+      <div class="payment-due-inner-grid">
+        <!-- Highlights Column -->
+        <div class="pd-highlights-col">
+          <!-- Receivable Box -->
+          <div class="pd-box pd-receivable">
+            <div class="pd-box-top">
+              <span class="pd-arrow-circle arrow-circle-green">↗</span>
+              <span class="pd-box-label">Receivable (To Receive)</span>
+            </div>
+            <div class="pd-box-value">{{ paymentDue.receivable }}</div>
+          </div>
+
+          <!-- Payable Box -->
+          <div class="pd-box pd-payable">
+            <div class="pd-box-top">
+              <span class="pd-arrow-circle arrow-circle-red">↘</span>
+              <span class="pd-box-label">Payable (To Pay)</span>
+            </div>
+            <div class="pd-box-value">{{ paymentDue.payable }}</div>
+          </div>
+        </div>
+
+        <!-- Dues Rows Column -->
+        <div class="pd-rows-col">
+          <a routerLink="/admin/party-ledger" class="pd-row">
+            <div class="pd-row-leading">
+              <i class="fa-regular fa-calendar pd-cal-icon"></i>
+              <span class="pd-row-label">Overdue Receivables</span>
+            </div>
+            <div class="pd-row-trailing">
+              <span class="pd-due-amount">{{ paymentDue.overdueReceivables }}</span>
+              <i class="fa-solid fa-chevron-right pd-chevron"></i>
+            </div>
+          </a>
+
+          <a routerLink="/admin/party-ledger" class="pd-row">
+            <div class="pd-row-leading">
+              <i class="fa-regular fa-calendar pd-cal-icon"></i>
+              <span class="pd-row-label">Overdue Payables</span>
+            </div>
+            <div class="pd-row-trailing">
+              <span class="pd-due-amount">{{ paymentDue.overduePayables }}</span>
+              <i class="fa-solid fa-chevron-right pd-chevron"></i>
+            </div>
+          </a>
+
+          <a routerLink="/admin/party-ledger" class="pd-row">
+            <div class="pd-row-leading">
+              <i class="fa-regular fa-calendar pd-cal-icon"></i>
+              <span class="pd-row-label">Payments Due (Next 7 Days)</span>
+            </div>
+            <div class="pd-row-trailing">
+              <span class="pd-due-amount">{{ paymentDue.paymentsDueNext7Days }}</span>
+              <i class="fa-solid fa-chevron-right pd-chevron"></i>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Commodity Summary -->
-  <div class="erp-card mb-4">
-    <div class="erp-card-header">
-      <div>
-        <h2 class="erp-card-title">Commodity Position Summary</h2>
-        <p class="erp-card-subtitle">
-          Contracted vs Dispatched vs Pending quantity by commodity
-        </p>
+  <!-- 5. Third Section (Three Columns) -->
+  <div class="dash-grid-three">
+    <!-- Column 1: Purchase vs Sales Overview -->
+    <div class="dash-card purchase-sales-card">
+      <div class="dash-card-header chart-card-header">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-column card-title-icon"></i>
+          <h2 class="dash-card-title">Purchase vs Sales <span class="fw-normal text-muted">(Overview)</span></h2>
+        </div>
+        <span class="chart-net-pill">
+          <i class="fa-solid fa-arrow-trend-up me-1"></i>+₹4.30 L (+34.4%)
+        </span>
       </div>
-      <span class="scope-pill">
-        <i class="fa-solid fa-circle-info me-1"></i>
-        Scope: Sauda &amp; Truck Management Only
-      </span>
+
+      <!-- Quick Legend & Metric Cards -->
+      <div class="chart-metric-strip">
+        <div class="chart-stat-chip chip-purchases">
+          <div class="stat-chip-dot dot-blue"></div>
+          <div class="stat-chip-info">
+            <span class="stat-chip-label">Total Purchases</span>
+            <div class="stat-chip-values">
+              <span class="stat-chip-val text-primary">{{ chartData.purchasesVal }}</span>
+              <span class="stat-chip-pct">({{ chartData.purchasesSharePct }})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-stat-chip chip-sales">
+          <div class="stat-chip-dot dot-green"></div>
+          <div class="stat-chip-info">
+            <span class="stat-chip-label">Total Sales</span>
+            <div class="stat-chip-values">
+              <span class="stat-chip-val text-success">{{ chartData.salesVal }}</span>
+              <span class="stat-chip-pct">({{ chartData.salesSharePct }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Layout -->
+      <div class="chart-layout">
+        <div class="chart-plot-area">
+          <div class="chart-plot-grid">
+            <!-- Y-axis guide labels & lines -->
+            <div class="y-ticks-col">
+              <div class="y-tick-row"><span class="y-label">20 L</span>
+                <div class="plot-grid-line"></div>
+              </div>
+              <div class="y-tick-row"><span class="y-label">15 L</span>
+                <div class="plot-grid-line"></div>
+              </div>
+              <div class="y-tick-row"><span class="y-label">10 L</span>
+                <div class="plot-grid-line"></div>
+              </div>
+              <div class="y-tick-row"><span class="y-label">5 L</span>
+                <div class="plot-grid-line"></div>
+              </div>
+              <div class="y-tick-row zero-row"><span class="y-label">0</span>
+                <div class="plot-grid-line baseline"></div>
+              </div>
+            </div>
+
+            <!-- Total Comparison Bars -->
+            <div class="plot-total-row">
+              <!-- Purchases Bar Slot -->
+              <div class="total-bar-col">
+                <span class="total-bar-val-badge badge-blue">{{ chartData.purchasesVal }}</span>
+                <div class="bar-fill bar-blue total-bar-fill" [style.height.%]="chartData.purchasesHeightPct"
+                  [title]="'Purchases: ' + chartData.purchasesVal"></div>
+              </div>
+
+              <!-- Sales Bar Slot -->
+              <div class="total-bar-col">
+                <span class="total-bar-val-badge badge-green">{{ chartData.salesVal }}</span>
+                <div class="bar-fill bar-green total-bar-fill" [style.height.%]="chartData.salesHeightPct"
+                  [title]="'Sales: ' + chartData.salesVal"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- X-axis Labels Row (below baseline) -->
+          <div class="x-axis-labels-row">
+            <div class="x-axis-total-label">
+              <span class="x-main-label text-primary">Purchases</span>
+              <span class="x-sub-label">{{ chartData.purchasesSharePct }} Share</span>
+            </div>
+            <div class="x-axis-total-label">
+              <span class="x-main-label text-success">Sales</span>
+              <span class="x-sub-label">{{ chartData.salesSharePct }} Share</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proportional Ratio Distribution Bar -->
+        <div class="chart-ratio-strip" title="Distribution: 42.7% Purchases vs 57.3% Sales">
+          <div class="ratio-bar-track">
+            <div class="ratio-segment segment-blue" style="width: 42.7%"></div>
+            <div class="ratio-segment segment-green" style="width: 57.3%"></div>
+          </div>
+          <div class="ratio-labels">
+            <span class="ratio-lbl-blue"><i class="fa-solid fa-circle-dot me-1"></i>Purchases: 42.7%</span>
+            <span class="ratio-lbl-green"><i class="fa-solid fa-circle-dot me-1"></i>Sales: 57.3%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 2: Current Stock (Available) -->
+    <div class="dash-card">
+      <div class="dash-card-header stock-card-header">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-boxes-stacked card-title-icon"></i>
+          <h2 class="dash-card-title">Current Stock <span class="fw-normal text-muted">(Available)</span></h2>
+        </div>
+        <div class="stock-toggle-pill">
+          <button type="button" class="toggle-opt" [class.active]="stockViewMode === 'commodity'"
+            (click)="setStockView('commodity')">
+            By Commodity
+          </button>
+          <button type="button" class="toggle-opt" [class.active]="stockViewMode === 'warehouse'"
+            (click)="setStockView('warehouse')">
+            By Warehouse
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive stock-table-wrap">
+        @if (stockViewMode === 'commodity') {
+        <table class="dash-clean-table">
+          <thead>
+            <tr>
+              <th style="width: 32%">Commodity</th>
+              <th class="text-center" style="width: 24%">Total Quantity</th>
+              <th class="text-center" style="width: 18%">Unit</th>
+              <th class="text-end" style="width: 26%">Total Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of commodityStockList; track item.commodity) {
+            <tr>
+              <td>
+                <div class="commodity-cell">
+                  <span class="commodity-icon-chip" [ngClass]="item.iconType">
+                    @if (item.iconType === 'groundnut') {
+                    <svg viewBox="0 0 24 24" class="grain-svg">
+                      <ellipse cx="9" cy="12" rx="5" ry="7" fill="#d97706" />
+                      <ellipse cx="15" cy="12" rx="5" ry="7" fill="#b45309" opacity="0.85" />
+                    </svg>
+                    } @else if (item.iconType === 'chana') {
+                    <svg viewBox="0 0 24 24" class="grain-svg">
+                      <circle cx="8" cy="14" r="5" fill="#f59e0b" />
+                      <circle cx="15" cy="11" r="5.5" fill="#d97706" />
+                      <circle cx="11" cy="7" r="4.5" fill="#b45309" />
+                    </svg>
+                    } @else {
+                    <svg viewBox="0 0 24 24" class="grain-svg">
+                      <ellipse cx="7" cy="14" rx="4" ry="6" fill="#84cc16" />
+                      <ellipse cx="14" cy="12" rx="4.5" ry="6.5" fill="#65a30d" />
+                      <ellipse cx="11" cy="7" rx="3.5" ry="5.5" fill="#4d7c0f" />
+                    </svg>
+                    }
+                  </span>
+                  <span class="commodity-name">{{ item.commodity }}</span>
+                </div>
+              </td>
+              <td class="text-center fw-semibold text-dark">{{ item.totalQty | number }}</td>
+              <td class="text-center text-secondary">{{ item.unit }}</td>
+              <td class="text-end fw-semibold text-dark">{{ item.totalWeightKg | number }} Kg</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        } @else {
+        <table class="dash-clean-table">
+          <thead>
+            <tr>
+              <th style="width: 38%">Warehouse</th>
+              <th class="text-center" style="width: 20%">Total Quantity</th>
+              <th class="text-center" style="width: 16%">Unit</th>
+              <th class="text-end" style="width: 26%">Total Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (wh of warehouseStockList; track wh.warehouse) {
+            <tr>
+              <td>
+                <div class="commodity-cell">
+                  <i class="fa-solid fa-warehouse text-primary me-2"></i>
+                  <div>
+                    <span class="commodity-name">{{ wh.warehouse }}</span>
+                    <div class="wh-subcity">{{ wh.city }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center fw-semibold text-dark">{{ wh.totalQty | number }}</td>
+              <td class="text-center text-secondary">{{ wh.unit }}</td>
+              <td class="text-end fw-semibold text-dark">{{ wh.totalWeightKg | number }} Kg</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+    </div>
+
+    <!-- Column 3: Sauda Summary (This Period) -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <i class="fa-solid fa-handshake card-title-icon"></i>
+        <h2 class="dash-card-title">Sauda Summary <span class="fw-normal text-muted">(This Period)</span></h2>
+      </div>
+
+      <div class="sauda-summary-grid">
+        <!-- Purchase Saudas -->
+        <div class="ss-box ss-purchase">
+          <div class="ss-icon-wrap">
+            <i class="fa-regular fa-file-lines ss-icon icon-blue"></i>
+          </div>
+          <div class="ss-title">Purchase Saudas</div>
+          <div class="ss-number">{{ saudaSummary.purchaseSaudas }}</div>
+        </div>
+
+        <!-- Sales Saudas -->
+        <div class="ss-box ss-sales">
+          <div class="ss-icon-wrap">
+            <i class="fa-regular fa-file-lines ss-icon icon-green"></i>
+          </div>
+          <div class="ss-title">Sales Saudas</div>
+          <div class="ss-number">{{ saudaSummary.salesSaudas }}</div>
+        </div>
+
+        <!-- Brokerage Saudas -->
+        <div class="ss-box ss-brokerage">
+          <div class="ss-icon-wrap">
+            <i class="fa-regular fa-file-lines ss-icon icon-purple"></i>
+          </div>
+          <div class="ss-title">Brokerage Saudas</div>
+          <div class="ss-number">{{ saudaSummary.brokerageSaudas }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Bottom Section: Recent Saudas -->
+  <div class="dash-card recent-saudas-card">
+    <div class="recent-saudas-header">
+      <h2 class="dash-card-title">Recent Saudas</h2>
+      <a routerLink="/admin/sauda-management" class="view-all-saudas-link">
+        <span>View All Saudas</span>
+        <i class="fa-solid fa-arrow-right ms-1"></i>
+      </a>
     </div>
 
     <div class="table-responsive">
-      <table class="erp-table">
+      <table class="recent-saudas-table">
         <thead>
           <tr>
-            <th>Commodity</th>
-            <th class="text-center">Contracts</th>
-            <th class="text-end">Contracted (MT)</th>
-            <th class="text-end">Truck Assigned (MT)</th>
-            <th class="text-end">Pending Balance (MT)</th>
-            <th style="width: 220px">Fulfillment</th>
+            <th style="width: 14%">Sauda No.</th>
+            <th style="width: 14%">Date</th>
+            <th style="width: 12%">Type</th>
+            <th style="width: 22%">Party</th>
+            <th style="width: 14%">Commodity</th>
+            <th style="width: 12%">Qty</th>
+            <th class="text-end" style="width: 12%">Value</th>
           </tr>
         </thead>
         <tbody>
-          @for (row of commoditySummaries; track row.commodity) {
+          @for (s of recentSaudas; track s.saudaNo) {
           <tr>
-            <td class="fw-semibold text-dark">{{ row.commodity }}</td>
-            <td class="text-center">{{ row.contracts }}</td>
-            <td class="text-end num">{{ row.totalMt | number: '1.0-2' }}</td>
-            <td class="text-end num text-success fw-semibold">
-              {{ row.dispatchedMt | number: '1.0-2' }}
-            </td>
-            <td class="text-end num text-primary fw-semibold">
-              {{ row.pendingMt | number: '1.0-2' }}
-            </td>
             <td>
-              <div class="progress-wrap">
-                <div class="progress-track">
-                  <div class="progress-fill" [style.width.%]="row.totalMt ? (row.dispatchedMt / row.totalMt) * 100 : 0">
-                  </div>
-                </div>
-                <span class="progress-pct">
-                  {{
-                  row.totalMt
-                  ? ((row.dispatchedMt / row.totalMt) * 100 | number: '1.0-0')
-                  : 0
-                  }}%
-                </span>
-              </div>
+              <a (click)="openSauda(s)" class="sauda-no-link">{{ s.saudaNo }}</a>
             </td>
+            <td class="text-nowrap">{{ s.date }}</td>
+            <td>
+              <span class="sauda-type-badge" [ngClass]="'type-' + s.type.toLowerCase()">
+                {{ s.type }}
+              </span>
+            </td>
+            <td class="fw-semibold text-dark">{{ s.party }}</td>
+            <td>{{ s.commodity }}</td>
+            <td>{{ s.qty }}</td>
+            <td class="text-end fw-bold text-dark">{{ s.value }}</td>
           </tr>
           }
         </tbody>
       </table>
-    </div>
-  </div>
-
-  <!-- Recent Tables Grid -->
-  <div class="tables-grid">
-    <!-- Recent Saudas -->
-    <div class="erp-card">
-      <div class="erp-card-header">
-        <div>
-          <h2 class="erp-card-title">Recent Sauda Contracts</h2>
-          <p class="erp-card-subtitle">Latest 5 contracts &amp; fulfillment status</p>
-        </div>
-        <a routerLink="/admin/sauda-management" class="link-action">
-          View All <i class="fa-solid fa-arrow-right ms-1"></i>
-        </a>
-      </div>
-
-      <div class="table-responsive">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th>Sauda No.</th>
-              <th>Party</th>
-              <th>Commodity</th>
-              <th class="text-end">Pending / Total</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (s of saudas.slice(0, 5); track s.id) {
-            <tr>
-              <td>
-                <div class="fw-bold text-primary">{{ s.saudaNo }}</div>
-                <div class="sub-cell">{{ s.saudaType }} &bull; v{{ s.currentVersion }}</div>
-              </td>
-              <td>
-                <div class="fw-semibold text-dark">{{ s.partyName }}</div>
-                <div class="sub-cell">{{ s.saudaDate }}</div>
-              </td>
-              <td>
-                <div>{{ s.commodity }}</div>
-                <div class="sub-cell">{{ s.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
-              </td>
-              <td class="text-end num">
-                <div class="fw-semibold">
-                  {{ erpService.getRemainingQtyMt(s.id) | number: '1.0-2' }} /
-                  {{ s.quantityMt | number: '1.0-2' }} MT
-                </div>
-                <div class="sub-cell">{{ getFulfillmentPercent(s) }}% assigned</div>
-              </td>
-              <td class="text-center">
-                <span class="status-badge" [ngClass]="getSaudaBadgeClass(s.status)">
-                  {{ s.status }}
-                </span>
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Recent Trucks -->
-    <div class="erp-card">
-      <div class="erp-card-header">
-        <div>
-          <h2 class="erp-card-title">Recent Truck Entries</h2>
-          <p class="erp-card-subtitle">Latest 5 dispatches &amp; placements</p>
-        </div>
-        <a routerLink="/admin/truck-management" class="link-action">
-          View All <i class="fa-solid fa-arrow-right ms-1"></i>
-        </a>
-      </div>
-
-      <div class="table-responsive">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th>Entry / Vehicle</th>
-              <th>Linked Sauda</th>
-              <th class="text-end">Loaded Qty</th>
-              <th>Dispatch</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (t of trucks.slice(0, 5); track t.id) {
-            <tr>
-              <td>
-                <div class="fw-bold text-dark">{{ t.vehicleNo }}</div>
-                <div class="sub-cell">{{ t.entryNo }} &bull; v{{ t.currentVersion }}</div>
-              </td>
-              <td>
-                <div class="fw-semibold text-primary">{{ t.saudaNo }}</div>
-                <div class="sub-cell">{{ t.transporterName }}</div>
-              </td>
-              <td class="text-end num fw-semibold">
-                {{ t.loadedQtyMt | number: '1.0-2' }} MT
-              </td>
-              <td>
-                <div>{{ t.dispatchDate }}</div>
-                <div class="sub-cell">LR: {{ t.lrNo }}</div>
-              </td>
-              <td class="text-center">
-                <span class="status-badge" [ngClass]="getTruckBadgeClass(t.status)">
-                  {{ t.status }}
-                </span>
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
 </div>

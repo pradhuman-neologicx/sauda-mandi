@@ -1,0 +1,573 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
+      <h1 class="erp-title">User Management</h1>
+      <p class="erp-subtitle">
+        Manage authorized system users, primary firm assignments, user types and account security
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddUserModal()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add User</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Overview Strip -->
+  <div class="user-kpi-grid mb-4">
+    <div class="user-kpi-card">
+      <div class="kpi-icon-box kpi-blue">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Users</span>
+        <span class="kpi-val">{{ totalUsers }}</span>
+      </div>
+    </div>
+
+    <div class="user-kpi-card">
+      <div class="kpi-icon-box kpi-purple">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Active Admins</span>
+        <span class="kpi-val text-purple">{{ totalAdmins }}</span>
+      </div>
+    </div>
+
+    <div class="user-kpi-card">
+      <div class="kpi-icon-box kpi-cyan">
+        <i class="fa-solid fa-user-tie"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Operations Executives</span>
+        <span class="kpi-val text-cyan">{{ totalOps }}</span>
+      </div>
+    </div>
+
+    <div class="user-kpi-card">
+      <div class="kpi-icon-box kpi-amber">
+        <i class="fa-regular fa-envelope"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Setup Pending</span>
+        <span class="kpi-val text-amber">{{ totalPendingSetup }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+          @for (size of tableSizes; track size) {
+          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <!-- Search Box (only searches on button click or form submit, not on type) -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search by Name, Email, Mobile or User ID..."
+          />
+        </div>
+
+        <!-- Role Filter -->
+        <select
+          class="filter-select"
+          name="selectedRole"
+          [(ngModel)]="selectedRole"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="All">All Roles</option>
+          <option value="Business Owner / Admin">Admin Only</option>
+          <option value="Operations Executive">Operations Exec Only</option>
+        </select>
+
+        <!-- Firm Filter -->
+        <select
+          class="filter-select"
+          name="selectedFirm"
+          [(ngModel)]="selectedFirm"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="All">All Firms</option>
+          @for (f of firmsList; track f.id) {
+            <option [value]="f.name">{{ f.name }}</option>
+          }
+        </select>
+
+        <!-- Search Button -->
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        <!-- Reset Button -->
+        @if (showReset) {
+          <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i>
+            <span>Reset</span>
+          </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Users Data Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 60px">S.No.</th>
+            <th style="width: 100px">User ID</th>
+            <th>User & Contact</th>
+            <th>Role / User Type</th>
+            <th>Primary Firm</th>
+            <th class="text-center" style="width: 140px">Password Setup</th>
+            <th class="text-center" style="width: 120px">Account Status</th>
+            <th class="text-center" style="width: 150px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredUsers.length === 0) {
+          <tr>
+            <td colspan="8" class="empty-state">
+              <i class="fa-solid fa-user-slash mb-2"></i>
+              <div class="fw-semibold">No user records found.</div>
+              <div class="text-muted small">Try adjusting your search query or filter options.</div>
+            </td>
+          </tr>
+          } @else {
+          @for (
+          u of filteredUsers
+          | paginate
+          : {
+          id: 'userPagination',
+          itemsPerPage: itemsPerPageCount,
+          currentPage: page,
+          totalItems: filteredUsers.length
+          };
+          track u.id;
+          let i = $index
+          ) {
+          <tr [class.inactive-row]="u.accountStatus === 'Inactive'">
+            <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
+            <td>
+              <span class="user-id-badge">{{ u.id }}</span>
+            </td>
+            <td>
+              <div class="user-primary-cell">
+                <span class="user-name-text">{{ u.name }}</span>
+                @if (u.id === currentLoggedInUserId) {
+                <span class="you-badge">You</span>
+                }
+              </div>
+              <div class="user-contact-sub">
+                <span><i class="fa-regular fa-envelope me-1"></i>{{ u.email }}</span>
+                <span><i class="fa-solid fa-phone me-1"></i>{{ u.mobile }}</span>
+              </div>
+            </td>
+            <td>
+              @if (u.userType === 'Business Owner / Admin') {
+              <span class="role-badge role-admin">
+                <i class="fa-solid fa-shield-halved me-1"></i>Admin
+              </span>
+              } @else {
+              <span class="role-badge role-ops">
+                <i class="fa-solid fa-user-gear me-1"></i>Operations Executive
+              </span>
+              }
+            </td>
+            <td>
+              <div class="firm-cell">
+                <i class="fa-solid fa-building text-secondary me-1"></i>
+                <span class="fw-medium text-dark">{{ u.primaryFirm }}</span>
+              </div>
+            </td>
+            <td class="text-center">
+              @if (u.passwordSetupStatus === 'Completed') {
+              <span class="setup-badge badge-done">
+                <i class="fa-solid fa-circle-check me-1"></i>Completed
+              </span>
+              } @else {
+              <div class="pending-setup-wrap">
+                <span class="setup-badge badge-pending">
+                  <i class="fa-solid fa-clock me-1"></i>Pending
+                </span>
+                <button type="button" class="btn-resend-link" (click)="resendInvitation(u)"
+                  title="Resend Invitation Email with Setup Link">
+                  Resend
+                </button>
+              </div>
+              }
+            </td>
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn"
+                [ngClass]="u.accountStatus === 'Active' ? 'is-active' : 'is-inactive'" (click)="promptStatusToggle(u)"
+                [title]="u.accountStatus === 'Active' ? 'Click to Deactivate' : 'Click to Activate'">
+                <span class="dot"></span>
+                <span>{{ u.accountStatus }}</span>
+              </button>
+            </td>
+            <td class="text-center">
+              <div class="table-actions">
+                <!-- View Profile -->
+                <button type="button" class="icon-btn btn-view" (click)="openViewDetails(u)" title="View User Details">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+
+                <!-- Edit User -->
+                <button type="button" class="icon-btn btn-edit" (click)="openEditUserModal(u)"
+                  [disabled]="u.id === currentLoggedInUserId"
+                  [title]="u.id === currentLoggedInUserId ? 'Cannot edit own account' : 'Edit User'">
+                  <i class="fa-solid fa-pencil"></i>
+                </button>
+
+                <!-- Resend Invite (if pending) -->
+                @if (u.passwordSetupStatus === 'Pending') {
+                <button type="button" class="icon-btn btn-resend" (click)="resendInvitation(u)"
+                  title="Resend Setup Invitation">
+                  <i class="fa-regular fa-paper-plane"></i>
+                </button>
+                }
+
+                <!-- Quick Activate/Deactivate -->
+                <button type="button" class="icon-btn"
+                  [ngClass]="u.accountStatus === 'Active' ? 'btn-deactivate' : 'btn-activate'"
+                  (click)="promptStatusToggle(u)" [disabled]="u.id === currentLoggedInUserId"
+                  [title]="u.id === currentLoggedInUserId ? 'Cannot modify own account' : (u.accountStatus === 'Active' ? 'Deactivate User' : 'Activate User')">
+                  <i class="fa-solid" [ngClass]="u.accountStatus === 'Active' ? 'fa-ban' : 'fa-check'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredUsers.length }} entries
+      </div>
+      <pagination-controls id="userPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+        class="my-pagination"></pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- MODAL 1: Add / Edit User Modal (UC-USR-01 & UC-USR-03)               -->
+<!-- ==================================================================== -->
+@if (isFormModalOpen) {
+<div class="modal-backdrop-erp" (click)="closeFormModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ isEditMode ? 'Edit User Details' : 'Create New User' }}
+        </h3>
+        <p class="modal-sub-erp">
+          {{ isEditMode ? 'Update user contact details, role type and primary firm assignment' : 'Register a new
+          authorized user and send password setup invitation' }}
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeFormModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="submitUserForm()">
+      <div class="modal-body-erp">
+        @if (formError) {
+        <div class="alert-erp alert-danger-erp mb-3">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>
+          <span>{{ formError }}</span>
+        </div>
+        }
+
+        <!-- Full Name -->
+        <div class="field-group mb-3">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" formControlName="name" class="erp-input" placeholder="e.g. Ramesh Chandra, Meena Joshi" />
+          @if (userForm.get('name')?.touched && userForm.get('name')?.invalid) {
+          <span class="field-error">Full name is required (minimum 2 characters).</span>
+          }
+        </div>
+
+        <!-- Email Address & Mobile in 2 Columns -->
+        <div class="form-row-2 mb-3">
+          <div class="field-group">
+            <label>Email Address (Login ID) <span class="req">*</span></label>
+            <input type="email" formControlName="email" class="erp-input" placeholder="name@company.com" />
+            @if (userForm.get('email')?.touched && userForm.get('email')?.invalid) {
+            <span class="field-error">Valid unique email address is required.</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Mobile Number <span class="req">*</span></label>
+            <div class="phone-input-wrap">
+              <span class="country-code">+91</span>
+              <input type="text" formControlName="mobile" class="erp-input phone-input" placeholder="9829012345"
+                maxlength="10" />
+            </div>
+            @if (userForm.get('mobile')?.touched && userForm.get('mobile')?.invalid) {
+            <span class="field-error">Valid 10-digit mobile number required.</span>
+            }
+          </div>
+        </div>
+
+        <!-- User Type (Role) -->
+        <div class="field-group mb-3">
+          <label>User Type (Role Access) <span class="req">*</span></label>
+          <select formControlName="userType" class="erp-select">
+            <option value="Business Owner / Admin">Business Owner / Admin (Full Access Across All Firms)</option>
+            <option value="Operations Executive">Operations Executive (Restricted to Primary Firm)</option>
+          </select>
+          <div class="role-help-text">
+            @if (userForm.get('userType')?.value === 'Business Owner / Admin') {
+            <i class="fa-solid fa-info-circle me-1 text-purple"></i>
+            <span>Admin has administrative & operational access across all configured firms.</span>
+            } @else {
+            <i class="fa-solid fa-info-circle me-1 text-blue"></i>
+            <span>Operations Executive is strictly limited to their assigned primary firm.</span>
+            }
+          </div>
+        </div>
+
+        <!-- Primary Firm -->
+        <div class="field-group">
+          <label>Primary Firm Assignment <span class="req">*</span></label>
+          <select formControlName="primaryFirm" class="erp-select">
+            <option value="" disabled>Select Primary Firm</option>
+            @for (firm of firmsList; track firm.id) {
+            <option [value]="firm.name">{{ firm.name }}</option>
+            }
+          </select>
+          <div class="field-note">
+            Every user must have exactly one primary firm assigned at creation.
+          </div>
+          @if (userForm.get('primaryFirm')?.touched && userForm.get('primaryFirm')?.invalid) {
+          <span class="field-error">Please select a primary firm.</span>
+          }
+        </div>
+
+        <!-- Note about password setup -->
+        @if (!isEditMode) {
+        <div class="invite-info-box mt-3">
+          <i class="fa-solid fa-paper-plane text-primary me-2"></i>
+          <span>Upon creation, an invitation email with a secure, expiring password setup link will automatically be
+            sent to the user.</span>
+        </div>
+        }
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeFormModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>{{ isEditMode ? 'Update User' : 'Create User' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 2: View User Details (UC-USR-02) - Read Only Profile           -->
+<!-- ==================================================================== -->
+@if (isViewModalOpen && viewingUser) {
+<div class="modal-backdrop-erp" (click)="closeViewDetails()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div class="d-flex align-items-center gap-2">
+        <div class="view-avatar-box">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div>
+          <h3 class="modal-title-erp">{{ viewingUser.name }}</h3>
+          <span class="user-id-badge">{{ viewingUser.id }}</span>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewDetails()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <!-- Security notice banner strictly following spec -->
+      <div class="view-security-banner mb-3">
+        <i class="fa-solid fa-shield-check me-2 text-success"></i>
+        <span>Read-only profile. Access credentials and security secrets are strictly protected.</span>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Email Address (Login ID)</span>
+          <span class="detail-val">{{ viewingUser.email }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Mobile Number</span>
+          <span class="detail-val">+91 {{ viewingUser.mobile }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">User Type / Role</span>
+          <div>
+            @if (viewingUser.userType === 'Business Owner / Admin') {
+            <span class="role-badge role-admin">
+              <i class="fa-solid fa-shield-halved me-1"></i>Business Owner / Admin
+            </span>
+            } @else {
+            <span class="role-badge role-ops">
+              <i class="fa-solid fa-user-gear me-1"></i>Operations Executive
+            </span>
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Primary Assigned Firm</span>
+          <span class="detail-val fw-semibold text-dark">
+            <i class="fa-solid fa-building text-secondary me-1"></i>{{ viewingUser.primaryFirm }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Account Status</span>
+          <div>
+            <span class="status-toggle-btn"
+              [ngClass]="viewingUser.accountStatus === 'Active' ? 'is-active' : 'is-inactive'">
+              <span class="dot"></span>
+              <span>{{ viewingUser.accountStatus }}</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Password Setup Status</span>
+          <div>
+            @if (viewingUser.passwordSetupStatus === 'Completed') {
+            <span class="setup-badge badge-done">
+              <i class="fa-solid fa-circle-check me-1"></i>Completed
+            </span>
+            } @else {
+            <span class="setup-badge badge-pending">
+              <i class="fa-solid fa-clock me-1"></i>Pending (Invitation Sent)
+            </span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Metadata Section -->
+      <div class="audit-metadata-box mt-3">
+        <div class="audit-title">System Audit Metadata</div>
+        <div class="audit-row">
+          <span>Created:</span>
+          <strong>{{ viewingUser.createdAt }} by {{ viewingUser.createdBy }}</strong>
+        </div>
+        <div class="audit-row">
+          <span>Last Updated:</span>
+          <strong>{{ viewingUser.updatedAt }} by {{ viewingUser.updatedBy }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeViewDetails()">
+        Close
+      </button>
+      <button type="button" class="btn-erp-primary" (click)="closeViewDetails(); openEditUserModal(viewingUser)"
+        [disabled]="viewingUser.id === currentLoggedInUserId">
+        <i class="fa-solid fa-pencil"></i>
+        <span>Edit User</span>
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 3: Status Change Confirmation Modal (UC-USR-03)                -->
+<!-- ==================================================================== -->
+@if (isStatusModalOpen && statusTargetUser) {
+<div class="modal-backdrop-erp" (click)="closeStatusModal()">
+  <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ statusTargetUser.accountStatus === 'Active' ? 'Deactivate User Account' : 'Activate User Account' }}
+        </h3>
+        <p class="modal-sub-erp">{{ statusTargetUser.name }} ({{ statusTargetUser.id }})</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeStatusModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      @if (statusModalError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>{{ statusModalError }}</span>
+      </div>
+      }
+
+      <div class="confirm-message-box">
+        @if (statusTargetUser.accountStatus === 'Active') {
+        <p class="text-danger fw-semibold mb-2">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i>
+          Are you sure you want to deactivate this account?
+        </p>
+        <p class="small text-muted mb-0">
+          Deactivating this user will immediately block further system access and terminate any active sessions.
+          Historical transactions remain preserved.
+        </p>
+        } @else {
+        <p class="text-success fw-semibold mb-2">
+          <i class="fa-solid fa-circle-check me-1"></i>
+          Activate this user account?
+        </p>
+        <p class="small text-muted mb-0">
+          The user will immediately regain access to the system based on their assigned role and primary firm.
+        </p>
+        }
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeStatusModal()">
+        Cancel
+      </button>
+      <button type="button" class="btn-erp-primary"
+        [ngClass]="statusTargetUser.accountStatus === 'Active' ? 'btn-danger-confirm' : ''"
+        (click)="confirmToggleStatus()">
+        <span>{{ statusTargetUser.accountStatus === 'Active' ? 'Yes, Deactivate' : 'Yes, Activate' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+}

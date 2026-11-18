@@ -219,9 +219,34 @@ export interface WeightUomRecord {
 export interface WarehouseRecord {
   id: string;
   name: string;
+  address: string;
   city: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  remarks?: string;
   isActive: boolean;
   createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export type UserType = 'Business Owner / Admin' | 'Operations Executive';
+export type AccountStatus = 'Active' | 'Inactive';
+export type PasswordSetupStatus = 'Pending' | 'Completed';
+
+export interface UserRecord {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  userType: UserType;
+  primaryFirm: string;
+  accountStatus: AccountStatus;
+  passwordSetupStatus: PasswordSetupStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
   updatedAt: string;
 }
 
@@ -1362,10 +1387,76 @@ export class SaudaErpMockService {
   ];
 
   private readonly initialWarehouses: WarehouseRecord[] = [
-    { id: 'WH-001', name: 'Desert Mandi Yard A', city: 'Jodhpur', isActive: true, createdAt: '2026-11-01 10:00', updatedAt: '2026-11-01 10:00' },
-    { id: 'WH-002', name: 'Fresh Terminal Cold Hub', city: 'Jaipur', isActive: true, createdAt: '2026-11-01 10:15', updatedAt: '2026-11-01 10:15' },
-    { id: 'WH-003', name: 'Rajasthan Agro Godown 4', city: 'Bikaner', isActive: true, createdAt: '2026-11-01 10:30', updatedAt: '2026-11-01 10:30' },
-    { id: 'WH-004', name: 'Kota Grain Silo', city: 'Kota', isActive: true, createdAt: '2026-11-01 10:45', updatedAt: '2026-11-01 10:45' },
+    {
+      id: 'WH-001',
+      name: 'Desert Mandi Yard A',
+      address: 'Plot 12-15, Mandi Yard Phase 1, Basni Industrial Area',
+      city: 'Jodhpur',
+      contactPerson: 'Kailash Choudhary',
+      contactPhone: '9829012345',
+      remarks: 'Primary grains and pulses depot with 500 MT covered capacity',
+      isActive: true,
+      createdAt: '2026-11-01 10:00',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-01 10:00',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'WH-002',
+      name: 'Fresh Terminal Cold Hub',
+      address: 'Warehouse No. 8, Agro Food Park, Sitapura Industrial Area',
+      city: 'Jaipur',
+      contactPerson: 'Mukesh Sharma',
+      contactPhone: '9829023456',
+      remarks: 'Cold storage facility with climate-controlled sheds for seeds & mustard',
+      isActive: true,
+      createdAt: '2026-11-01 10:15',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-01 10:15',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'WH-003',
+      name: 'Rajasthan Agro Godown 4',
+      address: 'Old Mandi Road, Near Railway Goods Yard, Karni Industrial Area',
+      city: 'Bikaner',
+      contactPerson: 'Rajendra Solanki',
+      contactPhone: '9829034567',
+      remarks: 'Heavy bulk commodity godown, direct rail connectivity',
+      isActive: true,
+      createdAt: '2026-11-01 10:30',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-01 10:30',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'WH-004',
+      name: 'Kota Grain Silo',
+      address: 'Sector 5, RIICO Mandi Complex, Chambal Bypass Road',
+      city: 'Kota',
+      contactPerson: 'Deepak Meena',
+      contactPhone: '9829045678',
+      remarks: 'Bulk grain storage silos with automated weighbridge facility',
+      isActive: true,
+      createdAt: '2026-11-01 10:45',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-01 10:45',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'WH-005',
+      name: 'Mewar Agro Storage Yard',
+      address: 'Depot 3, Sukher Mandi Complex, NH-8',
+      city: 'Udaipur',
+      contactPerson: 'Bhawani Singh',
+      contactPhone: '9829056789',
+      remarks: 'Decommissioned storage yard undergoing renovation; currently empty',
+      isActive: false,
+      createdAt: '2026-10-15 11:00',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-10 14:20',
+      updatedBy: 'Business Owner / Admin',
+    },
   ];
 
   private saudasSubject = new BehaviorSubject<SaudaRecord[]>(this.initialSaudas);
@@ -1403,9 +1494,83 @@ export class SaudaErpMockService {
   private weightUomsSubject = new BehaviorSubject<WeightUomRecord[]>(
     this.initialWeightUoms,
   );
+  private readonly initialUsers: UserRecord[] = [
+    {
+      id: 'USR-001',
+      name: 'Rajesh Sharma',
+      email: 'rajesh.sharma@jpbrokers.com',
+      mobile: '9829012345',
+      userType: 'Business Owner / Admin',
+      primaryFirm: 'Desert Fresh Traders',
+      accountStatus: 'Active',
+      passwordSetupStatus: 'Completed',
+      createdBy: 'System Setup',
+      createdAt: '2026-10-01 10:00',
+      updatedBy: 'System Setup',
+      updatedAt: '2026-10-01 10:00',
+    },
+    {
+      id: 'USR-002',
+      name: 'Vikram Singh',
+      email: 'vikram.singh@jpbrokers.com',
+      mobile: '9829023456',
+      userType: 'Business Owner / Admin',
+      primaryFirm: 'Rajasthan Agro',
+      accountStatus: 'Active',
+      passwordSetupStatus: 'Completed',
+      createdBy: 'Rajesh Sharma',
+      createdAt: '2026-10-15 11:30',
+      updatedBy: 'Rajesh Sharma',
+      updatedAt: '2026-10-15 11:30',
+    },
+    {
+      id: 'USR-003',
+      name: 'Amit Patel',
+      email: 'amit.patel@jpbrokers.com',
+      mobile: '9829034567',
+      userType: 'Operations Executive',
+      primaryFirm: 'Desert Fresh Traders',
+      accountStatus: 'Active',
+      passwordSetupStatus: 'Completed',
+      createdBy: 'Rajesh Sharma',
+      createdAt: '2026-11-01 09:15',
+      updatedBy: 'Rajesh Sharma',
+      updatedAt: '2026-11-01 09:15',
+    },
+    {
+      id: 'USR-004',
+      name: 'Suresh Meena',
+      email: 'suresh.meena@jpbrokers.com',
+      mobile: '9829045678',
+      userType: 'Operations Executive',
+      primaryFirm: 'Rajasthan Agro',
+      accountStatus: 'Active',
+      passwordSetupStatus: 'Pending',
+      createdBy: 'Vikram Singh',
+      createdAt: '2026-11-10 14:20',
+      updatedBy: 'Vikram Singh',
+      updatedAt: '2026-11-10 14:20',
+    },
+    {
+      id: 'USR-005',
+      name: 'Pooja Verma',
+      email: 'pooja.verma@jpbrokers.com',
+      mobile: '9829056789',
+      userType: 'Operations Executive',
+      primaryFirm: 'Desert Fresh Traders',
+      accountStatus: 'Inactive',
+      passwordSetupStatus: 'Completed',
+      createdBy: 'Rajesh Sharma',
+      createdAt: '2026-10-20 16:45',
+      updatedBy: 'Rajesh Sharma',
+      updatedAt: '2026-11-05 10:10',
+    },
+  ];
+
   private warehousesSubject = new BehaviorSubject<WarehouseRecord[]>(
     this.initialWarehouses,
   );
+  private usersSubject = new BehaviorSubject<UserRecord[]>(this.initialUsers);
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -1421,6 +1586,7 @@ export class SaudaErpMockService {
   readonly packagingUoms$ = this.packagingUomsSubject.asObservable();
   readonly weightUoms$ = this.weightUomsSubject.asObservable();
   readonly warehouses$ = this.warehousesSubject.asObservable();
+  readonly users$ = this.usersSubject.asObservable();
 
   constructor() {
     this.recomputeAllSaudaStatuses();
@@ -3345,15 +3511,44 @@ export class SaudaErpMockService {
 
   // ── Warehouse Operations ──
 
-  createWarehouse(name: string, city: string): ActionResult {
-    const trimmedName = (name || '').trim();
-    const trimmedCity = (city || '').trim();
+  // ── Warehouse Operations (UC-WH-01, UC-WH-02, UC-WH-03) ──
+
+  createWarehouse(
+    payloadOrName:
+      | string
+      | {
+          name: string;
+          address: string;
+          city: string;
+          contactPerson?: string;
+          contactPhone?: string;
+          remarks?: string;
+        },
+    cityArg?: string,
+  ): ActionResult {
+    const payload =
+      typeof payloadOrName === 'string'
+        ? {
+            name: payloadOrName,
+            address: `${cityArg || 'Industrial Area'} Mandi Depot`,
+            city: cityArg || '',
+          }
+        : payloadOrName;
+
+    const trimmedName = (payload.name || '').trim();
+    const trimmedAddress = (payload.address || '').trim();
+    const trimmedCity = (payload.city || '').trim();
+
     if (trimmedName.length < 2) {
       return { ok: false, message: 'Warehouse name must be at least 2 characters.' };
     }
-    if (trimmedCity.length < 2) {
-      return { ok: false, message: 'City must be at least 2 characters.' };
+    if (trimmedAddress.length < 3) {
+      return { ok: false, message: 'Warehouse address is mandatory (at least 3 characters).' };
     }
+    if (trimmedCity.length < 2) {
+      return { ok: false, message: 'City is mandatory (at least 2 characters).' };
+    }
+
     if (
       this.warehousesSubject.value.some(
         (w) =>
@@ -3366,31 +3561,68 @@ export class SaudaErpMockService {
         message: `Warehouse "${trimmedName}" in city "${trimmedCity}" already exists.`,
       };
     }
+
     const nextNum = this.warehousesSubject.value.length + 1;
     const now = this.formatTimestamp();
     const record: WarehouseRecord = {
       id: `WH-${String(nextNum).padStart(3, '0')}`,
       name: trimmedName,
+      address: trimmedAddress,
       city: trimmedCity,
+      contactPerson: (payload.contactPerson || '').trim() || undefined,
+      contactPhone: (payload.contactPhone || '').trim() || undefined,
+      remarks: (payload.remarks || '').trim() || undefined,
       isActive: true,
       createdAt: now,
+      createdBy: 'Business Owner / Admin',
       updatedAt: now,
+      updatedBy: 'Business Owner / Admin',
     };
+
     this.warehousesSubject.next([record, ...this.warehousesSubject.value]);
-    return { ok: true, message: `Warehouse "${trimmedName}" created successfully.` };
+    return { ok: true, message: `Warehouse "${trimmedName}" (${record.id}) created successfully.` };
   }
 
-  updateWarehouse(id: string, name: string, city: string): ActionResult {
+  updateWarehouse(
+    id: string,
+    payloadOrName:
+      | string
+      | {
+          name: string;
+          address: string;
+          city: string;
+          contactPerson?: string;
+          contactPhone?: string;
+          remarks?: string;
+        },
+    cityArg?: string,
+  ): ActionResult {
     const existing = this.warehousesSubject.value.find((w) => w.id === id);
     if (!existing) return { ok: false, message: 'Warehouse not found.' };
-    const trimmedName = (name || '').trim();
-    const trimmedCity = (city || '').trim();
+
+    const payload =
+      typeof payloadOrName === 'string'
+        ? {
+            name: payloadOrName,
+            address: existing.address,
+            city: cityArg || existing.city,
+          }
+        : payloadOrName;
+
+    const trimmedName = (payload.name || '').trim();
+    const trimmedAddress = (payload.address || '').trim();
+    const trimmedCity = (payload.city || '').trim();
+
     if (trimmedName.length < 2) {
       return { ok: false, message: 'Warehouse name must be at least 2 characters.' };
     }
-    if (trimmedCity.length < 2) {
-      return { ok: false, message: 'City must be at least 2 characters.' };
+    if (trimmedAddress.length < 3) {
+      return { ok: false, message: 'Warehouse address is mandatory (at least 3 characters).' };
     }
+    if (trimmedCity.length < 2) {
+      return { ok: false, message: 'City is mandatory (at least 2 characters).' };
+    }
+
     if (
       this.warehousesSubject.value.some(
         (w) =>
@@ -3404,30 +3636,110 @@ export class SaudaErpMockService {
         message: `Warehouse "${trimmedName}" in city "${trimmedCity}" already exists.`,
       };
     }
+
     const now = this.formatTimestamp();
     this.warehousesSubject.next(
       this.warehousesSubject.value.map((w) =>
         w.id === id
-          ? { ...w, name: trimmedName, city: trimmedCity, updatedAt: now }
+          ? {
+              ...w,
+              name: trimmedName,
+              address: trimmedAddress,
+              city: trimmedCity,
+              contactPerson: (payload.contactPerson || '').trim() || undefined,
+              contactPhone: (payload.contactPhone || '').trim() || undefined,
+              remarks: (payload.remarks || '').trim() || undefined,
+              updatedAt: now,
+              updatedBy: 'Business Owner / Admin',
+            }
           : w,
       ),
     );
-    return { ok: true, message: `Warehouse "${trimmedName}" updated successfully.` };
+    return { ok: true, message: `Warehouse "${trimmedName}" (${id}) updated successfully.` };
+  }
+
+  canDeactivateWarehouse(warehouseId: string): {
+    canDeactivate: boolean;
+    reasons: string[];
+    stockDetails?: string;
+    pendingTrucks?: string[];
+  } {
+    const warehouse = this.warehousesSubject.value.find((w) => w.id === warehouseId);
+    if (!warehouse) {
+      return { canDeactivate: false, reasons: ['Warehouse record not found.'] };
+    }
+
+    const reasons: string[] = [];
+    let stockDetails: string | undefined;
+    let pendingTrucks: string[] | undefined;
+
+    // 1. Check physical stock balance (BR-WH-03 Extension 8a)
+    if (warehouse.id === 'WH-001' || warehouse.name.includes('Desert Mandi')) {
+      stockDetails = '45.00 MT (Bags: 900) across Ground Nut and Chana';
+      reasons.push(
+        `Physical stock balance of ${stockDetails} is currently stored in this warehouse. Physical stock must be cleared through sales dispatches or approved Stock Adjustments before deactivation.`
+      );
+    } else if (warehouse.id === 'WH-002') {
+      stockDetails = '28.50 MT (Bags: 570) across Mustard Seed';
+      reasons.push(
+        `Physical stock balance of ${stockDetails} is currently stored in this warehouse. Physical stock must be cleared before deactivation.`
+      );
+    }
+
+    // 2. Check pending truck receipts or dispatches (BR-WH-03 Extension 8b)
+    const activeTrucks = this.trucksSubject.value.filter(
+      (t) =>
+        (t.warehouse === warehouse.name || t.warehouse === warehouse.id) &&
+        t.status !== 'Delivered' &&
+        t.status !== 'Removed',
+    );
+
+    if (activeTrucks.length > 0) {
+      pendingTrucks = activeTrucks.map((t) => `${t.entryNo} (${t.status})`);
+      reasons.push(
+        `Pending truck fulfilment(s) [${pendingTrucks.join(', ')}] are currently associated with this warehouse. Pending fulfilments must be completed or resolved before deactivation.`
+      );
+    }
+
+    return {
+      canDeactivate: reasons.length === 0,
+      reasons,
+      stockDetails,
+      pendingTrucks,
+    };
   }
 
   toggleWarehouseStatus(id: string): ActionResult {
     const existing = this.warehousesSubject.value.find((w) => w.id === id);
     if (!existing) return { ok: false, message: 'Warehouse not found.' };
+
+    if (existing.isActive) {
+      const check = this.canDeactivateWarehouse(id);
+      if (!check.canDeactivate) {
+        return {
+          ok: false,
+          message: check.reasons.join(' | '),
+        };
+      }
+    }
+
     const nextActive = !existing.isActive;
     const now = this.formatTimestamp();
     this.warehousesSubject.next(
       this.warehousesSubject.value.map((w) =>
-        w.id === id ? { ...w, isActive: nextActive, updatedAt: now } : w,
+        w.id === id
+          ? {
+              ...w,
+              isActive: nextActive,
+              updatedAt: now,
+              updatedBy: 'Business Owner / Admin',
+            }
+          : w,
       ),
     );
     return {
       ok: true,
-      message: `${existing.name} marked as ${nextActive ? 'Active' : 'Inactive'}.`,
+      message: `Warehouse "${existing.name}" (${id}) successfully marked as ${nextActive ? 'Active' : 'Inactive'}.`,
     };
   }
 
@@ -3452,6 +3764,264 @@ export class SaudaErpMockService {
       return { ...sauda, status };
     });
     this.saudasSubject.next(updated);
+  }
+
+  // ==========================================
+  // USER MANAGEMENT (UC-USR-01, 02, 03)
+  // ==========================================
+  getUsersSnapshot(): UserRecord[] {
+    return this.usersSubject.value;
+  }
+
+  createUser(
+    payload: {
+      name: string;
+      email: string;
+      mobile: string;
+      userType: UserType;
+      primaryFirm: string;
+    },
+    createdBy = 'Admin',
+  ): ActionResult {
+    const name = (payload.name || '').trim();
+    const email = (payload.email || '').trim().toLowerCase();
+    const mobile = (payload.mobile || '').trim();
+    const userType = payload.userType;
+    const primaryFirm = (payload.primaryFirm || '').trim();
+
+    if (name.length < 2) {
+      return { ok: false, message: 'User name must be at least 2 characters.' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { ok: false, message: 'Please enter a valid email address.' };
+    }
+    const cleanMobile = mobile.replace(/\D/g, '');
+    if (cleanMobile.length < 10) {
+      return { ok: false, message: 'Please enter a valid 10-digit mobile number.' };
+    }
+    if (!userType) {
+      return { ok: false, message: 'Please select a User Type (Role).' };
+    }
+    if (!primaryFirm) {
+      return { ok: false, message: 'Please select exactly one Primary Firm.' };
+    }
+
+    const currentUsers = this.usersSubject.value;
+    if (currentUsers.some((u) => u.email.toLowerCase() === email)) {
+      return {
+        ok: false,
+        message: 'The proposed email address is already associated with another user account.',
+      };
+    }
+    if (
+      currentUsers.some(
+        (u) => u.mobile.replace(/\D/g, '') === cleanMobile,
+      )
+    ) {
+      return {
+        ok: false,
+        message: 'The proposed mobile number is already associated with another user account.',
+      };
+    }
+
+    // Generate unique User ID
+    const maxNum = currentUsers.reduce((max, u) => {
+      const match = u.id.match(/USR-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        return num > max ? num : max;
+      }
+      return max;
+    }, 0);
+    const newId = `USR-${String(maxNum + 1).padStart(3, '0')}`;
+    const timestamp = this.formatTimestamp();
+
+    const newUser: UserRecord = {
+      id: newId,
+      name,
+      email,
+      mobile,
+      userType,
+      primaryFirm,
+      accountStatus: 'Active',
+      passwordSetupStatus: 'Pending',
+      createdBy,
+      createdAt: timestamp,
+      updatedBy: createdBy,
+      updatedAt: timestamp,
+    };
+
+    this.usersSubject.next([...currentUsers, newUser]);
+    return {
+      ok: true,
+      message: `User account created successfully (${newId}). Invitation email with setup link sent to ${email}.`,
+    };
+  }
+
+  updateUser(
+    id: string,
+    payload: {
+      name: string;
+      email: string;
+      mobile: string;
+      userType: UserType;
+      primaryFirm: string;
+    },
+    updatedBy = 'Admin',
+  ): ActionResult {
+    const currentUsers = this.usersSubject.value;
+    const target = currentUsers.find((u) => u.id === id);
+    if (!target) {
+      return { ok: false, message: 'User account not found.' };
+    }
+
+    const name = (payload.name || '').trim();
+    const email = (payload.email || '').trim().toLowerCase();
+    const mobile = (payload.mobile || '').trim();
+    const userType = payload.userType;
+    const primaryFirm = (payload.primaryFirm || '').trim();
+
+    if (name.length < 2) {
+      return { ok: false, message: 'User name must be at least 2 characters.' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { ok: false, message: 'Please enter a valid email address.' };
+    }
+    const cleanMobile = mobile.replace(/\D/g, '');
+    if (cleanMobile.length < 10) {
+      return { ok: false, message: 'Please enter a valid 10-digit mobile number.' };
+    }
+    if (!userType) {
+      return { ok: false, message: 'Please select a User Type (Role).' };
+    }
+    if (!primaryFirm) {
+      return { ok: false, message: 'Please select exactly one Primary Firm.' };
+    }
+
+    // Uniqueness checks excluding current user
+    if (
+      currentUsers.some(
+        (u) => u.id !== id && u.email.toLowerCase() === email,
+      )
+    ) {
+      return {
+        ok: false,
+        message: 'The email address is already in use by another user account.',
+      };
+    }
+    if (
+      currentUsers.some(
+        (u) => u.id !== id && u.mobile.replace(/\D/g, '') === cleanMobile,
+      )
+    ) {
+      return {
+        ok: false,
+        message: 'The mobile number is already in use by another user account.',
+      };
+    }
+
+    // Last Active Admin safeguard (UC-USR-03 Rule 6b)
+    if (
+      target.userType === 'Business Owner / Admin' &&
+      target.accountStatus === 'Active' &&
+      userType !== 'Business Owner / Admin'
+    ) {
+      const activeAdmins = currentUsers.filter(
+        (u) =>
+          u.userType === 'Business Owner / Admin' &&
+          u.accountStatus === 'Active',
+      );
+      if (activeAdmins.length <= 1) {
+        return {
+          ok: false,
+          message:
+            'Cannot demote the last Active Admin account. At least one Active Admin must always exist.',
+        };
+      }
+    }
+
+    const timestamp = this.formatTimestamp();
+    const updated = currentUsers.map((u) => {
+      if (u.id === id) {
+        return {
+          ...u,
+          name,
+          email,
+          mobile,
+          userType,
+          primaryFirm,
+          updatedBy,
+          updatedAt: timestamp,
+        };
+      }
+      return u;
+    });
+
+    this.usersSubject.next(updated);
+    return { ok: true, message: `User ${name} (${id}) updated successfully.` };
+  }
+
+  toggleUserStatus(id: string, updatedBy = 'Admin'): ActionResult {
+    const currentUsers = this.usersSubject.value;
+    const target = currentUsers.find((u) => u.id === id);
+    if (!target) {
+      return { ok: false, message: 'User account not found.' };
+    }
+
+    // Last Active Admin safeguard (UC-USR-03 Rule 6b)
+    if (
+      target.accountStatus === 'Active' &&
+      target.userType === 'Business Owner / Admin'
+    ) {
+      const activeAdmins = currentUsers.filter(
+        (u) =>
+          u.userType === 'Business Owner / Admin' &&
+          u.accountStatus === 'Active',
+      );
+      if (activeAdmins.length <= 1) {
+        return {
+          ok: false,
+          message:
+            'Cannot deactivate the last Active Admin account. At least one Active Admin must always exist.',
+        };
+      }
+    }
+
+    const newStatus: AccountStatus =
+      target.accountStatus === 'Active' ? 'Inactive' : 'Active';
+    const timestamp = this.formatTimestamp();
+
+    const updated = currentUsers.map((u) => {
+      if (u.id === id) {
+        return {
+          ...u,
+          accountStatus: newStatus,
+          updatedBy,
+          updatedAt: timestamp,
+        };
+      }
+      return u;
+    });
+
+    this.usersSubject.next(updated);
+    return {
+      ok: true,
+      message: `User ${target.name} (${id}) account status set to ${newStatus}.`,
+    };
+  }
+
+  resendUserInvite(id: string): ActionResult {
+    const currentUsers = this.usersSubject.value;
+    const target = currentUsers.find((u) => u.id === id);
+    if (!target) {
+      return { ok: false, message: 'User account not found.' };
+    }
+    return {
+      ok: true,
+      message: `Invitation email resent to ${target.email} with an expiring password-setup link.`,
+    };
   }
 
   private pushDiff(
