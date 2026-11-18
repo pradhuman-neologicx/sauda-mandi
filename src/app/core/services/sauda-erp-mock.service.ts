@@ -34,6 +34,25 @@ export interface CommodityLineItem {
   packagingQty: number;
   weightUom: WeightUom;
   actualWeight: number;
+  rate?: number;
+  lineTotal?: number;
+}
+
+export type AmendmentStatus = 'None' | 'Pending Approval' | 'Approved' | 'Rejected';
+
+export interface SaudaAmendmentRecord {
+  id: string;
+  saudaId: string;
+  saudaNo: string;
+  maker: string;
+  submittedAt: string;
+  reason: string;
+  proposedPayload: any;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  checker?: string;
+  decidedAt?: string;
+  rejectionReason?: string;
+  changes: RevisionDiff[];
 }
 
 export interface SaudaRecord {
@@ -49,6 +68,10 @@ export interface SaudaRecord {
   commodity: string;
   quantityMt: number;
   totalAmountInr: number;
+  expectedDeliveryDate?: string;
+  buyerBrokerageAmount?: number;
+  sellerBrokerageAmount?: number;
+  totalBrokerageAmount?: number;
   sellerCreditPeriodDays: number | null;
   sellerCreditStartDate: string;
   sellerDueDate: string;
@@ -61,6 +84,8 @@ export interface SaudaRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  amendmentStatus?: AmendmentStatus;
+  pendingAmendment?: SaudaAmendmentRecord;
   voidInfo?: {
     voidedBy: string;
     voidedAt: string;
@@ -295,6 +320,8 @@ export class SaudaErpMockService {
           packagingQty: 150,
           weightUom: 'Quintal',
           actualWeight: 30,
+          rate: 3000,
+          lineTotal: 90000,
         },
         {
           commodity: 'Jowar',
@@ -302,11 +329,14 @@ export class SaudaErpMockService {
           packagingQty: 100,
           weightUom: 'Quintal',
           actualWeight: 20,
+          rate: 3000,
+          lineTotal: 60000,
         },
       ],
       commodity: 'Bajra, Jowar',
       quantityMt: 5,
       totalAmountInr: 150000,
+      expectedDeliveryDate: '2026-11-12',
       sellerCreditPeriodDays: 15,
       sellerCreditStartDate: '2026-11-04',
       sellerDueDate: '2026-11-19',
@@ -316,6 +346,7 @@ export class SaudaErpMockService {
       remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags',
       status: 'Partial',
       currentVersion: 2,
+      amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-04 10:15',
       updatedAt: '2026-11-06 14:30',
@@ -368,6 +399,8 @@ export class SaudaErpMockService {
           packagingQty: 100,
           weightUom: 'Quintal',
           actualWeight: 50,
+          rate: 2500,
+          lineTotal: 125000,
         },
       ],
       commodity: 'Wheat',
@@ -382,6 +415,7 @@ export class SaudaErpMockService {
       remarks: 'Lokwan Sharbati Wheat, machine-cleaned 50kg bags',
       status: 'Completed',
       currentVersion: 1,
+      amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-05 11:40',
       updatedAt: '2026-11-05 11:40',
@@ -415,11 +449,16 @@ export class SaudaErpMockService {
           packagingQty: 200,
           weightUom: 'Quintal',
           actualWeight: 100,
+          rate: 2500,
+          lineTotal: 250000,
         },
       ],
       commodity: 'Bajra',
       quantityMt: 10,
       totalAmountInr: 250000,
+      buyerBrokerageAmount: 3500,
+      sellerBrokerageAmount: 3500,
+      totalBrokerageAmount: 7000,
       sellerCreditPeriodDays: 10,
       sellerCreditStartDate: '2026-11-06',
       sellerDueDate: '2026-11-16',
@@ -429,6 +468,7 @@ export class SaudaErpMockService {
       remarks: 'Brokerage agreement settled for Desi Hybrid Bajra lot',
       status: 'Partial',
       currentVersion: 1,
+      amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-06 09:50',
       updatedAt: '2026-11-06 09:50',
@@ -462,11 +502,14 @@ export class SaudaErpMockService {
           packagingQty: 100,
           weightUom: 'Quintal',
           actualWeight: 50,
+          rate: 1900,
+          lineTotal: 95000,
         },
       ],
       commodity: 'Maize',
       quantityMt: 5,
       totalAmountInr: 95000,
+      expectedDeliveryDate: '2026-11-20',
       sellerCreditPeriodDays: 30,
       sellerCreditStartDate: '2026-11-07',
       sellerDueDate: '2026-12-07',
@@ -476,6 +519,48 @@ export class SaudaErpMockService {
       remarks: 'Yellow Field Maize purchase, awaiting truck placement',
       status: 'Open',
       currentVersion: 1,
+      amendmentStatus: 'Pending Approval',
+      pendingAmendment: {
+        id: 'AMD-2026-0001',
+        saudaId: 'SAU-2026-0004',
+        saudaNo: 'SAU-2026-0004',
+        maker: 'Operations Executive (Ramesh Kumar)',
+        submittedAt: '2026-11-08 14:15',
+        reason: 'Seller requested extension of credit period to 45 days and delivery date revision',
+        status: 'Pending Approval',
+        proposedPayload: {
+          saudaType: 'Purchase',
+          saudaDate: '2026-11-07',
+          clientFirm: 'Rajasthan Agro',
+          sellerName: 'Om Traders',
+          buyerName: '',
+          commodityItems: [
+            {
+              commodity: 'Maize',
+              packagingUom: 'Sack',
+              packagingQty: 100,
+              weightUom: 'Quintal',
+              actualWeight: 50,
+              rate: 1900,
+              lineTotal: 95000,
+            },
+          ],
+          totalAmountInr: 95000,
+          expectedDeliveryDate: '2026-11-25',
+          sellerCreditPeriodDays: 45,
+          sellerCreditStartDate: '2026-11-07',
+          sellerDueDate: '2026-12-22',
+          buyerCreditPeriodDays: null,
+          buyerCreditStartDate: '',
+          buyerDueDate: '',
+          remarks: 'Seller requested extension of credit period to 45 days and delivery date revision',
+        },
+        changes: [
+          { field: 'Expected Delivery Date', oldValue: '2026-11-20', newValue: '2026-11-25' },
+          { field: 'Seller Credit Period', oldValue: '30 Days', newValue: '45 Days' },
+          { field: 'Seller Due Date', oldValue: '2026-12-07', newValue: '2026-12-22' },
+        ],
+      },
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-07 16:05',
       updatedAt: '2026-11-07 16:05',
@@ -509,11 +594,14 @@ export class SaudaErpMockService {
           packagingQty: 120,
           weightUom: 'Quintal',
           actualWeight: 60,
+          rate: 3500,
+          lineTotal: 210000,
         },
       ],
       commodity: 'Ragi',
       quantityMt: 6,
       totalAmountInr: 210000,
+      expectedDeliveryDate: '2026-11-08',
       sellerCreditPeriodDays: 7,
       sellerCreditStartDate: '2026-11-03',
       sellerDueDate: '2026-11-10',
@@ -523,6 +611,7 @@ export class SaudaErpMockService {
       remarks: 'Duplicate contract entry from morning floor',
       status: 'Voided',
       currentVersion: 2,
+      amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-03 11:00',
       updatedAt: '2026-11-03 13:25',
@@ -1714,6 +1803,7 @@ export class SaudaErpMockService {
       quantityMt,
       status: 'Open',
       currentVersion: 1,
+      amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
       createdAt: now,
       updatedAt: now,
@@ -1891,6 +1981,297 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `Sauda ${existing.saudaNo} updated (Revision v${nextVersion}).`,
+    };
+  }
+
+  initiateAmendment(
+    id: string,
+    payload: any,
+    reason: string,
+    maker = 'Operations Executive',
+  ): ActionResult {
+    const existing = this.saudasSubject.value.find((s) => s.id === id);
+    if (!existing) {
+      return { ok: false, message: 'Sauda record not found.' };
+    }
+    if (existing.status === 'Voided') {
+      return { ok: false, message: 'Voided Sauda contracts cannot be amended.' };
+    }
+    if (existing.amendmentStatus === 'Pending Approval') {
+      return {
+        ok: false,
+        message: `An amendment is already pending approval for ${existing.saudaNo} (AF-07). Resolve the pending amendment before submitting another.`,
+      };
+    }
+    if (!reason || reason.trim().length < 5) {
+      return {
+        ok: false,
+        message: 'Reason for amendment (minimum 5 characters) is mandatory (BR-SA-27).',
+      };
+    }
+    if (!payload.commodityItems || payload.commodityItems.length === 0) {
+      return { ok: false, message: 'At least one commodity row is required.' };
+    }
+
+    const seen = new Set<string>();
+    for (const item of payload.commodityItems) {
+      if (!item.commodity) {
+        return { ok: false, message: 'Please select a commodity for every row.' };
+      }
+      if (seen.has(item.commodity)) {
+        return {
+          ok: false,
+          message: `Duplicate commodity "${item.commodity}". Each commodity can appear only once per Sauda (BR-SA-07).`,
+        };
+      }
+      seen.add(item.commodity);
+      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+        return {
+          ok: false,
+          message: 'Packaging quantity and actual weight must be greater than zero.',
+        };
+      }
+    }
+
+    if (Number(payload.totalAmountInr) <= 0) {
+      return {
+        ok: false,
+        message: 'Total Sauda Amount must be greater than zero.',
+      };
+    }
+
+    const quantityMt = this.computeTotalWeightMt(payload.commodityItems);
+    const dispatched = this.getDispatchedQtyMt(id);
+    if (quantityMt < dispatched) {
+      return {
+        ok: false,
+        message: `Total weight (${quantityMt} MT) cannot be reduced below already dispatched truck quantity (${dispatched} MT).`,
+      };
+    }
+
+    const commodity = payload.commodityItems.map((i: any) => i.commodity).join(', ');
+    const partyName = this.derivePartyName(
+      payload.saudaType,
+      payload.sellerName,
+      payload.buyerName,
+    );
+
+    const changes: RevisionDiff[] = [];
+    this.pushDiff(changes, 'Sauda Type', existing.saudaType, payload.saudaType);
+    this.pushDiff(changes, 'Client Firm', existing.clientFirm, payload.clientFirm);
+    this.pushDiff(changes, 'Party', existing.partyName, partyName);
+    this.pushDiff(changes, 'Commodities', existing.commodity, commodity);
+    this.pushDiff(
+      changes,
+      'Total Weight (MT)',
+      `${existing.quantityMt} MT`,
+      `${quantityMt} MT`,
+    );
+    this.pushDiff(
+      changes,
+      'Total Amount',
+      `₹${existing.totalAmountInr.toLocaleString('en-IN')}`,
+      `₹${Number(payload.totalAmountInr).toLocaleString('en-IN')}`,
+    );
+    if (existing.expectedDeliveryDate || payload.expectedDeliveryDate) {
+      this.pushDiff(
+        changes,
+        'Expected Delivery Date',
+        existing.expectedDeliveryDate || '—',
+        payload.expectedDeliveryDate || '—',
+      );
+    }
+    if (existing.buyerBrokerageAmount !== payload.buyerBrokerageAmount) {
+      this.pushDiff(
+        changes,
+        'Buyer Brokerage',
+        existing.buyerBrokerageAmount ? `₹${existing.buyerBrokerageAmount}` : '₹0',
+        payload.buyerBrokerageAmount ? `₹${payload.buyerBrokerageAmount}` : '₹0',
+      );
+    }
+    if (existing.sellerBrokerageAmount !== payload.sellerBrokerageAmount) {
+      this.pushDiff(
+        changes,
+        'Seller Brokerage',
+        existing.sellerBrokerageAmount ? `₹${existing.sellerBrokerageAmount}` : '₹0',
+        payload.sellerBrokerageAmount ? `₹${payload.sellerBrokerageAmount}` : '₹0',
+      );
+    }
+    this.pushDiff(
+      changes,
+      'Seller Credit Period',
+      existing.sellerCreditPeriodDays !== null ? `${existing.sellerCreditPeriodDays} Days` : '—',
+      payload.sellerCreditPeriodDays !== null && payload.sellerCreditPeriodDays !== '' ? `${payload.sellerCreditPeriodDays} Days` : '—',
+    );
+    this.pushDiff(
+      changes,
+      'Seller Due Date',
+      existing.sellerDueDate || '—',
+      payload.sellerDueDate || '—',
+    );
+    this.pushDiff(
+      changes,
+      'Buyer Credit Period',
+      existing.buyerCreditPeriodDays !== null ? `${existing.buyerCreditPeriodDays} Days` : '—',
+      payload.buyerCreditPeriodDays !== null && payload.buyerCreditPeriodDays !== '' ? `${payload.buyerCreditPeriodDays} Days` : '—',
+    );
+    this.pushDiff(
+      changes,
+      'Buyer Due Date',
+      existing.buyerDueDate || '—',
+      payload.buyerDueDate || '—',
+    );
+    this.pushDiff(changes, 'Remarks', existing.remarks || '—', payload.remarks || '—');
+
+    if (changes.length === 0) {
+      return {
+        ok: false,
+        message: 'No changes detected compared to existing Sauda contract.',
+      };
+    }
+
+    const now = this.formatTimestamp();
+    const amendmentId = `AMD-${String(Date.now()).slice(-6)}`;
+    const pendingAmendment: SaudaAmendmentRecord = {
+      id: amendmentId,
+      saudaId: existing.id,
+      saudaNo: existing.saudaNo,
+      maker,
+      submittedAt: now,
+      reason: reason.trim(),
+      proposedPayload: {
+        ...payload,
+        partyName,
+        commodity,
+        quantityMt,
+      },
+      status: 'Pending Approval',
+      changes,
+    };
+
+    const updatedSauda: SaudaRecord = {
+      ...existing,
+      amendmentStatus: 'Pending Approval',
+      pendingAmendment,
+      updatedAt: now,
+    };
+
+    const nextList = this.saudasSubject.value.map((s) =>
+      s.id === id ? updatedSauda : s,
+    );
+    this.saudasSubject.next(nextList);
+
+    return {
+      ok: true,
+      message: `Amendment submitted for ${existing.saudaNo}. Pending Checker approval (AF-04).`,
+    };
+  }
+
+  approveAmendment(
+    id: string,
+    checker = 'Business Owner / Admin',
+  ): ActionResult {
+    const existing = this.saudasSubject.value.find((s) => s.id === id);
+    if (!existing) {
+      return { ok: false, message: 'Sauda record not found.' };
+    }
+    if (!existing.pendingAmendment) {
+      return { ok: false, message: 'No pending amendment found on this Sauda.' };
+    }
+
+    const pending = existing.pendingAmendment;
+    if (pending.maker.trim().toLowerCase() === checker.trim().toLowerCase()) {
+      return {
+        ok: false,
+        message: 'Maker and Checker cannot be the same user (Segregation of Duties - BR-SA-28).',
+      };
+    }
+
+    const now = this.formatTimestamp();
+    const nextVersion = existing.currentVersion + 1;
+    const proposed = pending.proposedPayload;
+
+    const approvedSauda: SaudaRecord = {
+      ...existing,
+      ...proposed,
+      currentVersion: nextVersion,
+      amendmentStatus: 'Approved',
+      pendingAmendment: undefined,
+      updatedAt: now,
+      revisions: [
+        ...existing.revisions,
+        {
+          version: nextVersion,
+          changedAt: now,
+          changedBy: checker,
+          action: 'Updated',
+          reason: `[Amendment Approved by ${checker}] ${pending.reason}`,
+          changes: pending.changes,
+        },
+      ],
+    };
+
+    const nextList = this.saudasSubject.value.map((s) =>
+      s.id === id ? approvedSauda : s,
+    );
+    this.saudasSubject.next(nextList);
+    this.recomputeAllSaudaStatuses();
+
+    return {
+      ok: true,
+      message: `Amendment approved for ${existing.saudaNo} (v${nextVersion} published).`,
+    };
+  }
+
+  rejectAmendment(
+    id: string,
+    rejectionReason: string,
+    checker = 'Business Owner / Admin',
+  ): ActionResult {
+    const existing = this.saudasSubject.value.find((s) => s.id === id);
+    if (!existing) {
+      return { ok: false, message: 'Sauda record not found.' };
+    }
+    if (!existing.pendingAmendment) {
+      return { ok: false, message: 'No pending amendment found on this Sauda.' };
+    }
+    if (!rejectionReason || rejectionReason.trim().length < 5) {
+      return {
+        ok: false,
+        message: 'Rejection reason (min 5 characters) is mandatory (BR-SA-30).',
+      };
+    }
+
+    const pending = existing.pendingAmendment;
+    const now = this.formatTimestamp();
+
+    // Contract terms remain completely unchanged (BR-SA-31)
+    const updatedSauda: SaudaRecord = {
+      ...existing,
+      amendmentStatus: 'Rejected',
+      pendingAmendment: undefined,
+      updatedAt: now,
+      revisions: [
+        ...existing.revisions,
+        {
+          version: existing.currentVersion,
+          changedAt: now,
+          changedBy: checker,
+          action: 'Updated',
+          reason: `[Amendment Rejected by ${checker}] Rejection Reason: ${rejectionReason.trim()} (Original proposed: ${pending.reason})`,
+          changes: [],
+        },
+      ],
+    };
+
+    const nextList = this.saudasSubject.value.map((s) =>
+      s.id === id ? updatedSauda : s,
+    );
+    this.saudasSubject.next(nextList);
+
+    return {
+      ok: true,
+      message: `Amendment rejected for ${existing.saudaNo}. Active contract terms remain unchanged (BR-SA-31).`,
     };
   }
 

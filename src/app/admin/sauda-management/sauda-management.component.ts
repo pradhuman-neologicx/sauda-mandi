@@ -20,6 +20,7 @@ import {
   InvProductRecord,
   InvSubCategoryRecord,
   PackagingUom,
+  SaudaAmendmentRecord,
   SaudaErpMockService,
   SaudaRecord,
   SaudaType,
@@ -95,11 +96,24 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   sellerOptions: string[] = [];
   buyerOptions: string[] = [];
 
+  // Active Role for testing Maker-Checker Amendment Workflow
+  currentActorRole: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)' =
+    'Business Owner / Admin (Checker)';
+
+  get isChecker(): boolean {
+    return this.currentActorRole === 'Business Owner / Admin (Checker)';
+  }
+
+  get isMaker(): boolean {
+    return this.currentActorRole === 'Operations Executive (Maker)';
+  }
+
   // Screen states
   isEditMode = false;
   isDetailsOpen = false;
   isRevisionOpen = false;
   isVoidOpen = false;
+  isReviewOpen = false;
 
   selectedSauda: SaudaRecord | null = null;
   linkedTrucks: TruckEntryRecord[] = [];
@@ -108,6 +122,9 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   voidForm!: FormGroup;
   formError = '';
   voidError = '';
+  reviewError = '';
+  rejectionReason = '';
+  showRejectionInput = false;
 
   constructor(
     private fb: FormBuilder,
@@ -115,6 +132,13 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private route: ActivatedRoute,
   ) {}
+
+  switchActorRole(
+    role: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)',
+  ): void {
+    this.currentActorRole = role;
+    this.notificationService.show(`Switched active role to: ${role}`, 'info', 2500);
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -188,8 +212,12 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       clientFirm: ['', Validators.required],
       sellerName: ['', Validators.required],
       buyerName: [''],
+      expectedDeliveryDate: [''],
       commodityItems: this.fb.array([this.createCommodityRow()]),
       totalAmountInr: [null, [Validators.required, Validators.min(1)]],
+      buyerBrokerageAmount: [null, Validators.min(0)],
+      sellerBrokerageAmount: [null, Validators.min(0)],
+      totalBrokerageAmount: [{ value: null, disabled: true }],
       sellerCreditPeriodDays: [null, Validators.min(0)],
       sellerCreditStartDate: [''],
       sellerDueDate: [{ value: '', disabled: true }],
@@ -205,7 +233,18 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       ?.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((type: SaudaType) => {
         this.updatePartyValidators(type);
+        this.recomputeBrokerageAmounts();
       });
+
+    this.saudaForm
+      .get('buyerBrokerageAmount')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.recomputeBrokerageAmounts());
+
+    this.saudaForm
+      .get('sellerBrokerageAmount')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.recomputeBrokerageAmounts());
 
     // Auto-calculate Seller & Buyer Due Dates using calendar days
     this.saudaForm
@@ -233,19 +272,116 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   }
 
   private createCommodityRow(item?: CommodityLineItem): FormGroup {
-    return this.fb.group({
+    const row = this.fb.group({
       commodity: [item?.commodity || '', Validators.required],
       packagingUom: [item?.packagingUom || 'Bag', Validators.required],
       packagingQty: [
         item?.packagingQty ?? null,
         [Validators.required, Validators.min(1)],
       ],
-      weightUom: [item?.weightUom || 'KG', Validators.required],
+      weightUom: [item?.weightUom || 'Quintal', Validators.required],
       actualWeight: [
         item?.actualWeight ?? null,
-        [Validators.required, Validators.min(0.1)],
+        [Validators.required, Validators.min(0.01)],
       ],
+      rate: [
+        item?.rate ?? null,
+        [Validators.required, Validators.min(0.01)],
+      ],
+      lineTotal: [{ value: item?.lineTotal ?? null, disabled: true }],
     });
+
+    if (item?.actualWeight && item?.rate) {
+      row.patchValue(
+        { lineTotal: Number((item.actualWeight * item.rate).toFixed(2)) },
+        { emitEvent: false },
+      );
+    }
+
+    row
+      .get('actualWeight')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.recomputeRowLineTotal(row);
+      });
+    row
+      .get('rate')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.recomputeRowLineTotal(row);
+      });
+
+    return row;
+  }
+
+  private recomputeRowLineTotal(row: FormGroup): void {
+    const wt = Number(row.get('actualWeight')?.value) || 0;
+    const rate = Number(row.get('rate')?.value) || 0;
+    const total = Number((wt * rate).toFixed(2));
+    row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
+    this.recomputeTotalAmountFromLines();
+  }
+
+  private recomputeTotalAmountFromLines(): void {
+    const type = this.saudaForm.get('saudaType')?.value;
+    if (type === 'Brokerage') return;
+    let sum = 0;
+    for (const ctrl of this.commodityRows.controls) {
+      const lineTotal = Number(ctrl.get('lineTotal')?.value) || 0;
+      sum += lineTotal;
+    }
+    if (sum > 0) {
+      this.saudaForm.patchValue({ totalAmountInr: sum }, { emitEvent: false });
+    }
+  }
+
+  private recomputeBrokerageAmounts(): void {
+    const b = Number(this.saudaForm.get('buyerBrokerageAmount')?.value) || 0;
+    const s = Number(this.saudaForm.get('sellerBrokerageAmount')?.value) || 0;
+    const total = b + s;
+    this.saudaForm
+      .get('totalBrokerageAmount')
+      ?.setValue(total > 0 ? total : null, { emitEvent: false });
+  }
+
+  onSellerSelected(): void {
+    const sellerName = this.saudaForm.get('sellerName')?.value;
+    const seller = this.activeSellers.find((s) => s.name === sellerName);
+    if (
+      seller &&
+      seller.defaultCreditDays !== null &&
+      seller.defaultCreditDays !== undefined
+    ) {
+      const startDate =
+        this.saudaForm.get('sellerCreditStartDate')?.value ||
+        this.saudaForm.get('saudaDate')?.value ||
+        new Date().toISOString().slice(0, 10);
+      this.saudaForm.patchValue({
+        sellerCreditPeriodDays: seller.defaultCreditDays,
+        sellerCreditStartDate: startDate,
+      });
+      this.recomputeDueDate('seller');
+    }
+  }
+
+  onBuyerSelected(): void {
+    const buyerName = this.saudaForm.get('buyerName')?.value;
+    const buyer = this.activeBuyers.find((b) => b.name === buyerName);
+    if (
+      buyer &&
+      buyer.defaultCreditDays !== null &&
+      buyer.defaultCreditDays !== undefined
+    ) {
+      const startDate =
+        this.saudaForm.get('buyerCreditStartDate')?.value ||
+        this.saudaForm.get('saudaDate')?.value ||
+        new Date().toISOString().slice(0, 10);
+      this.saudaForm.patchValue({
+        buyerCreditPeriodDays: buyer.defaultCreditDays,
+        buyerCreditStartDate: startDate,
+      });
+      this.recomputeDueDate('buyer');
+    }
   }
 
   get commodityRows(): FormArray {
@@ -292,6 +428,23 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     const row = this.commodityRows.at(index);
     if (!row) return;
     const val = (row.get('commodity')?.value || '').trim();
+    if (!val) return;
+
+    // BR-SA-07, EX-03: Duplicate commodity in single Sauda prevented
+    const isDuplicate = this.commodityRows.controls.some(
+      (ctrl, idx) =>
+        idx !== index && (ctrl.get('commodity')?.value || '').trim() === val,
+    );
+    if (isDuplicate) {
+      this.notificationService.show(
+        `Commodity "${val}" is already added to this Sauda. Duplicate commodities are not permitted (BR-SA-07).`,
+        'error',
+        3500,
+      );
+      row.patchValue({ commodity: '' });
+      return;
+    }
+
     const match = this.inventoryCommodityOptions.find((o) => o.value === val);
     if (match) {
       row.patchValue(
@@ -488,7 +641,11 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       clientFirm: this.activeFirms[0]?.name || '',
       sellerName: '',
       buyerName: '',
+      expectedDeliveryDate: '',
       totalAmountInr: null,
+      buyerBrokerageAmount: null,
+      sellerBrokerageAmount: null,
+      totalBrokerageAmount: null,
       sellerCreditPeriodDays: null,
       sellerCreditStartDate: '',
       sellerDueDate: '',
@@ -515,6 +672,16 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // AF-07: Second amendment blocked while one is pending
+    if (sauda.amendmentStatus === 'Pending Approval') {
+      this.notificationService.show(
+        `An amendment is already pending Checker approval for ${sauda.saudaNo} (AF-07). Resolve it before submitting a new amendment.`,
+        'error',
+        4000,
+      );
+      return;
+    }
+
     this.closeAllModals();
     this.isEditMode = true;
     this.selectedSauda = sauda;
@@ -534,7 +701,10 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       clientFirm: sauda.clientFirm,
       sellerName: sauda.sellerName,
       buyerName: sauda.buyerName,
+      expectedDeliveryDate: sauda.expectedDeliveryDate || '',
       totalAmountInr: sauda.totalAmountInr,
+      buyerBrokerageAmount: sauda.buyerBrokerageAmount ?? null,
+      sellerBrokerageAmount: sauda.sellerBrokerageAmount ?? null,
       sellerCreditPeriodDays: sauda.sellerCreditPeriodDays,
       sellerCreditStartDate: sauda.sellerCreditStartDate,
       sellerDueDate: sauda.sellerDueDate,
@@ -545,6 +715,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       revisionReason: '',
     });
 
+    this.recomputeBrokerageAmounts();
     this.updatePartyValidators(sauda.saudaType);
     this.saudaForm
       .get('revisionReason')
@@ -573,14 +744,27 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       clientFirm: v.clientFirm,
       sellerName: (v.sellerName || '').trim(),
       buyerName: (v.buyerName || '').trim(),
+      expectedDeliveryDate: v.expectedDeliveryDate || '',
       commodityItems: (v.commodityItems || []).map((c: any) => ({
         commodity: c.commodity,
         packagingUom: c.packagingUom,
         packagingQty: Number(c.packagingQty),
         weightUom: c.weightUom,
         actualWeight: Number(c.actualWeight),
+        rate: Number(c.rate),
+        lineTotal: Number((Number(c.actualWeight) * Number(c.rate)).toFixed(2)),
       })),
       totalAmountInr: Number(v.totalAmountInr),
+      buyerBrokerageAmount:
+        v.buyerBrokerageAmount !== null && v.buyerBrokerageAmount !== ''
+          ? Number(v.buyerBrokerageAmount)
+          : undefined,
+      sellerBrokerageAmount:
+        v.sellerBrokerageAmount !== null && v.sellerBrokerageAmount !== ''
+          ? Number(v.sellerBrokerageAmount)
+          : undefined,
+      totalBrokerageAmount:
+        (Number(v.buyerBrokerageAmount) || 0) + (Number(v.sellerBrokerageAmount) || 0) || undefined,
       sellerCreditPeriodDays:
         v.sellerCreditPeriodDays !== null && v.sellerCreditPeriodDays !== ''
           ? Number(v.sellerCreditPeriodDays)
@@ -596,23 +780,32 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       remarks: (v.remarks || '').trim(),
     };
 
-    const result =
-      this.isEditMode && this.selectedSauda
-        ? this.erpService.updateSauda(
-            this.selectedSauda.id,
-            payload,
-            v.revisionReason,
-          )
-        : this.erpService.createSauda(payload);
-
-    if (!result.ok) {
-      this.formError = result.message;
-      this.notificationService.show(result.message, 'error', 3500);
-      return;
+    if (this.isEditMode && this.selectedSauda) {
+      // Maker-Checker Amendment (AF-04, BR-SA-26)
+      const result = this.erpService.initiateAmendment(
+        this.selectedSauda.id,
+        payload,
+        v.revisionReason,
+        this.currentActorRole,
+      );
+      if (!result.ok) {
+        this.formError = result.message;
+        this.notificationService.show(result.message, 'error', 3500);
+        return;
+      }
+      this.notificationService.show(result.message, 'success', 3500);
+      this.viewMode = 'listing';
+    } else {
+      // Create new Sauda
+      const result = this.erpService.createSauda(payload);
+      if (!result.ok) {
+        this.formError = result.message;
+        this.notificationService.show(result.message, 'error', 3500);
+        return;
+      }
+      this.notificationService.show(result.message, 'success', 3000);
+      this.viewMode = 'listing';
     }
-
-    this.notificationService.show(result.message, 'success', 3000);
-    this.viewMode = 'listing';
   }
 
   // ── Screen 3: Sauda Details ──
@@ -630,7 +823,72 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     this.isRevisionOpen = true;
   }
 
-  // ── Screen 5: Void Confirmation ──
+  // ── Screen 5: Checker Review Amendment Modal (AF-05, AF-06) ──
+  openReviewModal(sauda: SaudaRecord): void {
+    if (!sauda.pendingAmendment) {
+      this.notificationService.show(
+        'No pending amendment found for this Sauda.',
+        'info',
+        2500,
+      );
+      return;
+    }
+    this.closeAllModals();
+    this.selectedSauda = sauda;
+    this.reviewError = '';
+    this.rejectionReason = '';
+    this.showRejectionInput = false;
+    this.isReviewOpen = true;
+  }
+
+  approvePendingAmendment(): void {
+    if (!this.selectedSauda || !this.selectedSauda.pendingAmendment) return;
+    this.reviewError = '';
+
+    const res = this.erpService.approveAmendment(
+      this.selectedSauda.id,
+      this.currentActorRole,
+    );
+    if (!res.ok) {
+      this.reviewError = res.message;
+      this.notificationService.show(res.message, 'error', 3500);
+      return;
+    }
+
+    this.notificationService.show(res.message, 'success', 3000);
+    this.closeAllModals();
+  }
+
+  startRejection(): void {
+    this.showRejectionInput = true;
+    this.reviewError = '';
+  }
+
+  confirmRejection(): void {
+    if (!this.selectedSauda || !this.selectedSauda.pendingAmendment) return;
+    this.reviewError = '';
+    if (!this.rejectionReason || this.rejectionReason.trim().length < 5) {
+      this.reviewError =
+        'Rejection reason (minimum 5 characters) is mandatory (BR-SA-30).';
+      return;
+    }
+
+    const res = this.erpService.rejectAmendment(
+      this.selectedSauda.id,
+      this.rejectionReason.trim(),
+      this.currentActorRole,
+    );
+    if (!res.ok) {
+      this.reviewError = res.message;
+      this.notificationService.show(res.message, 'error', 3500);
+      return;
+    }
+
+    this.notificationService.show(res.message, 'success', 3000);
+    this.closeAllModals();
+  }
+
+  // ── Screen 6: Void Confirmation ──
   openVoidModal(sauda: SaudaRecord): void {
     this.closeAllModals();
     this.selectedSauda = sauda;
@@ -675,10 +933,21 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     this.isDetailsOpen = false;
     this.isRevisionOpen = false;
     this.isVoidOpen = false;
+    this.isReviewOpen = false;
     this.voidError = '';
+    this.reviewError = '';
+    this.showRejectionInput = false;
+    this.rejectionReason = '';
   }
 
   getRecordBadgeClass(status: string): string {
     return status === 'Voided' ? 'badge-red' : 'badge-green';
+  }
+
+  getAmendmentBadgeClass(status?: string): string {
+    if (status === 'Pending Approval') return 'badge-amber';
+    if (status === 'Approved') return 'badge-green';
+    if (status === 'Rejected') return 'badge-red';
+    return '';
   }
 }

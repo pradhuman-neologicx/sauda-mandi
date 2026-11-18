@@ -9,7 +9,22 @@
       </p>
     </div>
 
-    <div class="erp-actions">
+    <div class="erp-actions d-flex align-items-center gap-3">
+      <!-- Active Role Switcher for testing Maker-Checker Amendment Workflow -->
+      <div class="actor-role-switcher">
+        <span class="role-caption"><i class="fa-solid fa-users-gear me-1"></i>Role:</span>
+        <button type="button" class="btn-role-toggle" [class.active-role]="isMaker"
+          (click)="switchActorRole('Operations Executive (Maker)')"
+          title="Operations Executive (Maker who creates Saudas and submits amendments)">
+          <i class="fa-solid fa-pen-ruler me-1"></i>Maker
+        </button>
+        <button type="button" class="btn-role-toggle" [class.active-role]="isChecker"
+          (click)="switchActorRole('Business Owner / Admin (Checker)')"
+          title="Business Owner / Admin (Checker who approves/rejects amendments)">
+          <i class="fa-solid fa-shield-halved me-1"></i>Checker
+        </button>
+      </div>
+
       <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
         <i class="fa-solid fa-plus"></i>
         <span>Create Sauda</span>
@@ -22,25 +37,21 @@
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Total Saudas</div>
       <div class="sauda-kpi-val">{{ activeSaudasList.length }}</div>
-      <div class="sauda-kpi-sub">Including all types</div>
     </div>
 
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Purchase</div>
       <div class="sauda-kpi-val">{{ purchaseCount }}</div>
-      <div class="sauda-kpi-sub">Sauda records</div>
     </div>
 
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Sales</div>
       <div class="sauda-kpi-val">{{ salesCount }}</div>
-      <div class="sauda-kpi-sub">Sauda records</div>
     </div>
 
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Brokerage</div>
       <div class="sauda-kpi-val">{{ brokerageCount }}</div>
-      <div class="sauda-kpi-sub">Sauda records</div>
     </div>
   </div>
 
@@ -164,11 +175,27 @@
               <span class="status-badge" [ngClass]="getRecordBadgeClass(sauda.status)">
                 {{ sauda.status === 'Voided' ? 'Voided' : 'Active' }}
               </span>
+              @if (sauda.amendmentStatus === 'Pending Approval') {
+              <div class="mt-1">
+                <span class="status-badge badge-amber"
+                  title="Amendment submitted and awaiting Checker approval (AF-04)">
+                  <i class="fa-solid fa-clock-rotate-left me-1"></i>Pending Review
+                </span>
+              </div>
+              }
             </td>
             <td class="text-center">
-              <button type="button" class="view-link-btn" (click)="openDetailsModal(sauda)">
-                View
-              </button>
+              <div class="d-flex align-items-center justify-content-center gap-2">
+                <button type="button" class="view-link-btn" (click)="openDetailsModal(sauda)">
+                  View
+                </button>
+                @if (sauda.amendmentStatus === 'Pending Approval' && isChecker) {
+                <button type="button" class="btn-erp-amber-sm" (click)="openReviewModal(sauda)"
+                  title="Review amendment as Checker (AF-05)">
+                  <i class="fa-solid fa-clipboard-check me-1"></i>Review
+                </button>
+                }
+              </div>
             </td>
           </tr>
           }
@@ -257,7 +284,7 @@
         @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Seller <span class="req">*</span></label>
-          <select formControlName="sellerName" class="erp-input">
+          <select formControlName="sellerName" class="erp-input" (change)="onSellerSelected()">
             <option value="">Select Seller</option>
             @for (s of sellerOptions; track s) {
             <option [value]="s">{{ s }}</option>
@@ -272,7 +299,7 @@
         @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Buyer <span class="req">*</span></label>
-          <select formControlName="buyerName" class="erp-input">
+          <select formControlName="buyerName" class="erp-input" (change)="onBuyerSelected()">
             <option value="">Select Buyer</option>
             @for (b of buyerOptions; track b) {
             <option [value]="b">{{ b }}</option>
@@ -281,6 +308,13 @@
           @if (saudaForm.get('buyerName')?.touched && saudaForm.get('buyerName')?.invalid) {
           <span class="field-err">Buyer is required.</span>
           }
+        </div>
+        }
+
+        @if (saudaForm.get('saudaType')?.value === 'Purchase') {
+        <div class="field-group">
+          <label>Expected Delivery Date <span class="text-muted small">(Optional)</span></label>
+          <input type="date" formControlName="expectedDeliveryDate" class="erp-input" />
         </div>
         }
       </div>
@@ -338,14 +372,26 @@
 
           <div class="field-group">
             <label>Actual Weight <span class="req">*</span></label>
-            <input type="number" step="0.1" min="0.1" formControlName="actualWeight" class="erp-input"
-              placeholder="0" />
+            <input type="number" step="0.01" min="0.01" formControlName="actualWeight" class="erp-input"
+              placeholder="0.00" />
+          </div>
+
+          <div class="field-group">
+            <label>Rate (₹) <span class="req">*</span></label>
+            <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input"
+              placeholder="₹ / unit" />
+          </div>
+
+          <div class="field-group">
+            <label>Total (₹)</label>
+            <input type="text" formControlName="lineTotal" class="erp-input readonly-input" placeholder="₹ 0.00"
+              readonly />
           </div>
 
           <div class="remove-btn-wrap">
             <button type="button" class="btn-remove-row" [disabled]="commodityRows.length <= 1"
-              (click)="removeCommodityRow(idx)">
-              Remove
+              (click)="removeCommodityRow(idx)" title="Remove this commodity row">
+              <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
         </div>
@@ -353,14 +399,34 @@
       </div>
 
       <div class="helper-note-box mt-3">
-        Each commodity can appear once per Sauda. Packaging quantity and actual weight are
-        mandatory. No commodity-wise rate or amount is calculated.
+        Each commodity can appear once per Sauda (BR-SA-07). Rate and Total are calculated
+        per line item. Total Sauda amount is auto-calculated from totals.
       </div>
     </div>
 
     <!-- Section 3: Financial Details -->
     <div class="erp-card section-card">
       <h2 class="section-card-title">Financial Details</h2>
+
+      @if (saudaForm.get('saudaType')?.value === 'Brokerage') {
+      <div class="form-grid-3 mb-3">
+        <div class="field-group">
+          <label>Buyer Brokerage Amount (₹)</label>
+          <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
+            placeholder="Lump-sum amount" />
+        </div>
+        <div class="field-group">
+          <label>Seller Brokerage Amount (₹)</label>
+          <input type="number" min="0" formControlName="sellerBrokerageAmount" class="erp-input"
+            placeholder="Lump-sum amount" />
+        </div>
+        <div class="field-group">
+          <label>Total Brokerage Amount (₹)</label>
+          <input type="text" formControlName="totalBrokerageAmount" class="erp-input readonly-input"
+            placeholder="Auto-calculated total" readonly />
+        </div>
+      </div>
+      }
 
       <div class="form-grid-3">
         <div class="field-group">
@@ -448,12 +514,19 @@
 
       <div class="form-actions-left mt-4">
         <button type="submit" class="btn-erp-primary">
-          {{ isEditMode ? 'Update Sauda' : 'Save Sauda' }}
+          {{ isEditMode ? 'Submit Amendment Request' : 'Save Sauda' }}
         </button>
         <button type="button" class="btn-erp-ghost" (click)="backToListing()">
           Cancel
         </button>
       </div>
+      @if (isEditMode) {
+      <div class="text-muted small mt-2">
+        <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+        Modifications to this contract are submitted as an <strong>Amendment (Pending Approval)</strong>. An authorized
+        Checker must review and approve it before revisions become active (AF-04, BR-SA-26).
+      </div>
+      }
     </div>
   </form>
   }
@@ -484,6 +557,26 @@
     </div>
 
     <div class="modal-body-erp">
+      @if (selectedSauda.pendingAmendment) {
+      <div class="alert-erp alert-warning-erp mb-3 d-flex justify-content-between align-items-center">
+        <div>
+          <strong><i class="fa-solid fa-hourglass-half me-2"></i>Amendment Pending Approval (AF-04)</strong>
+          <div class="small mt-1">
+            Submitted by: <strong>{{ selectedSauda.pendingAmendment.maker }}</strong> on {{
+            selectedSauda.pendingAmendment.submittedAt }}
+          </div>
+          <div class="small mt-1 text-dark">
+            <strong>Reason:</strong> {{ selectedSauda.pendingAmendment.reason }}
+          </div>
+        </div>
+        @if (isChecker) {
+        <button type="button" class="btn-erp-amber text-nowrap ms-3" (click)="openReviewModal(selectedSauda)">
+          <i class="fa-solid fa-clipboard-check me-1"></i> Review Amendment
+        </button>
+        }
+      </div>
+      }
+
       @if (selectedSauda.voidInfo) {
       <div class="alert-erp alert-danger-erp mb-3">
         <strong>Voided on {{ selectedSauda.voidInfo.voidedAt }}</strong> by
@@ -496,10 +589,48 @@
           <span class="detail-label">Client Firm</span>
           <span class="detail-value">{{ selectedSauda.clientFirm }}</span>
         </div>
+
+        @if (selectedSauda.saudaType === 'Purchase') {
         <div class="detail-item">
-          <span class="detail-label">Party (Seller / Buyer)</span>
-          <span class="detail-value">{{ selectedSauda.partyName }}</span>
+          <span class="detail-label">Seller</span>
+          <span class="detail-value">{{ selectedSauda.sellerName || '—' }}</span>
         </div>
+        @if (selectedSauda.expectedDeliveryDate) {
+        <div class="detail-item">
+          <span class="detail-label">Expected Delivery Date</span>
+          <span class="detail-value">{{ selectedSauda.expectedDeliveryDate }}</span>
+        </div>
+        }
+        }
+
+        @if (selectedSauda.saudaType === 'Sales') {
+        <div class="detail-item">
+          <span class="detail-label">Buyer</span>
+          <span class="detail-value">{{ selectedSauda.buyerName || '—' }}</span>
+        </div>
+        }
+
+        @if (selectedSauda.saudaType === 'Brokerage') {
+        <div class="detail-item">
+          <span class="detail-label">Seller</span>
+          <span class="detail-value">{{ selectedSauda.sellerName || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Buyer</span>
+          <span class="detail-value">{{ selectedSauda.buyerName || '—' }}</span>
+        </div>
+        @if (selectedSauda.buyerBrokerageAmount || selectedSauda.sellerBrokerageAmount) {
+        <div class="detail-item">
+          <span class="detail-label">Buyer / Seller Brokerage</span>
+          <span class="detail-value">
+            Buyer: ₹{{ selectedSauda.buyerBrokerageAmount || 0 }} &bull; Seller: ₹{{ selectedSauda.sellerBrokerageAmount
+            || 0 }}
+            (Total: ₹{{ selectedSauda.totalBrokerageAmount || 0 }})
+          </span>
+        </div>
+        }
+        }
+
         <div class="detail-item">
           <span class="detail-label">Total Sauda Amount</span>
           <span class="detail-value text-primary fw-bold">
@@ -550,6 +681,8 @@
                 <th class="text-end">Packaging Qty</th>
                 <th>Weight UOM</th>
                 <th class="text-end">Actual Weight</th>
+                <th class="text-end">Rate (₹)</th>
+                <th class="text-end">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -560,6 +693,10 @@
                 <td class="text-end num">{{ item.packagingQty | number }}</td>
                 <td>{{ item.weightUom }}</td>
                 <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+                <td class="text-end num">₹{{ item.rate || 0 | number: '1.2-2' }}</td>
+                <td class="text-end num fw-semibold text-dark">
+                  ₹{{ item.lineTotal || ((item.actualWeight || 0) * (item.rate || 0)) | number: '1.2-2' }}
+                </td>
               </tr>
               }
             </tbody>
@@ -618,9 +755,16 @@
         <button type="button" class="btn-erp-danger" (click)="openVoidModal(selectedSauda)">
           <i class="fa-solid fa-ban me-1"></i> Void Sauda
         </button>
+        @if (selectedSauda.amendmentStatus === 'Pending Approval') {
+        <button type="button" class="btn-erp-primary" disabled
+          title="An amendment is currently pending Checker approval. Further edits are locked (AF-07).">
+          <i class="fa-solid fa-lock me-1"></i> Amendment Pending
+        </button>
+        } @else {
         <button type="button" class="btn-erp-primary" (click)="openEditForm(selectedSauda)">
           <i class="fa-solid fa-pen-to-square me-1"></i> Edit Sauda
         </button>
+        }
         }
       </div>
     </div>
@@ -760,6 +904,105 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- Screen 6: Checker Review Amendment Modal (AF-05, AF-06, BR-SA-26)   -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (isReviewOpen && selectedSauda && selectedSauda.pendingAmendment) {
+<div class="modal-backdrop-erp" (click)="closeAllModals()">
+  <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="modal-title-erp mb-0">Review Amendment — {{ selectedSauda.saudaNo }}</h3>
+          <span class="status-badge badge-amber">Pending Approval</span>
+        </div>
+        <p class="modal-sub-erp">
+          Maker-Checker Review &bull; Submitted by <strong>{{ selectedSauda.pendingAmendment.maker }}</strong> on {{
+          selectedSauda.pendingAmendment.submittedAt }}
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeAllModals()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      @if (reviewError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ reviewError }}
+      </div>
+      }
+
+      <div class="amendment-callout-card mb-3">
+        <div class="callout-head">
+          <i class="fa-solid fa-comment-dots text-primary me-2"></i>
+          <strong>Proposed Reason for Revision:</strong>
+        </div>
+        <div class="callout-text">{{ selectedSauda.pendingAmendment.reason }}</div>
+      </div>
+
+      <div class="mb-3">
+        <h4 class="sub-section-title">
+          Comparison: Active Contract vs Proposed Revision ({{ selectedSauda.pendingAmendment.changes.length }}
+          differences)
+        </h4>
+        <div class="table-responsive border rounded-3">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th style="width: 25%">Field</th>
+                <th style="width: 35%">Active Contract Value</th>
+                <th style="width: 40%">Proposed Amendment Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (diff of selectedSauda.pendingAmendment.changes; track diff.field) {
+              <tr>
+                <td class="fw-semibold text-dark">{{ diff.field }}</td>
+                <td class="text-muted">{{ diff.oldValue }}</td>
+                <td class="text-primary fw-semibold">{{ diff.newValue }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      @if (showRejectionInput) {
+      <div class="rejection-box-panel mb-3">
+        <label class="fw-bold text-danger mb-2">
+          <i class="fa-solid fa-circle-exclamation me-1"></i>Mandatory Rejection Reason (min 5 characters, BR-SA-30):
+        </label>
+        <textarea rows="3" [(ngModel)]="rejectionReason" class="erp-input"
+          placeholder="State reason why this proposed amendment is rejected..."></textarea>
+        <div class="d-flex justify-content-end gap-2 mt-2">
+          <button type="button" class="btn-erp-ghost" (click)="showRejectionInput = false">
+            Cancel
+          </button>
+          <button type="button" class="btn-erp-danger" (click)="confirmRejection()">
+            <i class="fa-solid fa-ban me-1"></i> Confirm Rejection
+          </button>
+        </div>
+      </div>
+      }
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeAllModals()">
+          Close
+        </button>
+        @if (!showRejectionInput) {
+        <button type="button" class="btn-erp-danger" (click)="startRejection()">
+          <i class="fa-solid fa-xmark me-1"></i> Reject Amendment
+        </button>
+        <button type="button" class="btn-erp-primary" (click)="approvePendingAmendment()">
+          <i class="fa-solid fa-check me-1"></i> Approve Amendment</button>
+        }
+      </div>
+    </div>
   </div>
 </div>
 }
