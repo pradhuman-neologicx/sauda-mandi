@@ -10,9 +10,13 @@
     </div>
 
     <div class="erp-actions">
-      <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
-        <i class="fa-solid fa-plus"></i>
-        <span>Create Truck Entry</span>
+      <button type="button" class="btn-erp-primary" (click)="openCreateForm(undefined, 'Purchase')">
+        <i class="fa-solid fa-arrow-down"></i>
+        <span>Record Receipt (Inward)</span>
+      </button>
+      <button type="button" class="btn-erp-success" (click)="openCreateForm(undefined, 'Sales')">
+        <i class="fa-solid fa-arrow-up"></i>
+        <span>Record Dispatch (Outward)</span>
       </button>
     </div>
   </div>
@@ -201,9 +205,13 @@
     </div>
 
     <div class="erp-actions">
-      <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
-        <i class="fa-solid fa-plus"></i>
-        <span>Create Truck Entry</span>
+      <button type="button" class="btn-erp-primary" (click)="openCreateForm(undefined, 'Purchase')">
+        <i class="fa-solid fa-arrow-down"></i>
+        <span>Record Receipt (Inward)</span>
+      </button>
+      <button type="button" class="btn-erp-success" (click)="openCreateForm(undefined, 'Sales')">
+        <i class="fa-solid fa-arrow-up"></i>
+        <span>Record Dispatch (Outward)</span>
       </button>
     </div>
   </div>
@@ -460,6 +468,25 @@
     @if (formError) {
     <div class="alert-erp alert-danger-erp">
       <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
+    </div>
+    }
+
+    <!-- Operation Switcher: Inward Receipt vs Outward Dispatch -->
+    @if (!isEditMode) {
+    <div class="fulfilment-type-switcher">
+      <span class="switcher-label">Operation Type:</span>
+      <div class="switcher-buttons">
+        <button type="button" class="switcher-btn" [class.active-inward]="targetSaudaType === 'Purchase'"
+          (click)="setFulfilmentType('Purchase')">
+          <i class="fa-solid fa-arrow-down me-2"></i>
+          <span>Inward Receipt (Purchase Sauda)</span>
+        </button>
+        <button type="button" class="switcher-btn" [class.active-outward]="targetSaudaType === 'Sales'"
+          (click)="setFulfilmentType('Sales')">
+          <i class="fa-solid fa-arrow-up me-2"></i>
+          <span>Outward Dispatch (Sales Sauda)</span>
+        </button>
+      </div>
     </div>
     }
 

@@ -88,6 +88,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   isEditMode = false;
   isRemoveOpen = false;
   selectedTruck: TruckEntryRecord | null = null;
+  targetSaudaType: 'Purchase' | 'Sales' = 'Purchase';
 
   truckForm!: FormGroup;
   removeForm!: FormGroup;
@@ -125,7 +126,13 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((params) => {
         if (params['action'] === 'create' || params['saudaId']) {
-          this.openCreateForm(params['saudaId']);
+          const forceType =
+            params['type'] === 'Sales'
+              ? 'Sales'
+              : params['type'] === 'Purchase'
+              ? 'Purchase'
+              : undefined;
+          this.openCreateForm(params['saudaId'], forceType);
         }
       });
   }
@@ -221,19 +228,21 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     if (!saudaId || this.isEditMode) return;
     const sauda = this.getSaudaById(saudaId);
     if (!sauda) return;
+    if (sauda.saudaType === 'Purchase' || sauda.saudaType === 'Sales') {
+      this.targetSaudaType = sauda.saudaType;
+    }
     const first = sauda.commodityItems[0];
-    if (first && this.commodityRows.length === 1) {
-      const row = this.commodityRows.at(0);
-      if (!row.get('commodity')?.value) {
-        row.patchValue(
-          {
-            commodity: first.commodity,
-            packagingUom: first.packagingUom,
-            weightUom: first.weightUom,
-          },
-          { emitEvent: false },
-        );
-      }
+    if (first) {
+      this.commodityRows.clear();
+      this.commodityRows.push(
+        this.createCommodityRow({
+          commodity: first.commodity,
+          packagingUom: first.packagingUom,
+          packagingQty: 1,
+          weightUom: first.weightUom,
+          actualWeight: 100,
+        }),
+      );
     }
   }
 
@@ -360,12 +369,33 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   get eligibleSaudasForForm(): SaudaRecord[] {
     return this.allSaudas.filter((s) => {
       if (s.status === 'Voided' || s.saudaType === 'Brokerage') return false;
+      if (s.saudaType !== this.targetSaudaType) return false;
       const available = this.erpService.getRemainingQtyMt(
         s.id,
         this.isEditMode ? this.selectedTruck?.id : undefined,
       );
       return available > 0 || s.id === this.truckForm?.get('saudaId')?.value;
     });
+  }
+
+  setFulfilmentType(type: 'Purchase' | 'Sales'): void {
+    if (this.isEditMode || this.targetSaudaType === type) return;
+    this.targetSaudaType = type;
+    const firstAvailable = this.allSaudas.find(
+      (s) =>
+        s.status !== 'Voided' &&
+        s.saudaType === type &&
+        this.erpService.getRemainingQtyMt(s.id) > 0,
+    );
+    this.truckForm.patchValue({
+      saudaId: firstAvailable?.id || '',
+    });
+    if (firstAvailable) {
+      this.onLinkedSaudaChanged(firstAvailable.id);
+    } else {
+      this.commodityRows.clear();
+      this.commodityRows.push(this.createCommodityRow());
+    }
   }
 
   get selectedWarehouse(): string {
@@ -476,7 +506,10 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.viewMode = 'details';
   }
 
-  openCreateForm(preselectedSaudaId?: string): void {
+  openCreateForm(
+    preselectedSaudaId?: string,
+    forceType?: 'Purchase' | 'Sales',
+  ): void {
     const today = new Date().toISOString().slice(0, 10);
     this.isEditMode = false;
     this.selectedTruck = null;
@@ -495,11 +528,19 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (targetSauda) {
+      this.targetSaudaType = targetSauda.saudaType as 'Purchase' | 'Sales';
+    } else if (forceType) {
+      this.targetSaudaType = forceType;
+    } else {
+      this.targetSaudaType = 'Purchase';
+    }
+
     if (!targetSauda) {
       targetSauda = this.allSaudas.find(
         (s) =>
           s.status !== 'Voided' &&
-          s.saudaType !== 'Brokerage' &&
+          s.saudaType === this.targetSaudaType &&
           this.erpService.getRemainingQtyMt(s.id) > 0,
       );
     }
@@ -552,6 +593,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
 
     this.isEditMode = true;
     this.selectedTruck = truck;
+    this.targetSaudaType = truck.saudaType === 'Sales' ? 'Sales' : 'Purchase';
     this.formError = '';
 
     this.commodityRows.clear();
