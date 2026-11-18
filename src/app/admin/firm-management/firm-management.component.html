@@ -33,7 +33,7 @@
       <form (ngSubmit)="onSearch()" class="filter-form-right">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search by Firm Name..." />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search by Name, Email, WhatsApp..." />
         </div>
 
         <div class="filter-controls">
@@ -60,16 +60,18 @@
       <table class="erp-table">
         <thead>
           <tr>
-            <th style="width: 80px">S.No.</th>
+            <th style="width: 70px">S.No.</th>
             <th>Firm Name</th>
-            <th class="text-center" style="width: 140px">Status</th>
-            <th class="text-center" style="width: 160px">Actions</th>
+            <th>Email</th>
+            <th>WhatsApp Number</th>
+            <th class="text-center" style="width: 130px">Status</th>
+            <th class="text-center" style="width: 170px">Actions</th>
           </tr>
         </thead>
         <tbody>
           @if (filteredFirms.length === 0) {
           <tr>
-            <td colspan="4" class="empty-state">
+            <td colspan="6" class="empty-state">
               <i class="fa-solid fa-building mb-2"></i>
               <div>No firms match your search or filter.</div>
             </td>
@@ -89,7 +91,30 @@
           ) {
           <tr [class.inactive-row]="!firm.isActive">
             <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
-            <td class="fw-semibold text-dark">{{ firm.name }}</td>
+            <td class="fw-semibold text-dark">
+              <button type="button" class="sauda-no-link" (click)="openViewModal(firm)" title="Click to view details">
+                {{ firm.name }}
+              </button>
+            </td>
+            <td>
+              @if (firm.email) {
+              <a href="mailto:{{ firm.email }}" class="contact-link" (click)="$event.stopPropagation()">
+                <i class="fa-regular fa-envelope me-1 text-muted"></i>{{ firm.email }}
+              </a>
+              } @else {
+              <span class="text-muted">—</span>
+              }
+            </td>
+            <td>
+              @if (firm.whatsappNumber) {
+              <a href="https://wa.me/91{{ firm.whatsappNumber }}" target="_blank" class="whatsapp-link"
+                (click)="$event.stopPropagation()" title="Chat on WhatsApp">
+                <i class="fa-brands fa-whatsapp text-success me-1"></i>{{ firm.whatsappNumber }}
+              </a>
+              } @else {
+              <span class="text-muted">—</span>
+              }
+            </td>
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="firm.isActive ? 'is-active' : 'is-inactive'"
                 (click)="toggleStatus(firm)" [title]="firm.isActive ? 'Click to set Inactive' : 'Click to set Active'">
@@ -99,7 +124,10 @@
             </td>
             <td class="text-center">
               <div class="action-group">
-                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(firm)" title="Edit Firm Name">
+                <button type="button" class="icon-btn btn-view" (click)="openViewModal(firm)" title="View Firm Details">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(firm)" title="Edit Firm">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 <button type="button" class="icon-btn" [ngClass]="firm.isActive ? 'btn-void' : 'btn-activate'"
@@ -138,8 +166,8 @@
         <p class="modal-sub-erp">
           {{
           isEditMode
-          ? 'Update the firm name below.'
-          : 'Enter the firm name to register it as Active.'
+          ? 'Update the firm details below.'
+          : 'Enter firm details to register it as an active trading firm.'
           }}
         </p>
       </div>
@@ -155,13 +183,37 @@
       </div>
       }
 
-      <div class="field-group">
+      <div class="field-group mb-3">
         <label>Firm Name <span class="req">*</span></label>
         <input type="text" formControlName="name" class="erp-input" placeholder="e.g. Shree Ganesh Agro Mills"
           autofocus />
         @if (firmForm.get('name')?.touched && firmForm.get('name')?.invalid) {
         <span class="field-err">
           Firm name is required (minimum 2 characters).
+        </span>
+        }
+      </div>
+
+      <div class="field-group mb-3">
+        <label>Email Address</label>
+        <input type="email" formControlName="email" class="erp-input" placeholder="e.g. contact@firm.com" />
+        @if (firmForm.get('email')?.touched && firmForm.get('email')?.invalid) {
+        <span class="field-err">
+          Please enter a valid email address.
+        </span>
+        }
+      </div>
+
+      <div class="field-group mb-3">
+        <label>WhatsApp Number</label>
+        <div class="input-with-prefix">
+          <span class="input-prefix"><i class="fa-brands fa-whatsapp text-success me-1"></i>+91</span>
+          <input type="text" formControlName="whatsappNumber" class="erp-input with-prefix"
+            placeholder="10-digit mobile number" maxlength="10" />
+        </div>
+        @if (firmForm.get('whatsappNumber')?.touched && firmForm.get('whatsappNumber')?.invalid) {
+        <span class="field-err">
+          Valid 10-digit mobile number required (starting with 6-9).
         </span>
         }
       </div>
@@ -176,6 +228,93 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+}
+
+<!-- View Firm Details Modal -->
+@if (isViewOpen && viewingFirm) {
+<div class="modal-backdrop-erp" (click)="closeViewModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <div class="firm-id-badge">{{ viewingFirm.id }}</div>
+        <h3 class="modal-title-erp">{{ viewingFirm.name }}</h3>
+        <p class="modal-sub-erp">Trading Firm Account Details</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <div class="firm-view-grid">
+        <div class="view-item">
+          <span class="view-label">Firm ID</span>
+          <span class="view-value fw-bold text-dark">{{ viewingFirm.id }}</span>
+        </div>
+
+        <div class="view-item">
+          <span class="view-label">Account Status</span>
+          <span class="view-value">
+            <span class="status-toggle-btn" [ngClass]="viewingFirm.isActive ? 'is-active' : 'is-inactive'">
+              <span class="dot"></span>
+              <span>{{ viewingFirm.isActive ? 'Active' : 'Inactive' }}</span>
+            </span>
+          </span>
+        </div>
+
+        <div class="view-item full-span">
+          <span class="view-label">Firm Name</span>
+          <span class="view-value fw-bold fs-6">{{ viewingFirm.name }}</span>
+        </div>
+
+        <div class="view-item">
+          <span class="view-label">Email Address</span>
+          <span class="view-value">
+            @if (viewingFirm.email) {
+            <a href="mailto:{{ viewingFirm.email }}" class="contact-link">
+              <i class="fa-regular fa-envelope me-1 text-muted"></i>{{ viewingFirm.email }}
+            </a>
+            } @else {
+            <span class="text-muted">Not Provided</span>
+            }
+          </span>
+        </div>
+
+        <div class="view-item">
+          <span class="view-label">WhatsApp Number</span>
+          <span class="view-value">
+            @if (viewingFirm.whatsappNumber) {
+            <a href="https://wa.me/91{{ viewingFirm.whatsappNumber }}" target="_blank" class="whatsapp-link">
+              <i class="fa-brands fa-whatsapp text-success me-1"></i>+91 {{ viewingFirm.whatsappNumber }}
+            </a>
+            } @else {
+            <span class="text-muted">Not Provided</span>
+            }
+          </span>
+        </div>
+
+        <div class="view-item">
+          <span class="view-label">Registered On</span>
+          <span class="view-value text-muted">{{ viewingFirm.createdAt }}</span>
+        </div>
+
+        <div class="view-item">
+          <span class="view-label">Last Updated</span>
+          <span class="view-value text-muted">{{ viewingFirm.updatedAt }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeViewModal()">
+        Close
+      </button>
+      <button type="button" class="btn-erp-primary" (click)="editFromView()">
+        <i class="fa-solid fa-pen-to-square me-1"></i> Edit Firm
+      </button>
+    </div>
   </div>
 </div>
 }

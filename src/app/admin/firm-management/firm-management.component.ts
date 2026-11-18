@@ -46,6 +46,9 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
   firmForm!: FormGroup;
   formError = '';
 
+  isViewOpen = false;
+  viewingFirm: FirmRecord | null = null;
+
   constructor(
     private fb: FormBuilder,
     private erpService: SaudaErpMockService,
@@ -55,6 +58,8 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.firmForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.email]],
+      whatsappNumber: ['', [Validators.pattern(/^([6-9]\d{9})?$/)]],
     });
 
     this.erpService.firms$
@@ -82,7 +87,11 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     const q = this.appliedSearchTerm.toLowerCase();
     this.filteredFirms = this.allFirms.filter((f) => {
-      const matchesQuery = !q || f.name.toLowerCase().includes(q);
+      const matchesQuery =
+        !q ||
+        f.name.toLowerCase().includes(q) ||
+        (f.email && f.email.toLowerCase().includes(q)) ||
+        (f.whatsappNumber && f.whatsappNumber.includes(q));
       const matchesStatus =
         this.appliedStatusFilter === 'All' ||
         (this.appliedStatusFilter === 'Active' ? f.isActive : !f.isActive);
@@ -138,7 +147,7 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
     this.isEditMode = false;
     this.selectedFirm = null;
     this.formError = '';
-    this.firmForm.reset({ name: '' });
+    this.firmForm.reset({ name: '', email: '', whatsappNumber: '' });
     this.isFormOpen = true;
   }
 
@@ -146,8 +155,30 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
     this.isEditMode = true;
     this.selectedFirm = firm;
     this.formError = '';
-    this.firmForm.reset({ name: firm.name });
+    this.firmForm.reset({
+      name: firm.name,
+      email: firm.email || '',
+      whatsappNumber: firm.whatsappNumber || '',
+    });
     this.isFormOpen = true;
+  }
+
+  openViewModal(firm: FirmRecord): void {
+    this.viewingFirm = firm;
+    this.isViewOpen = true;
+  }
+
+  closeViewModal(): void {
+    this.isViewOpen = false;
+    this.viewingFirm = null;
+  }
+
+  editFromView(): void {
+    if (this.viewingFirm) {
+      const firm = this.viewingFirm;
+      this.closeViewModal();
+      this.openEditModal(firm);
+    }
   }
 
   closeModal(): void {
@@ -160,16 +191,21 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
     this.formError = '';
     if (this.firmForm.invalid) {
       this.firmForm.markAllAsTouched();
-      this.formError = 'Please enter a valid firm name (min 2 characters).';
+      this.formError = 'Please check required fields and valid formats.';
       return;
     }
 
-    const name = this.firmForm.value.name;
-    // Static mock persistence (replace with backend API when ready)
+    const { name, email, whatsappNumber } = this.firmForm.value;
+    const payload = {
+      name: (name || '').trim(),
+      email: (email || '').trim(),
+      whatsappNumber: (whatsappNumber || '').trim(),
+    };
+
     const result =
       this.isEditMode && this.selectedFirm
-        ? this.erpService.updateFirm(this.selectedFirm.id, name)
-        : this.erpService.createFirm(name);
+        ? this.erpService.updateFirm(this.selectedFirm.id, payload)
+        : this.erpService.createFirm(payload);
 
     if (!result.ok) {
       this.formError = result.message;

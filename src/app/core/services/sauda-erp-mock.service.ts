@@ -133,9 +133,17 @@ export interface TruckEntryRecord {
 export interface FirmRecord {
   id: string;
   name: string;
+  email?: string;
+  whatsappNumber?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FirmPayload {
+  name: string;
+  email?: string;
+  whatsappNumber?: string;
 }
 
 export interface SellerRecord {
@@ -1169,6 +1177,8 @@ export class SaudaErpMockService {
     {
       id: 'FRM-001',
       name: 'Desert Fresh Traders',
+      email: 'contact@desertfresh.com',
+      whatsappNumber: '9829012345',
       isActive: true,
       createdAt: '2026-11-01 09:30',
       updatedAt: '2026-11-01 09:30',
@@ -1176,6 +1186,8 @@ export class SaudaErpMockService {
     {
       id: 'FRM-002',
       name: 'Rajasthan Agro',
+      email: 'sales@rajasthanagro.in',
+      whatsappNumber: '9829023456',
       isActive: true,
       createdAt: '2026-11-02 11:15',
       updatedAt: '2026-11-02 11:15',
@@ -1183,6 +1195,8 @@ export class SaudaErpMockService {
     {
       id: 'FRM-003',
       name: 'Shree Ganesh Agro Mills',
+      email: 'info@shreeganeshagro.com',
+      whatsappNumber: '9829034567',
       isActive: true,
       createdAt: '2026-11-04 14:20',
       updatedAt: '2026-11-04 14:20',
@@ -1190,6 +1204,8 @@ export class SaudaErpMockService {
     {
       id: 'FRM-004',
       name: 'Kisan Krishi Mandi Samiti',
+      email: 'kisan@mandisamiti.org',
+      whatsappNumber: '9829045678',
       isActive: true,
       createdAt: '2026-11-05 16:40',
       updatedAt: '2026-11-05 16:40',
@@ -1197,6 +1213,8 @@ export class SaudaErpMockService {
     {
       id: 'FRM-005',
       name: 'Om Sai Traders Kota',
+      email: 'omsai.kota@traders.com',
+      whatsappNumber: '9829056789',
       isActive: false,
       createdAt: '2026-11-06 10:05',
       updatedAt: '2026-11-08 17:10',
@@ -3525,8 +3543,13 @@ export class SaudaErpMockService {
 
   // ── Firm Operations ──
 
-  createFirm(name: string): ActionResult {
-    const trimmed = (name || '').trim();
+  createFirm(payload: FirmPayload | string): ActionResult {
+    const rawName = typeof payload === 'string' ? payload : payload.name;
+    const email = typeof payload === 'string' ? '' : (payload.email || '').trim();
+    const whatsapp =
+      typeof payload === 'string' ? '' : (payload.whatsappNumber || '').trim();
+
+    const trimmed = (rawName || '').trim();
     if (trimmed.length < 2) {
       return {
         ok: false,
@@ -3548,6 +3571,8 @@ export class SaudaErpMockService {
     const newFirm: FirmRecord = {
       id,
       name: trimmed,
+      email: email || undefined,
+      whatsappNumber: whatsapp || undefined,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -3557,13 +3582,21 @@ export class SaudaErpMockService {
     return { ok: true, message: `Firm "${trimmed}" added successfully.` };
   }
 
-  updateFirm(id: string, name: string): ActionResult {
+  updateFirm(id: string, payload: FirmPayload | string): ActionResult {
     const existing = this.firmsSubject.value.find((f) => f.id === id);
     if (!existing) {
       return { ok: false, message: 'Firm not found.' };
     }
 
-    const trimmed = (name || '').trim();
+    const rawName = typeof payload === 'string' ? payload : payload.name;
+    const email =
+      typeof payload === 'string' ? existing.email : (payload.email || '').trim();
+    const whatsapp =
+      typeof payload === 'string'
+        ? existing.whatsappNumber
+        : (payload.whatsappNumber || '').trim();
+
+    const trimmed = (rawName || '').trim();
     if (trimmed.length < 2) {
       return {
         ok: false,
@@ -3581,10 +3614,18 @@ export class SaudaErpMockService {
     const now = this.formatTimestamp();
     this.firmsSubject.next(
       this.firmsSubject.value.map((f) =>
-        f.id === id ? { ...f, name: trimmed, updatedAt: now } : f,
+        f.id === id
+          ? {
+              ...f,
+              name: trimmed,
+              email: email || undefined,
+              whatsappNumber: whatsapp || undefined,
+              updatedAt: now,
+            }
+          : f,
       ),
     );
-    return { ok: true, message: `Firm updated to "${trimmed}".` };
+    return { ok: true, message: `Firm "${trimmed}" updated successfully.` };
   }
 
   toggleFirmStatus(id: string): ActionResult {
