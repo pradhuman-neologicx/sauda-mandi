@@ -13,19 +13,6 @@
       </div>
     </div>
 
-    <!-- Year Filter -->
-    <div class="dash-filter-group year-group">
-      <label class="dash-filter-label">Year</label>
-      <div class="dash-select-wrap year-wrap">
-        <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange()" class="dash-select year-select">
-          @for (y of availableYears; track y) {
-          <option [value]="y">{{ y }}</option>
-          }
-        </select>
-        <i class="fa-solid fa-chevron-down dash-caret"></i>
-      </div>
-    </div>
-
     <!-- Period / Multi-Month Picker -->
     <div class="dash-filter-group period-group">
       <label class="dash-filter-label">Period</label>
@@ -35,10 +22,10 @@
           title="Click to select single or multiple months">
           <i class="fa-regular fa-calendar cal-prefix-icon"></i>
           <span class="period-text-label">{{ selectedMonthsDisplay }}</span>
-          @if (selectedMonthIndexes.length > 0 && selectedMonthIndexes.length < 12) {
-          <span class="month-count-badge">{{ selectedMonthIndexes.length }}</span>
-          }
-          <i class="fa-solid fa-chevron-down dash-caret" [class.rotate]="isMonthDropdownOpen"></i>
+          @if (selectedMonthIndexes.length > 0 && selectedMonthIndexes.length < 12) { <span class="month-count-badge">{{
+            selectedMonthIndexes.length }}</span>
+            }
+            <i class="fa-solid fa-chevron-down dash-caret" [class.rotate]="isMonthDropdownOpen"></i>
         </button>
 
         @if (isMonthDropdownOpen) {
