@@ -184,6 +184,24 @@ export class PartyLedgerComponent implements OnInit {
   showViewInvoiceModal = false;
   viewingInvoice: InvoiceRecord | null = null;
 
+  // Send Invoice Modal (for Paid Invoices)
+  showSendInvoiceModal = false;
+  sendInvoiceError = '';
+  sendingInvoice: InvoiceRecord | null = null;
+  sendInvoiceForm: {
+    fromFirm: string;
+    sendChannel: 'email' | 'whatsapp';
+    recipientEmail: string;
+    recipientWhatsapp: string;
+    notes: string;
+  } = {
+    fromFirm: '',
+    sendChannel: 'email',
+    recipientEmail: '',
+    recipientWhatsapp: '',
+    notes: '',
+  };
+
   // Record Payment / Receipt Modal
   showPaymentModal = false;
   paymentError = '';
@@ -1060,6 +1078,110 @@ export class PartyLedgerComponent implements OnInit {
   closeViewInvoiceModal(): void {
     this.showViewInvoiceModal = false;
     this.viewingInvoice = null;
+  }
+
+  // ── Send Invoice Modal ──
+
+  openSendInvoiceModal(invoice: InvoiceRecord): void {
+    this.sendingInvoice = invoice;
+    this.sendInvoiceError = '';
+
+    let partyEmail = '';
+    let partyPhone = '';
+
+    if (invoice.partyRole === 'Seller') {
+      const seller = this.sellers.find(
+        (s) => s.name.toLowerCase() === invoice.partyName.toLowerCase(),
+      );
+      partyEmail = seller?.email || '';
+      partyPhone = seller?.phone || '';
+    } else {
+      const buyer = this.buyers.find(
+        (b) => b.name.toLowerCase() === invoice.partyName.toLowerCase(),
+      );
+      partyEmail = buyer?.email || '';
+      partyPhone = buyer?.phone || '';
+    }
+
+    const defaultFirm =
+      this.firms.find(
+        (f) => f.name.toLowerCase() === (invoice.clientFirm || '').toLowerCase(),
+      )?.name ||
+      this.firms[0]?.name ||
+      invoice.clientFirm ||
+      '';
+
+    this.sendInvoiceForm = {
+      fromFirm: defaultFirm,
+      sendChannel: partyEmail ? 'email' : 'whatsapp',
+      recipientEmail: partyEmail,
+      recipientWhatsapp: partyPhone,
+      notes: '',
+    };
+
+    this.showSendInvoiceModal = true;
+  }
+
+  closeSendInvoiceModal(): void {
+    this.showSendInvoiceModal = false;
+    this.sendInvoiceError = '';
+    this.sendingInvoice = null;
+  }
+
+  get selectedSenderFirm(): FirmRecord | undefined {
+    return this.firms.find(
+      (f) =>
+        f.name.toLowerCase() ===
+        (this.sendInvoiceForm.fromFirm || '').trim().toLowerCase(),
+    );
+  }
+
+  onSendFirmChange(): void {
+    this.sendInvoiceError = '';
+  }
+
+  executeSendInvoice(): void {
+    this.sendInvoiceError = '';
+    if (!this.sendingInvoice) return;
+
+    if (!this.sendInvoiceForm.fromFirm) {
+      this.sendInvoiceError = 'Please select a Firm.';
+      return;
+    }
+
+    const firm = this.selectedSenderFirm;
+
+    if (this.sendInvoiceForm.sendChannel === 'email') {
+      const recipient = (this.sendInvoiceForm.recipientEmail || '').trim();
+      if (!recipient) {
+        this.sendInvoiceError = 'Please provide a valid recipient email address.';
+        return;
+      }
+      const senderEmail =
+        firm?.email ||
+        `${this.sendInvoiceForm.fromFirm.toLowerCase().replace(/\s+/g, '')}@jpbrokers.com`;
+
+      this.notify.show(
+        `Invoice ${this.sendingInvoice.invoiceNo} dispatched via Email from ${this.sendInvoiceForm.fromFirm} (${senderEmail}) to ${this.sendingInvoice.partyName} (${recipient}).`,
+        'success',
+        4000,
+      );
+    } else {
+      const recipientPhone = (this.sendInvoiceForm.recipientWhatsapp || '').trim();
+      if (!recipientPhone) {
+        this.sendInvoiceError = 'Please provide a recipient WhatsApp number.';
+        return;
+      }
+      const senderWhatsapp = firm?.whatsappNumber || 'Configured Firm WhatsApp';
+
+      this.notify.show(
+        `Invoice ${this.sendingInvoice.invoiceNo} dispatched via WhatsApp from ${this.sendInvoiceForm.fromFirm} (${senderWhatsapp}) to ${this.sendingInvoice.partyName} (${recipientPhone}).`,
+        'success',
+        4000,
+      );
+    }
+
+    this.closeSendInvoiceModal();
   }
 
   applyFilters(): void {

@@ -297,6 +297,12 @@
                     <i class="fa-solid fa-indian-rupee-sign"></i>
                     <span>Pay</span>
                   </button>
+                  } @else if (inv.status === 'Paid') {
+                  <button type="button" class="btn-action-send" (click)="openSendInvoiceModal(inv)"
+                    title="Send Invoice to Party">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Send</span>
+                  </button>
                   }
                   <button type="button" class="btn-action-ghost" (click)="openViewInvoiceModal(inv)"
                     title="View Invoice &amp; Details">
@@ -1367,12 +1373,162 @@
             (click)="closeViewInvoiceModal(); openInvoicePaymentModal(viewingInvoice)">
             <i class="fa-solid fa-indian-rupee-sign"></i> Record Payment
           </button>
+          } @else if (viewingInvoice.status === 'Paid') {
+          <button type="button" class="btn-erp-send" (click)="openSendInvoiceModal(viewingInvoice)">
+            <i class="fa-solid fa-paper-plane me-1"></i> Send Invoice
+          </button>
           }
           <button type="button" class="btn-erp-ghost" (click)="closeViewInvoiceModal()">
             Close
           </button>
         </div>
       </div>
+    </div>
+  </div>
+  }
+
+  <!-- Send Invoice Modal (for Paid Invoices) -->
+  @if (showSendInvoiceModal && sendingInvoice) {
+  <div class="modal-backdrop-erp send-invoice-backdrop" (click)="closeSendInvoiceModal()">
+    <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">
+            <i class="fa-solid fa-paper-plane text-primary me-2"></i>Send Invoice — {{ sendingInvoice.invoiceNo }}
+          </h3>
+          <p class="modal-sub-erp">
+            Dispatch settled invoice to {{ sendingInvoice.partyName }} ({{ sendingInvoice.partyRole }})
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeSendInvoiceModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="executeSendInvoice()">
+        <div class="modal-body-erp">
+          @if (sendInvoiceError) {
+          <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ sendInvoiceError }}</span>
+          </div>
+          }
+
+          <!-- Invoice Summary Pill -->
+          <div class="p-3 mb-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-xs text-muted text-uppercase fw-semibold">Settled Amount</div>
+              <div class="fs-5 fw-bold text-success">
+                {{ sendingInvoice.finalAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="status-badge badge-green"><i class="fa-solid fa-circle-check"></i> Paid</span>
+              <div class="text-xs text-muted mt-1">Invoice Date: {{ sendingInvoice.invoiceDate }}</div>
+            </div>
+          </div>
+
+          <!-- From: Firm Dropdown -->
+          <div class="form-group mb-3">
+            <label class="form-label-erp fw-bold d-flex justify-content-between align-items-center">
+              <span>From:</span>
+              <span class="text-xs text-muted">Select Sender Firm</span>
+            </label>
+            <select class="form-control-erp" [(ngModel)]="sendInvoiceForm.fromFirm" name="fromFirm"
+              (change)="onSendFirmChange()" required>
+              @for (firm of firms; track firm.id) {
+              <option [value]="firm.name">{{ firm.name }}</option>
+              }
+            </select>
+          </div>
+
+
+          <!-- Channel Selection (Email or WhatsApp Number) -->
+          <div class="mb-3">
+            <label class="form-label-erp fw-bold mb-2">Send Via (Choose One):</label>
+            <div class="channel-selection-grid">
+              <!-- Email Option -->
+              <label class="channel-card" [class.active]="sendInvoiceForm.sendChannel === 'email'">
+                <div class="channel-header">
+                  <input type="radio" name="sendChannel" value="email" [(ngModel)]="sendInvoiceForm.sendChannel"
+                    id="channelEmail">
+                  <span class="channel-label ms-2">
+                    <i class="fa-solid fa-envelope text-primary me-1"></i> Email
+                  </span>
+                </div>
+                <div class="channel-details small mt-2">
+                  <div class="text-muted text-xs">Firm Sender Email:</div>
+                  <div class="fw-semibold text-truncate text-dark">
+                    {{ selectedSenderFirm?.email || 'N/A' }}
+                  </div>
+                </div>
+              </label>
+
+              <!-- WhatsApp Option -->
+              <label class="channel-card" [class.active]="sendInvoiceForm.sendChannel === 'whatsapp'">
+                <div class="channel-header">
+                  <input type="radio" name="sendChannel" value="whatsapp" [(ngModel)]="sendInvoiceForm.sendChannel"
+                    id="channelWhatsapp">
+                  <span class="channel-label ms-2">
+                    <i class="fa-brands fa-whatsapp text-success me-1"></i> WhatsApp Number
+                  </span>
+                </div>
+                <div class="channel-details small mt-2">
+                  <div class="text-muted text-xs">Firm Sender WhatsApp:</div>
+                  <div class="fw-semibold text-truncate text-dark">
+                    {{ selectedSenderFirm?.whatsappNumber || 'N/A' }}
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Recipient Destination Input based on selected channel -->
+          @if (sendInvoiceForm.sendChannel === 'email') {
+          <div class="form-group mb-3">
+            <label class="form-label-erp fw-bold">
+              Recipient Email ({{ sendingInvoice.partyName }}):
+            </label>
+            <div class="input-group-erp">
+              <span class="input-icon"><i class="fa-solid fa-at text-muted"></i></span>
+              <input type="email" class="form-control-erp" [(ngModel)]="sendInvoiceForm.recipientEmail"
+                name="recipientEmail" placeholder="e.g. accounts@party.com" required>
+            </div>
+            <div class="form-hint-erp">Settled invoice receipt PDF will be sent to this email address.</div>
+          </div>
+          } @else {
+          <div class="form-group mb-3">
+            <label class="form-label-erp fw-bold">
+              Recipient WhatsApp Number ({{ sendingInvoice.partyName }}):
+            </label>
+            <div class="input-group-erp">
+              <span class="input-icon"><i class="fa-brands fa-whatsapp text-success"></i></span>
+              <input type="tel" class="form-control-erp" [(ngModel)]="sendInvoiceForm.recipientWhatsapp"
+                name="recipientWhatsapp" placeholder="e.g. 9829012345" required>
+            </div>
+            <div class="form-hint-erp">Invoice details &amp; receipt link will be dispatched to this WhatsApp number.
+            </div>
+          </div>
+          }
+
+          <!-- Remarks / Note -->
+          <div class="form-group mb-2">
+            <label class="form-label-erp">Optional Note / Message:</label>
+            <textarea class="form-control-erp" rows="2" [(ngModel)]="sendInvoiceForm.notes" name="notes"
+              placeholder="e.g. Dear Partner, please find attached the settled invoice statement."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer-erp">
+          <button type="button" class="btn-erp-ghost" (click)="closeSendInvoiceModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-erp-send">
+            <i class="fa-solid fa-paper-plane me-1"></i>
+            <span>Send Invoice</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
   }
