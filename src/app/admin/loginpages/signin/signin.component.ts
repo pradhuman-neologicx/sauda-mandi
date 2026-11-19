@@ -8,9 +8,7 @@ import {
 import {
   Component,
   OnInit,
-  ViewChildren,
-  QueryList,
-  ElementRef,
+  OnDestroy,
   ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -20,7 +18,7 @@ import { LoginService } from 'src/app/core/services/login.service';
 import { ApiService } from 'src/app/core/services/api.service';
 import { DataService } from 'src/app/core/services/data.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
-import { NgClass, NgOptimizedImage } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-signin',
@@ -59,7 +57,7 @@ import { NgClass, NgOptimizedImage } from '@angular/common';
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, ReactiveFormsModule, NgClass, RouterLink]
 })
-export class SigninComponent implements OnInit {
+export class SigninComponent implements OnInit, OnDestroy {
   title = 'Login';
 
   // ── Forms ──

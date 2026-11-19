@@ -1,7 +1,6 @@
 import {
   Component,
   ElementRef,
-  HostListener,
   OnInit,
   ChangeDetectionStrategy,
   input,
@@ -35,7 +34,10 @@ export interface Notification {
   templateUrl: './sidenav-header.component.html',
   styleUrl: './sidenav-header.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatIconButton, MatIcon, RouterLink, UpperCasePipe, SlicePipe, DatePipe, NgOptimizedImage]
+  imports: [MatIconButton, MatIcon, RouterLink, UpperCasePipe, SlicePipe, DatePipe, NgOptimizedImage],
+  host: {
+    '(document:click)': 'onClick($event)'
+  }
 })
 export class SidenavHeaderComponent implements OnInit, OnDestroy {
   readonly isMobile = input<boolean>(false);
@@ -157,7 +159,6 @@ export class SidenavHeaderComponent implements OnInit, OnDestroy {
     this.isProfileOpen = false;
   }
 
-  @HostListener('document:click', ['$event'])
   onClick(event: Event) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.closeMenu();

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, NavigationEnd, RouterLink } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -9,6 +9,9 @@ import { filter } from 'rxjs/operators';
     styleUrl: './navbar.component.scss',
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgOptimizedImage],
+    host: {
+      '(window:scroll)': 'onScroll()'
+    }
 })
 export class NavbarComponent implements OnInit {
   isMenuOpen = false;
@@ -68,7 +71,6 @@ export class NavbarComponent implements OnInit {
     this.forceScrolled = doctorRoutes.some((route) => url.includes(route));
   }
 
-  @HostListener('window:scroll')
   onScroll() {
     this.isScrolled = window.scrollY > 30;
   }

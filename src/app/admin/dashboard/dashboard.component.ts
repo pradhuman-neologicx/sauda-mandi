@@ -1,23 +1,19 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
-  HostListener,
-  OnDestroy,
   OnInit,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BsDatepickerConfig, BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import {
   FirmRecord,
   SaudaErpMockService,
-  SaudaRecord,
-  TruckEntryRecord,
-  WarehouseRecord,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
@@ -60,9 +56,15 @@ interface RecentSaudaItem {
   selector: 'app-dashboard',
   styleUrl: './dashboard.component.scss',
   templateUrl: './dashboard.component.html',
+  host: {
+    '(document:click)': 'onDocumentClick($event)'
+  }
 })
-export class DashboardComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class DashboardComponent implements OnInit {
+  public erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   // Filter Bar state
   selectedFirm = 'All Firms';
@@ -103,10 +105,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   selectedMonthIndexes: number[] = [11];
+  selectedMonthsDisplay: string = 'November 2026';
 
   @ViewChild('monthPickerContainer') monthPickerContainer?: ElementRef;
 
-  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (
@@ -186,7 +188,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.updateSelectedPeriodText();
   }
 
-  get selectedMonthsDisplay(): string {
+  calculateSelectedMonthsDisplay(): string {
     if (this.selectedMonthIndexes.length === 12) {
       return `All Months (${this.selectedYear})`;
     }
@@ -208,6 +210,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private updateSelectedPeriodText(): void {
+    this.selectedMonthsDisplay = this.calculateSelectedMonthsDisplay();
     this.selectedPeriod = this.selectedMonthsDisplay;
   }
 
@@ -341,25 +344,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
   ];
 
-  constructor(
-    public erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-    private router: Router,
-  ) {}
-
   ngOnInit(): void {
+    this.updateSelectedPeriodText();
     // Populate firms list from ERP service
     this.erpService.firms$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((firms: FirmRecord[]) => {
         const names = firms.map((f) => f.name);
         this.firmsList = ['All Firms', ...names];
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   // Top Filter Apply

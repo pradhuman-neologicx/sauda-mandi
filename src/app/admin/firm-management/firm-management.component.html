@@ -33,7 +33,8 @@
       <form (ngSubmit)="onSearch()" class="filter-form-right">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search by Name, Email, WhatsApp..." />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search by Name, Email, WhatsApp..." />
         </div>
 
         <div class="filter-controls">
@@ -107,8 +108,8 @@
             </td>
             <td>
               @if (firm.whatsappNumber) {
-              <a href="https://wa.me/91{{ firm.whatsappNumber }}" target="_blank" class="whatsapp-link"
-                (click)="$event.stopPropagation()" title="Chat on WhatsApp">
+              <a href="https://wa.me/91{{ firm.whatsappNumber }}" target="_blank" rel="noopener noreferrer"
+                class="whatsapp-link" (click)="$event.stopPropagation()" title="Chat on WhatsApp">
                 <i class="fa-brands fa-whatsapp text-success me-1"></i>{{ firm.whatsappNumber }}
               </a>
               } @else {
@@ -286,7 +287,8 @@
           <span class="view-label">WhatsApp Number</span>
           <span class="view-value">
             @if (viewingFirm.whatsappNumber) {
-            <a href="https://wa.me/91{{ viewingFirm.whatsappNumber }}" target="_blank" class="whatsapp-link">
+            <a href="https://wa.me/91{{ viewingFirm.whatsappNumber }}" target="_blank" rel="noopener noreferrer"
+              class="whatsapp-link">
               <i class="fa-brands fa-whatsapp text-success me-1"></i>+91 {{ viewingFirm.whatsappNumber }}
             </a>
             } @else {

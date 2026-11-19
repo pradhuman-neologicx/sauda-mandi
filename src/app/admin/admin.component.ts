@@ -1,7 +1,6 @@
 
 import {
   Component,
-  HostListener,
   Inject,
   Renderer2,
   DOCUMENT,
@@ -13,7 +12,6 @@ import {
   OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ThemePalette } from '@angular/material/core';
 import { MatDrawerMode, MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { SidenavHeaderComponent } from './sidenav-header/sidenav-header.component';
@@ -27,7 +25,11 @@ import { filter } from 'rxjs/operators';
     templateUrl: './admin.component.html',
     styleUrl: './admin.component.scss',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [SidenavHeaderComponent, MatSidenavContainer, MatSidenav, SidenavComponent, MatSidenavContent, SpinnerComponent, RouterOutlet]
+    imports: [SidenavHeaderComponent, MatSidenavContainer, MatSidenav, SidenavComponent, MatSidenavContent, SpinnerComponent, RouterOutlet],
+    host: {
+      '(window:resize)': 'onResize()',
+      '(document:click)': 'onClick($event)'
+    }
 })
 export class AdminComponent implements OnInit {
   title = 'mat_admin';
@@ -112,8 +114,7 @@ export class AdminComponent implements OnInit {
   contentMargin: string = '0'; // Initially, no margin
   collapsed = false;
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
+  onResize() {
     this.checkScreenSize();
   }
 
@@ -140,10 +141,6 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  get sidenavWidth(): string {
-    return this.collapsed ? '73px' : '220px';
-  }
-
   // change theme code start
   changeTheme(themevalue: string) {
     this.applyTheme(themevalue);
@@ -161,7 +158,6 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  @HostListener('document:click', ['$event'])
   onClick(event: MouseEvent) {
     const targetElement = event.target as HTMLElement;
     if (

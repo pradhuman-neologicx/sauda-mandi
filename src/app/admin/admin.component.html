@@ -5,7 +5,7 @@
   </div>
   <mat-sidenav-container class="admin-container">
     <mat-sidenav [opened]="!isMobile ? true : sidenavOpened" [mode]="isMobile ? 'over' : sidenavMode"
-      [style.width]="isMobile ? '100vw' : sidenavWidth" (closedStart)="sidenavOpened = false"
+      [style.width]="isMobile ? '100vw' : (collapsed ? '73px' : '220px')" (closedStart)="sidenavOpened = false"
       class="responsive-sidenav">
       <app-sidenav [collapsed]="collapsed" (closeSidenav)="sidenavOpened = false" [isMobile]="isMobile"></app-sidenav>
     </mat-sidenav>
