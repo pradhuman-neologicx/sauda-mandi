@@ -281,7 +281,8 @@
           }
         </div>
 
-        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
+        saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Seller <span class="req">*</span></label>
           <select formControlName="sellerName" class="erp-input" (change)="onSellerSelected()">
@@ -296,7 +297,8 @@
         </div>
         }
 
-        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
+        saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Buyer <span class="req">*</span></label>
           <select formControlName="buyerName" class="erp-input" (change)="onBuyerSelected()">
@@ -399,7 +401,7 @@
       </div>
 
       <div class="helper-note-box mt-3">
-        Each commodity can appear once per Sauda (BR-SA-07). Rate and Total are calculated
+        Each commodity can appear once per Sauda. Rate and Total are calculated
         per line item. Total Sauda amount is auto-calculated from totals.
       </div>
     </div>
@@ -444,7 +446,8 @@
     <div class="erp-card section-card">
       <h2 class="section-card-title">Credit Terms</h2>
 
-      @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
+      saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Seller Credit Period (Days)</label>
@@ -465,7 +468,8 @@
       </div>
       }
 
-      @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
+      saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Buyer Credit Period (Days)</label>
