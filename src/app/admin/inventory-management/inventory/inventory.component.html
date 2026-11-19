@@ -277,15 +277,15 @@
 
     <!-- Pagination -->
     @if (filteredInventory.length > 0) {
-    <div class="erp-pagination-bar">
-      <div class="text-xs text-muted">
+    <div class="table-footer">
+      <div class="pagination-info">
         Showing {{ (stockPage - 1) * stockPageSize + 1 }} to
         {{ stockTableSize === 'all' ? filteredInventory.length : Math.min(stockPage * stockPageSize,
         filteredInventory.length) }}
         of {{ filteredInventory.length }} entries
       </div>
       <pagination-controls id="stock-pg" (pageChange)="stockPage = $event" [maxSize]="5" [responsive]="true"
-        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+        previousLabel="Prev" nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
     }
   </div>
@@ -494,15 +494,15 @@
 
     <!-- Pagination -->
     @if (filteredAdjustments.length > 0) {
-    <div class="erp-pagination-bar">
-      <div class="text-xs text-muted">
+    <div class="table-footer">
+      <div class="pagination-info">
         Showing {{ (adjPage - 1) * adjPageSize + 1 }} to
         {{ adjTableSize === 'all' ? filteredAdjustments.length : Math.min(adjPage * adjPageSize,
         filteredAdjustments.length) }}
         of {{ filteredAdjustments.length }} entries
       </div>
       <pagination-controls id="adj-pg" (pageChange)="adjPage = $event" [maxSize]="5" [responsive]="true"
-        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+        previousLabel="Prev" nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
     }
   </div>
@@ -738,15 +738,15 @@
 
     <!-- Pagination -->
     @if (filteredMovements.length > 0) {
-    <div class="erp-pagination-bar">
-      <div class="text-xs text-muted">
+    <div class="table-footer">
+      <div class="pagination-info">
         Showing {{ (movPage - 1) * movPageSize + 1 }} to
         {{ movTableSize === 'all' ? filteredMovements.length : Math.min(movPage * movPageSize, filteredMovements.length)
         }}
         of {{ filteredMovements.length }} entries
       </div>
       <pagination-controls id="mov-pg" (pageChange)="movPage = $event" [maxSize]="5" [responsive]="true"
-        previousLabel="Prev" nextLabel="Next"></pagination-controls>
+        previousLabel="Prev" nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
     }
   </div>
