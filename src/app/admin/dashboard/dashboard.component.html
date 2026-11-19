@@ -13,16 +13,92 @@
       </div>
     </div>
 
-    <div class="dash-filter-group period-group">
-      <label class="dash-filter-label">Period</label>
-      <div class="dash-select-wrap period-wrap">
-        <i class="fa-regular fa-calendar cal-prefix-icon"></i>
-        <select [(ngModel)]="selectedPeriod" class="dash-select period-select">
-          @for (p of periodOptions; track p) {
-          <option [value]="p">{{ p }}</option>
+    <!-- Year Filter -->
+    <div class="dash-filter-group year-group">
+      <label class="dash-filter-label">Year</label>
+      <div class="dash-select-wrap year-wrap">
+        <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange()" class="dash-select year-select">
+          @for (y of availableYears; track y) {
+          <option [value]="y">{{ y }}</option>
           }
         </select>
         <i class="fa-solid fa-chevron-down dash-caret"></i>
+      </div>
+    </div>
+
+    <!-- Period / Multi-Month Picker -->
+    <div class="dash-filter-group period-group">
+      <label class="dash-filter-label">Period</label>
+      <div class="month-picker-container" #monthPickerContainer>
+        <button type="button" class="dash-select period-select month-picker-trigger"
+          (click)="toggleMonthDropdown($event)" [class.active]="isMonthDropdownOpen"
+          title="Click to select single or multiple months">
+          <i class="fa-regular fa-calendar cal-prefix-icon"></i>
+          <span class="period-text-label">{{ selectedMonthsDisplay }}</span>
+          @if (selectedMonthIndexes.length > 0 && selectedMonthIndexes.length < 12) {
+          <span class="month-count-badge">{{ selectedMonthIndexes.length }}</span>
+          }
+          <i class="fa-solid fa-chevron-down dash-caret" [class.rotate]="isMonthDropdownOpen"></i>
+        </button>
+
+        @if (isMonthDropdownOpen) {
+        <div class="month-popover" (click)="$event.stopPropagation()">
+          <div class="popover-header">
+            <span class="popover-title">
+              <i class="fa-regular fa-calendar-days text-primary me-1"></i>Select Month(s)
+            </span>
+            <div class="popover-year-pill">
+              <span>Year:</span>
+              <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange()" class="popover-inline-year">
+                @for (y of availableYears; track y) {
+                <option [value]="y">{{ y }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="presets-row">
+            <button type="button" class="preset-chip" (click)="selectAllMonths()"
+              [class.chip-active]="selectedMonthIndexes.length === 12">
+              All (12)
+            </button>
+            <button type="button" class="preset-chip" (click)="selectCurrentMonth()">
+              This Month
+            </button>
+            <button type="button" class="preset-chip" (click)="selectQuarter(1)">Q1</button>
+            <button type="button" class="preset-chip" (click)="selectQuarter(2)">Q2</button>
+            <button type="button" class="preset-chip" (click)="selectQuarter(3)">Q3</button>
+            <button type="button" class="preset-chip" (click)="selectQuarter(4)">Q4</button>
+            <button type="button" class="preset-chip clear-chip" (click)="clearAllMonths()">
+              Clear
+            </button>
+          </div>
+
+          <!-- 12-Month Grid -->
+          <div class="months-grid">
+            @for (m of monthsList; track m.index) {
+            <button type="button" class="month-btn" [class.selected]="isMonthSelected(m.index)"
+              (click)="toggleMonth(m.index)" [title]="m.name">
+              <span class="month-text">{{ m.short }}</span>
+              @if (isMonthSelected(m.index)) {
+              <i class="fa-solid fa-check check-mark"></i>
+              }
+            </button>
+            }
+          </div>
+
+          <!-- Popover Footer -->
+          <div class="popover-footer">
+            <span class="selection-counter">
+              {{ selectedMonthIndexes.length }} of 12 months selected
+            </span>
+            <button type="button" class="btn-popover-done" (click)="closeMonthDropdown()">
+              Done
+            </button>
+          </div>
+        </div>
+        }
       </div>
     </div>
 
@@ -265,11 +341,9 @@
       <div class="dash-card-header chart-card-header">
         <div class="d-flex align-items-center gap-2">
           <i class="fa-solid fa-chart-column card-title-icon"></i>
-          <h2 class="dash-card-title">Purchase vs Sales <span class="fw-normal text-muted">(Overview)</span></h2>
+          <h2 class="dash-card-title">Purchase vs Sales </h2>
         </div>
-        <span class="chart-net-pill">
-          <i class="fa-solid fa-arrow-trend-up me-1"></i>+₹4.30 L (+34.4%)
-        </span>
+
       </div>
 
       <!-- Quick Legend & Metric Cards -->
@@ -370,7 +444,7 @@
       <div class="dash-card-header stock-card-header">
         <div class="d-flex align-items-center gap-2">
           <i class="fa-solid fa-boxes-stacked card-title-icon"></i>
-          <h2 class="dash-card-title">Current Stock <span class="fw-normal text-muted">(Available)</span></h2>
+          <h2 class="dash-card-title">Current Stock</h2>
         </div>
         <div class="stock-toggle-pill">
           <button type="button" class="toggle-opt" [class.active]="stockViewMode === 'commodity'"
@@ -467,7 +541,7 @@
     <div class="dash-card">
       <div class="dash-card-header">
         <i class="fa-solid fa-handshake card-title-icon"></i>
-        <h2 class="dash-card-title">Sauda Summary <span class="fw-normal text-muted">(This Period)</span></h2>
+        <h2 class="dash-card-title">Sauda Summary</h2>
       </div>
 
       <div class="sauda-summary-grid">

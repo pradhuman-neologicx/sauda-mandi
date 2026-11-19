@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -53,13 +60,125 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Filter Bar state
   selectedFirm = 'All Firms';
   firmsList: string[] = ['All Firms'];
-  selectedPeriod = 'This Month (01 Jan 2025 – 31 Jan 2025)';
+  selectedPeriod = 'November 2026';
   periodOptions: string[] = [
     'This Month (01 Jan 2025 – 31 Jan 2025)',
     'Last Month (01 Dec 2024 – 31 Dec 2024)',
     'This Quarter (Q4 2024-25)',
     'This Financial Year (2024-25)',
   ];
+
+  // Year & Multi-Month Filter State
+  availableYears: number[] = [2026, 2025, 2024, 2023];
+  selectedYear = 2026;
+  isMonthDropdownOpen = false;
+
+  readonly monthsList = [
+    { index: 1, name: 'January', short: 'Jan' },
+    { index: 2, name: 'February', short: 'Feb' },
+    { index: 3, name: 'March', short: 'Mar' },
+    { index: 4, name: 'April', short: 'Apr' },
+    { index: 5, name: 'May', short: 'May' },
+    { index: 6, name: 'June', short: 'Jun' },
+    { index: 7, name: 'July', short: 'Jul' },
+    { index: 8, name: 'August', short: 'Aug' },
+    { index: 9, name: 'September', short: 'Sep' },
+    { index: 10, name: 'October', short: 'Oct' },
+    { index: 11, name: 'November', short: 'Nov' },
+    { index: 12, name: 'December', short: 'Dec' },
+  ];
+
+  selectedMonthIndexes: number[] = [11];
+
+  @ViewChild('monthPickerContainer') monthPickerContainer?: ElementRef;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (
+      this.isMonthDropdownOpen &&
+      this.monthPickerContainer &&
+      !this.monthPickerContainer.nativeElement.contains(event.target)
+    ) {
+      this.isMonthDropdownOpen = false;
+    }
+  }
+
+  toggleMonthDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.isMonthDropdownOpen = !this.isMonthDropdownOpen;
+  }
+
+  closeMonthDropdown(): void {
+    this.isMonthDropdownOpen = false;
+  }
+
+  isMonthSelected(mIndex: number): boolean {
+    return this.selectedMonthIndexes.includes(mIndex);
+  }
+
+  toggleMonth(mIndex: number): void {
+    const idx = this.selectedMonthIndexes.indexOf(mIndex);
+    if (idx > -1) {
+      this.selectedMonthIndexes.splice(idx, 1);
+    } else {
+      this.selectedMonthIndexes.push(mIndex);
+      this.selectedMonthIndexes.sort((a, b) => a - b);
+    }
+    this.updateSelectedPeriodText();
+  }
+
+  selectAllMonths(): void {
+    this.selectedMonthIndexes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    this.updateSelectedPeriodText();
+  }
+
+  clearAllMonths(): void {
+    this.selectedMonthIndexes = [];
+    this.updateSelectedPeriodText();
+  }
+
+  selectCurrentMonth(): void {
+    const current = new Date().getMonth() + 1;
+    this.selectedMonthIndexes = [current];
+    this.updateSelectedPeriodText();
+  }
+
+  selectQuarter(q: 1 | 2 | 3 | 4): void {
+    if (q === 1) this.selectedMonthIndexes = [1, 2, 3];
+    else if (q === 2) this.selectedMonthIndexes = [4, 5, 6];
+    else if (q === 3) this.selectedMonthIndexes = [7, 8, 9];
+    else if (q === 4) this.selectedMonthIndexes = [10, 11, 12];
+    this.updateSelectedPeriodText();
+  }
+
+  onYearChange(): void {
+    this.updateSelectedPeriodText();
+  }
+
+  get selectedMonthsDisplay(): string {
+    if (this.selectedMonthIndexes.length === 12) {
+      return `All Months (${this.selectedYear})`;
+    }
+    if (this.selectedMonthIndexes.length === 0) {
+      return `Select Months (${this.selectedYear})`;
+    }
+    if (this.selectedMonthIndexes.length === 1) {
+      const m = this.monthsList.find((item) => item.index === this.selectedMonthIndexes[0]);
+      return `${m?.name || ''} ${this.selectedYear}`;
+    }
+    if (this.selectedMonthIndexes.length <= 3) {
+      const names = this.monthsList
+        .filter((item) => this.selectedMonthIndexes.includes(item.index))
+        .map((item) => item.short)
+        .join(', ');
+      return `${names} ${this.selectedYear}`;
+    }
+    return `${this.selectedMonthIndexes.length} Months (${this.selectedYear})`;
+  }
+
+  private updateSelectedPeriodText(): void {
+    this.selectedPeriod = this.selectedMonthsDisplay;
+  }
 
   // Stock view toggle
   stockViewMode: 'commodity' | 'warehouse' = 'commodity';
@@ -214,6 +333,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Top Filter Apply
   applyFilters(): void {
+    this.updateSelectedPeriodText();
+    this.closeMonthDropdown();
     this.notificationService.show(
       `Filters applied for ${this.selectedFirm} & ${this.selectedPeriod}.`,
       'success',
