@@ -149,26 +149,7 @@
           </select>
         </div>
 
-        <div class="filter-field">
-          <label>Packaging UOM</label>
-          <select class="erp-input" name="stockUomFilter" [(ngModel)]="stockUomFilter"
-            (ngModelChange)="onStockSearch()">
-            <option value="All">All UOMs</option>
-            @for (u of packagingUoms; track u) {
-            <option [value]="u">{{ u }}</option>
-            }
-          </select>
-        </div>
 
-        <div class="filter-field">
-          <label>Stock Availability</label>
-          <select class="erp-input" name="stockAvailabilityFilter" [(ngModel)]="stockAvailabilityFilter"
-            (ngModelChange)="onStockSearch()">
-            <option value="All">All Stock</option>
-            <option value="Available Stock">Available Stock (&gt; 0)</option>
-            <option value="Zero Stock">Zero Stock (= 0)</option>
-          </select>
-        </div>
 
         @if (isChecker) {
         <div class="filter-field">
