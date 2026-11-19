@@ -10,7 +10,7 @@
 - **Infos:** 123
 - **Project:** panel (angular-cli)
 - **Angular:** 22.1.3
-- **Scan duration:** 5520ms
+- **Scan duration:** 6662ms
 
 ## Official Angular migrations
 
