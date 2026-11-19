@@ -54,7 +54,7 @@ export class inquiryDetails {
   firstName!: string;
   middleName!: string;
   lastName!: string;
-  userId!: String;
+  userId!: string;
   fullName!: string;
   fatherName!: string;
   fatherMobile!: string;

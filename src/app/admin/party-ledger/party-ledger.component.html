@@ -325,9 +325,12 @@
         </table>
       </div>
 
-      <div class="pagination-wrapper">
+      <div class="table-footer">
+        <div class="pagination-info">
+          Showing {{ filteredInvoices.length }} invoice(s)
+        </div>
         <pagination-controls id="invPagination" (pageChange)="invoicePage = $event" [autoHide]="true"
-          [responsive]="true">
+          [responsive]="true" previousLabel="Prev" nextLabel="Next" class="my-pagination">
         </pagination-controls>
       </div>
       } @else if (viewTab === 'parties') {

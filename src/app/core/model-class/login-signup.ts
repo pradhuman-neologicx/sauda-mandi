@@ -40,7 +40,7 @@ export class OtpVerify {
 
 
 export class ForgotPasswordRes {
-  ForgotPasswordID!: String;
+  ForgotPasswordID!: string;
 }
 
 
@@ -53,6 +53,6 @@ export class ChangePassword {
 }
 
 export class ChangePasswordresponse {
-  user_id!:String;
+  user_id!: string;
   message!: string;
 }

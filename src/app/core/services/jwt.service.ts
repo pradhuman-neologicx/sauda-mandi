@@ -15,7 +15,7 @@ export class JwtService {
   }
   isLoggedIn(isloggedIn: boolean) {
     window.localStorage['isloggedIn'] =
-      isloggedIn != undefined ? isloggedIn : false;
+      isloggedIn !== undefined ? isloggedIn : false;
   }
 
   getLoginAs(): number {
@@ -39,7 +39,7 @@ export class JwtService {
   }
   firstLoggedIn(isfirstlogin: boolean) {
     window.localStorage['isfirstlogin'] =
-      isfirstlogin != undefined ? isfirstlogin : false;
+      isfirstlogin !== undefined ? isfirstlogin : false;
   }
 
   getSession(): string {
@@ -73,14 +73,14 @@ export class JwtService {
     window.localStorage['SessionEnddate'] = Session;
   }
 
-  getpanelUserId(): Number {
+  getpanelUserId(): number {
     return window.localStorage['panel_user_id'];
   }
 
-  savepanelUserId(userid: Number) {
+  savepanelUserId(userid: number) {
     window.localStorage['panel_user_id'] = userid;
   }
-  getadminame(): String {
+  getadminame(): string {
     return window.localStorage['adminname'];
   }
 
@@ -88,53 +88,53 @@ export class JwtService {
     window.localStorage['adminname'] = adminname;
   }
 
-  saveAdminToken(Token: String) {
+  saveAdminToken(Token: string) {
     window.localStorage['Token'] = Token;
   }
-  saveAdminRole(Role: String) {
+  saveAdminRole(Role: string) {
     window.localStorage['Role'] = Role;
   }
-  getadmiRole(): String {
+  getadmiRole(): string {
     return window.localStorage['Role'];
   }
-  getpanelPartyId(): Number {
+  getpanelPartyId(): number {
     return window.localStorage['Party_id'];
   }
 
-  savePartyId(Party_id: Number) {
+  savePartyId(Party_id: number) {
     window.localStorage['Party_id'] = Party_id;
   }
 
-  getType(): String {
+  getType(): string {
     return window.localStorage['Type'];
   }
 
-  saveType(Type: String) {
+  saveType(Type: string) {
     window.localStorage['Type'] = Type;
   }
 
-  getToken(): String {
+  getToken(): string {
     return window.localStorage['Token'];
   }
 
-  saveToken(Token: String) {
+  saveToken(Token: string) {
     window.localStorage['Token'] = Token;
   }
 
   // Profile Image of
-  getImageUrl(): String {
+  getImageUrl(): string {
     return window.localStorage['ImageUrl'];
   }
 
-  saveImageUrl(ImageUrl: String) {
+  saveImageUrl(ImageUrl: string) {
     window.localStorage['ImageUrl'] = ImageUrl;
   }
 
-  getUserId(): String {
+  getUserId(): string {
     return window.localStorage['user_id'];
   }
 
-  saveUserId(user_id: String) {
+  saveUserId(user_id: string) {
     window.localStorage['user_id'] = user_id;
   }
 
@@ -144,7 +144,7 @@ export class JwtService {
   }
   isstudentLoggedIn(isloggedStudent: boolean) {
     window.localStorage['isloggedStudent'] =
-      isloggedStudent != undefined ? isloggedStudent : false;
+      isloggedStudent !== undefined ? isloggedStudent : false;
   }
 
   getSessionStartdateStudent(): string {
@@ -171,36 +171,36 @@ export class JwtService {
     window.localStorage['SessionStudent'] = Session;
   }
 
-  getpanelUserIdStudent(): String {
+  getpanelUserIdStudent(): string {
     return window.localStorage['panel_user_idStudent'];
   }
 
-  savepanelUserIdStudent(userid: String) {
+  savepanelUserIdStudent(userid: string) {
     window.localStorage['panel_user_idStudent'] = userid;
   }
 
-  getTokenStudent(): String {
+  getTokenStudent(): string {
     return window.localStorage['TokenStudent'];
   }
 
-  saveTokenStudent(Token: String) {
+  saveTokenStudent(Token: string) {
     window.localStorage['TokenStudent'] = Token;
   }
 
   // Profile Image of
-  getImageUrlStudent(): String {
+  getImageUrlStudent(): string {
     return window.localStorage['ImageUrlStudent'];
   }
 
-  saveImageUrlStudent(ImageUrl: String) {
+  saveImageUrlStudent(ImageUrl: string) {
     window.localStorage['ImageUrlStudent'] = ImageUrl;
   }
 
-  getUserIdStudent(): String {
+  getUserIdStudent(): string {
     return window.localStorage['user_idStudent'];
   }
 
-  saveUserIdStudent(user_id: String) {
+  saveUserIdStudent(user_id: string) {
     window.localStorage['user_idStudent'] = user_id;
   }
 

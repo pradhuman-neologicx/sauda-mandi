@@ -6,7 +6,7 @@ export function fileExtensionValidator(validExt: string): ValidatorFn {
     if (control.value) {
       const fileExt = control.value.split(".").pop();
       validExt.split(",").forEach((ext) => {
-        if (ext.trim() == fileExt) {
+        if (ext.trim() === fileExt) {
           forbidden = false;
         }
       });

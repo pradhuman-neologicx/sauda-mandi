@@ -24,13 +24,13 @@ export class DirectAccessGuard implements CanActivate {
         .map((nav: any) => nav.type)
         .includes("reload");
     console.log(pageAccessedByReload);
-    if (pageAccessedByReload == true) {
+    if (pageAccessedByReload === true) {
       return true;
     } else {
       if (this.router.url === "/") {
         console.log(this.router);
         var loginAs=this.jwtService.getLoginAs();
-        if(loginAs!=undefined){
+        if(loginAs !== undefined){
           this.router.navigate(["/sign_in"]); //Navigate away to signIn page
         }else{
           this.router.navigate(["/dashboard"]); //Navigate away to signIn page

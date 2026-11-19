@@ -1,7 +1,7 @@
 <div class="header-container" [class.mobile-header]="isMobile()">
   <!-- Left Side: Toggle & Logo -->
   <div class="header-left">
-    <button mat-icon-button (click)="toggleCollapsed.emit()" class="toggle-btn">
+    <button type="button" mat-icon-button (click)="toggleCollapsed.emit()" class="toggle-btn">
       <mat-icon>menu</mat-icon>
     </button>
     <img ngSrc="assets/logo.png" width="220" height="50" class="admin-theme-logo" alt="Bikaji Logo"
@@ -32,7 +32,7 @@
             Notifications
           </div>
           @if (notifications.length > 0) {
-          <button class="clear-btn" (click)="clearNotifications()">
+          <button type="button" class="clear-btn" (click)="clearNotifications()">
             Clear All
           </button>
           }

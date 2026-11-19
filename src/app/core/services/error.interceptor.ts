@@ -16,7 +16,7 @@ export class ErrorIntercept implements HttpInterceptor {
                         // server-side error
                         errorMessage = `Error Status: ${error.status}\nMessage: ${error.message}`;
                     }
-                    if (error.status==500) window.alert(
+                    if (error.status === 500) window.alert(
                       "Error Status: 500\nMessage: Internal server error"
                     );
                     console.log(errorMessage);

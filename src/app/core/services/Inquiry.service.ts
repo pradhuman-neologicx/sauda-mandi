@@ -66,7 +66,7 @@ export class InquiryService {
     return this.apiservice.get('onboarding/transferred-students');
   }
 
-  UpdateTransferDetailapi(studentId: string, Userid: String): Observable<any> {
+  UpdateTransferDetailapi(studentId: string, Userid: string): Observable<any> {
     const body = {
       userId: Userid,
       studentId: [studentId],
@@ -129,7 +129,7 @@ export class InquiryService {
     return this.apiservice.putWithoutHeader('onboarding/update', body);
   }
 
-  updateinquiryStatus(enquiryId: string, status: string,userId:String): Observable<any> {
+  updateinquiryStatus(enquiryId: string, status: string,userId: string): Observable<any> {
     const body = {
       enquiryId: [enquiryId],
       status: status,
@@ -252,23 +252,23 @@ export class InquiryService {
     
     let url = 'history/get-inquiries?limit=' +tableSize+ "&page=" +page;
    
-    if(searchText!=undefined){
+    if(searchText !== undefined){
       if(searchText.length>0){
       url = url + '&search=' + searchText;
     }
   }
 
-    if(userId!=undefined){
+    if(userId !== undefined){
       url = url + '&userId=' + userId;
     }
    
-    if (from != undefined && to == undefined) {
+    if (from !== undefined && to === undefined) {
        url = url + '&from=' + from;
  
-    } else if (to != undefined && from == undefined) {
+    } else if (to !== undefined && from === undefined) {
    
       url = url + '&to=' + to;
-    } else if (to != undefined && from != undefined) {
+    } else if (to !== undefined && from !== undefined) {
  
      //  url = url + '?from=' + from+'&to='+to;
       if (from.length > 0 && to.length <= 0) {
