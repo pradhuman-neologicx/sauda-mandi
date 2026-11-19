@@ -5,7 +5,7 @@
     <div>
       <h1 class="erp-title">Sauda Management</h1>
       <p class="erp-subtitle">
-        Manage purchase, sales and brokerage agreements
+        Manage purchase, sales and direct sale agreements
       </p>
     </div>
 
@@ -50,7 +50,7 @@
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Brokerage</div>
+      <div class="sauda-kpi-label">Direct Sale</div>
       <div class="sauda-kpi-val">{{ brokerageCount }}</div>
     </div>
   </div>
@@ -84,7 +84,7 @@
             <option value="All">All Types</option>
             <option value="Purchase">Purchase</option>
             <option value="Sales">Sales</option>
-            <option value="Brokerage">Brokerage</option>
+            <option value="Direct Sale">Direct Sale</option>
           </select>
         </div>
 
@@ -223,7 +223,7 @@
         {{ isEditMode ? 'Edit Sauda — ' + selectedSauda?.saudaNo : 'Create Sauda' }}
       </h1>
       <p class="erp-subtitle">
-        Manage purchase, sales and brokerage agreements
+        Manage purchase, sales and direct sale agreements
       </p>
     </div>
   </div>
@@ -281,7 +281,7 @@
           }
         </div>
 
-        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Seller <span class="req">*</span></label>
           <select formControlName="sellerName" class="erp-input" (change)="onSellerSelected()">
@@ -296,7 +296,7 @@
         </div>
         }
 
-        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
         <div class="field-group">
           <label>Buyer <span class="req">*</span></label>
           <select formControlName="buyerName" class="erp-input" (change)="onBuyerSelected()">
@@ -408,20 +408,20 @@
     <div class="erp-card section-card">
       <h2 class="section-card-title">Financial Details</h2>
 
-      @if (saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
-          <label>Buyer Brokerage Amount (₹)</label>
+          <label>Buyer Direct Sale Amount (₹)</label>
           <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
             placeholder="Lump-sum amount" />
         </div>
         <div class="field-group">
-          <label>Seller Brokerage Amount (₹)</label>
+          <label>Seller Direct Sale Amount (₹)</label>
           <input type="number" min="0" formControlName="sellerBrokerageAmount" class="erp-input"
             placeholder="Lump-sum amount" />
         </div>
         <div class="field-group">
-          <label>Total Brokerage Amount (₹)</label>
+          <label>Total Direct Sale Amount (₹)</label>
           <input type="text" formControlName="totalBrokerageAmount" class="erp-input readonly-input"
             placeholder="Auto-calculated total" readonly />
         </div>
@@ -444,7 +444,7 @@
     <div class="erp-card section-card">
       <h2 class="section-card-title">Credit Terms</h2>
 
-      @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Seller Credit Period (Days)</label>
@@ -465,7 +465,7 @@
       </div>
       }
 
-      @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Buyer Credit Period (Days)</label>
@@ -610,7 +610,7 @@
         </div>
         }
 
-        @if (selectedSauda.saudaType === 'Brokerage') {
+        @if (selectedSauda.saudaType === 'Direct Sale' || selectedSauda.saudaType === 'Brokerage') {
         <div class="detail-item">
           <span class="detail-label">Seller</span>
           <span class="detail-value">{{ selectedSauda.sellerName || '—' }}</span>
@@ -621,7 +621,7 @@
         </div>
         @if (selectedSauda.buyerBrokerageAmount || selectedSauda.sellerBrokerageAmount) {
         <div class="detail-item">
-          <span class="detail-label">Buyer / Seller Brokerage</span>
+          <span class="detail-label">Buyer / Seller Direct Sale</span>
           <span class="detail-value">
             Buyer: ₹{{ selectedSauda.buyerBrokerageAmount || 0 }} &bull; Seller: ₹{{ selectedSauda.sellerBrokerageAmount
             || 0 }}

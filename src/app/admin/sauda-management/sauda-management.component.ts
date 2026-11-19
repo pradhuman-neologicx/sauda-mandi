@@ -81,7 +81,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
-  readonly saudaTypes: SaudaType[] = ['Purchase', 'Sales', 'Brokerage'];
+  readonly saudaTypes: SaudaType[] = ['Purchase', 'Sales', 'Direct Sale'];
   commodities: string[] = [];
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
@@ -324,7 +324,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
 
   private recomputeTotalAmountFromLines(): void {
     const type = this.saudaForm.get('saudaType')?.value;
-    if (type === 'Brokerage') return;
+    if (type === 'Brokerage' || type === 'Direct Sale') return;
     let sum = 0;
     for (const ctrl of this.commodityRows.controls) {
       const lineTotal = Number(ctrl.get('lineTotal')?.value) || 0;
@@ -530,8 +530,9 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   }
 
   get brokerageCount(): number {
-    return this.activeSaudasList.filter((s) => s.saudaType === 'Brokerage')
-      .length;
+    return this.activeSaudasList.filter(
+      (s) => s.saudaType === 'Direct Sale' || s.saudaType === 'Brokerage',
+    ).length;
   }
 
   get firmFilterOptions(): string[] {
@@ -569,7 +570,9 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
         s.commodity.toLowerCase().includes(q);
       const matchesType =
         this.appliedTypeFilter === 'All' ||
-        s.saudaType === this.appliedTypeFilter;
+        s.saudaType === this.appliedTypeFilter ||
+        (this.appliedTypeFilter === 'Direct Sale' && s.saudaType === 'Brokerage') ||
+        (this.appliedTypeFilter === 'Brokerage' && s.saudaType === 'Direct Sale');
       const matchesFirm =
         this.appliedFirmFilter === 'All' ||
         s.clientFirm === this.appliedFirmFilter;

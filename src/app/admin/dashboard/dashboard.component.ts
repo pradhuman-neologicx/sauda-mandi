@@ -32,7 +32,7 @@ interface WarehouseStockItem {
 interface RecentSaudaItem {
   saudaNo: string;
   date: string;
-  type: 'Sales' | 'Purchase' | 'Brokerage';
+  type: 'Sales' | 'Purchase' | 'Direct Sale' | 'Brokerage';
   party: string;
   commodity: string;
   qty: string;
@@ -183,7 +183,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     {
       saudaNo: 'SA-000343',
       date: '27 Jan 2025',
-      type: 'Brokerage',
+      type: 'Direct Sale',
       party: 'M/s Omni Exports',
       commodity: 'Guar',
       qty: '300 Bags',

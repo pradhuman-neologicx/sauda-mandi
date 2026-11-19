@@ -271,8 +271,9 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   }
 
   get brokerageLinkedCount(): number {
-    return this.activeTrucksList.filter((t) => t.saudaType === 'Brokerage')
-      .length;
+    return this.activeTrucksList.filter(
+      (t) => t.saudaType === 'Brokerage' || t.saudaType === 'Direct Sale',
+    ).length;
   }
 
   // ── Search, Filters & Pagination ──
@@ -368,7 +369,12 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   // ── Helpers for Form ──
   get eligibleSaudasForForm(): SaudaRecord[] {
     return this.allSaudas.filter((s) => {
-      if (s.status === 'Voided' || s.saudaType === 'Brokerage') return false;
+      if (
+        s.status === 'Voided' ||
+        s.saudaType === 'Brokerage' ||
+        s.saudaType === 'Direct Sale'
+      )
+        return false;
       if (s.saudaType !== this.targetSaudaType) return false;
       const available = this.erpService.getRemainingQtyMt(
         s.id,
@@ -518,9 +524,13 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     let targetSauda: SaudaRecord | undefined;
     if (preselectedSaudaId) {
       targetSauda = this.allSaudas.find((s) => s.id === preselectedSaudaId);
-      if (targetSauda && targetSauda.saudaType === 'Brokerage') {
+      if (
+        targetSauda &&
+        (targetSauda.saudaType === 'Brokerage' ||
+          targetSauda.saudaType === 'Direct Sale')
+      ) {
         this.notificationService.show(
-          'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12).',
+          'Direct Sale Saudas are not eligible for truck fulfilment (BR-TF-12).',
           'error',
           4000,
         );

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-export type SaudaType = 'Purchase' | 'Sales' | 'Brokerage';
+export type SaudaType = 'Purchase' | 'Sales' | 'Direct Sale' | 'Brokerage';
 export type SaudaStatus = 'Open' | 'Partial' | 'Completed' | 'Voided';
 export type TruckStatus =
   | 'Scheduled'
@@ -554,7 +554,7 @@ export class SaudaErpMockService {
       id: 'SAU-2026-0003',
       saudaNo: 'SAU-2026-0003',
       saudaDate: '2026-11-06',
-      saudaType: 'Brokerage',
+      saudaType: 'Direct Sale',
       clientFirm: 'Rajasthan Agro',
       sellerName: 'Jai Kisan Suppliers',
       buyerName: 'Fresh Mart',
@@ -582,7 +582,7 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: 15,
       buyerCreditStartDate: '2026-11-06',
       buyerDueDate: '2026-11-21',
-      remarks: 'Brokerage agreement settled for Desi Hybrid Bajra lot',
+      remarks: 'Direct Sale agreement settled for Desi Hybrid Bajra lot',
       status: 'Partial',
       currentVersion: 1,
       amendmentStatus: 'None',
@@ -595,7 +595,7 @@ export class SaudaErpMockService {
           changedAt: '2026-11-06 09:50',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Brokerage agreement finalized',
+          reason: 'Direct Sale agreement finalized',
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra (100 Quintal)' },
             { field: 'Total Amount', oldValue: '-', newValue: '₹2,50,000' },
@@ -1037,7 +1037,7 @@ export class SaudaErpMockService {
       entryNo: 'TRK-2026-0004',
       saudaId: 'SAU-2026-0003',
       saudaNo: 'SAU-2026-0003',
-      saudaType: 'Brokerage',
+      saudaType: 'Direct Sale',
       warehouse: 'Rajasthan Agro Godown 4',
       vehicleNo: 'RJ20-GB-9104',
       driverName: 'Dinesh Jat',
@@ -1071,7 +1071,7 @@ export class SaudaErpMockService {
           changedAt: '2026-11-08 18:10',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Brokerage Bajra loading completed',
+          reason: 'Direct Sale Bajra loading completed',
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
             { field: 'Warehouse', oldValue: '-', newValue: 'Rajasthan Agro Godown 4' },
@@ -1534,7 +1534,7 @@ export class SaudaErpMockService {
           referenceNo: 'TRK-2026-0004',
           unitsChange: 200,
           weightMtChange: 4,
-          remarks: 'Brokerage transit stock against SAU-2026-0003',
+          remarks: 'Direct Sale transit stock against SAU-2026-0003',
           doneBy: 'Sauda Admin',
         },
       ],
@@ -2842,7 +2842,7 @@ export class SaudaErpMockService {
     if (existing.buyerBrokerageAmount !== payload.buyerBrokerageAmount) {
       this.pushDiff(
         changes,
-        'Buyer Brokerage',
+        'Buyer Direct Sale',
         existing.buyerBrokerageAmount ? `₹${existing.buyerBrokerageAmount}` : '₹0',
         payload.buyerBrokerageAmount ? `₹${payload.buyerBrokerageAmount}` : '₹0',
       );
@@ -2850,7 +2850,7 @@ export class SaudaErpMockService {
     if (existing.sellerBrokerageAmount !== payload.sellerBrokerageAmount) {
       this.pushDiff(
         changes,
-        'Seller Brokerage',
+        'Seller Direct Sale',
         existing.sellerBrokerageAmount ? `₹${existing.sellerBrokerageAmount}` : '₹0',
         payload.sellerBrokerageAmount ? `₹${payload.sellerBrokerageAmount}` : '₹0',
       );
@@ -3135,10 +3135,10 @@ export class SaudaErpMockService {
         message: 'Cannot assign a truck to a Voided Sauda contract.',
       };
     }
-    if (sauda.saudaType === 'Brokerage') {
+    if (sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale') {
       return {
         ok: false,
-        message: 'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
+        message: 'Direct Sale Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
       };
     }
     if (!payload.warehouse || !payload.warehouse.trim()) {
@@ -3318,10 +3318,10 @@ export class SaudaErpMockService {
         message: 'Linked Sauda must be active and non-voided.',
       };
     }
-    if (sauda.saudaType === 'Brokerage') {
+    if (sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale') {
       return {
         ok: false,
-        message: 'Brokerage Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
+        message: 'Direct Sale Saudas are not eligible for truck fulfilment (BR-TF-12, EX-02).',
       };
     }
     if (!payload.warehouse || !payload.warehouse.trim()) {
@@ -4567,7 +4567,7 @@ export class SaudaErpMockService {
     isReversal: boolean,
   ): void {
     const sauda = this.saudasSubject.value.find((s) => s.id === truck.saudaId);
-    if (!sauda || sauda.saudaType === 'Brokerage') {
+    if (!sauda || sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale') {
       return;
     }
 

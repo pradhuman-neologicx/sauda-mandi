@@ -489,12 +489,12 @@
           <div class="ss-number">{{ saudaSummary.salesSaudas }}</div>
         </div>
 
-        <!-- Brokerage Saudas -->
+        <!-- Direct Sale Saudas -->
         <div class="ss-box ss-brokerage">
           <div class="ss-icon-wrap">
             <i class="fa-regular fa-file-lines ss-icon icon-purple"></i>
           </div>
-          <div class="ss-title">Brokerage Saudas</div>
+          <div class="ss-title">Direct Sale Saudas</div>
           <div class="ss-number">{{ saudaSummary.brokerageSaudas }}</div>
         </div>
       </div>
@@ -532,7 +532,8 @@
             </td>
             <td class="text-nowrap">{{ s.date }}</td>
             <td>
-              <span class="sauda-type-badge" [ngClass]="'type-' + s.type.toLowerCase()">
+              <span class="sauda-type-badge"
+                [ngClass]="s.type === 'Direct Sale' ? 'type-direct-sale' : 'type-' + s.type.toLowerCase()">
                 {{ s.type }}
               </span>
             </td>
