@@ -5,12 +5,7 @@ import {
   transition,
   animate,
 } from '@angular/animations';
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ChangeDetectionStrategy
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { JwtService } from 'src/app/core/services/jwt.service';
@@ -58,6 +53,15 @@ import { NgClass } from '@angular/common';
     imports: [FormsModule, ReactiveFormsModule, NgClass, RouterLink]
 })
 export class SigninComponent implements OnInit, OnDestroy {
+  private formBuilder = inject(FormBuilder);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private apiservice = inject(ApiService);
+  private dataService = inject(DataService);
+  private jwtService = inject(JwtService);
+  private notificationService = inject(NotificationService);
+  private loginService = inject(LoginService);
+
   title = 'Login';
 
   // ── Forms ──
@@ -71,17 +75,6 @@ export class SigninComponent implements OnInit, OnDestroy {
   submitted!: boolean;
   isLoading: boolean = false;
   showPassword: boolean = false;
-
-  constructor(
-    private formBuilder: FormBuilder,
-    private router: Router,
-    private route: ActivatedRoute,
-    private apiservice: ApiService,
-    private dataService: DataService,
-    private jwtService: JwtService,
-    private notificationService: NotificationService,
-    private loginService: LoginService,
-  ) {}
 
   ngOnInit(): void {
     this.signIn = this.formBuilder.group({

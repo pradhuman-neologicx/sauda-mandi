@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,8 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FirmRecord,
   SaudaErpMockService,
@@ -23,8 +22,11 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   styleUrl: './firm-management.component.scss',
   templateUrl: './firm-management.component.html',
 })
-export class FirmManagementComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class FirmManagementComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   allFirms: FirmRecord[] = [];
   filteredFirms: FirmRecord[] = [];
@@ -40,6 +42,12 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+  activeCount: number = 0;
+  inactiveCount: number = 0;
+
   isFormOpen = false;
   isEditMode = false;
   selectedFirm: FirmRecord | null = null;
@@ -49,12 +57,6 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
   isViewOpen = false;
   viewingFirm: FirmRecord | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
-
   ngOnInit(): void {
     this.firmForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -63,16 +65,11 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
     });
 
     this.erpService.firms$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((firms) => {
         this.allFirms = firms;
         this.applyFilters();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   onSearch(): void {
@@ -97,6 +94,7 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
         (this.appliedStatusFilter === 'Active' ? f.isActive : !f.isActive);
       return matchesQuery && matchesStatus;
     });
+    this.updatePaginationCounters();
   }
 
   resetFilters(): void {
@@ -109,39 +107,35 @@ export class FirmManagementComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.filteredFirms.length)
-      : Number(this.tableSize);
-  }
-
-  get showingStart(): number {
-    if (this.filteredFirms.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredFirms.length,
-    );
+  updatePaginationCounters(): void {
+    this.activeCount = this.allFirms.filter((f) => f.isActive).length;
+    this.inactiveCount = this.allFirms.filter((f) => !f.isActive).length;
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.filteredFirms.length)
+        : Number(this.tableSize);
+    if (this.filteredFirms.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredFirms.length,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updatePaginationCounters();
   }
 
   onTableDataChange(pageNumber: number): void {
     this.page = pageNumber;
+    this.updatePaginationCounters();
   }
-
-  get activeCount(): number {
-    return this.allFirms.filter((f) => f.isActive).length;
-  }
-
-  get inactiveCount(): number {
-    return this.allFirms.filter((f) => !f.isActive).length;
-  }
+  
 
   openAddModal(): void {
     this.isEditMode = false;

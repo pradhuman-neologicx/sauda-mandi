@@ -1,12 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  OnInit,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  OnDestroy
-} from '@angular/core';
+import { Component, ElementRef, OnInit, ChangeDetectionStrategy, input, output, OnDestroy, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { JwtService } from 'src/app/core/services/jwt.service';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -40,6 +32,12 @@ export interface Notification {
   }
 })
 export class SidenavHeaderComponent implements OnInit, OnDestroy {
+  private elementRef = inject(ElementRef);
+  private router = inject(Router);
+  private jwtService = inject(JwtService);
+  private apiService = inject(ApiService);
+  private notificationService = inject(NotificationService);
+
   readonly isMobile = input<boolean>(false);
   readonly toggleCollapsed = output<void>();
   searchQuery: string = '';
@@ -120,14 +118,6 @@ export class SidenavHeaderComponent implements OnInit, OnDestroy {
     this.isMenuOpen = false;
     this.notificationService.show('All notifications cleared (Mock)', 'success', 2000);
   }
-
-  constructor(
-    private elementRef: ElementRef,
-    private router: Router,
-    private jwtService: JwtService,
-    private apiService: ApiService,
-    private notificationService: NotificationService,
-  ) { }
 
   clearSearch(): void {
     this.searchQuery = '';

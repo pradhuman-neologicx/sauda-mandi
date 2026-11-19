@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, input, output, inject } from '@angular/core';
 import { Router, RouterLinkActive, RouterLink } from '@angular/router';
 import { JwtService } from 'src/app/core/services/jwt.service';
 import { LoginService } from 'src/app/core/services/login.service';
@@ -24,17 +24,15 @@ interface MenuItem {
     imports: [MatNavList, MatExpansionPanel, MatExpansionPanelHeader, MatIcon, MatListItem, RouterLinkActive, RouterLink, MatListItemIcon, MatListItemTitle]
 })
 export class SidenavComponent implements OnInit {
+  private jwtService = inject(JwtService);
+  private router = inject(Router);
+  private loginService = inject(LoginService);
+  private notificationService = inject(NotificationService);
+
   menuItems: MenuItem[] = [];
   readonly collapsed = input<boolean>(false);
   readonly isMobile = input<boolean>(false);
   readonly closeSidenav = output<void>();
-
-  constructor(
-    private jwtService: JwtService,
-    private router: Router,
-    private loginService: LoginService,
-    private notificationService: NotificationService,
-  ) {}
 
   roles: any;
   ngOnInit(): void {

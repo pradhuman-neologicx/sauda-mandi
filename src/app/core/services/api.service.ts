@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map, retry } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, retry } from 'rxjs/operators';
 import { JwtService } from './jwt.service';
 import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
@@ -9,12 +9,11 @@ import { NotificationService } from './notificationnew.service';
 
 @Injectable()
 export class ApiService {
-  constructor(
-    private http: HttpClient,
-    private jwtService: JwtService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {}
+  private http = inject(HttpClient);
+  private jwtService = inject(JwtService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+
 
   private formatErrors = (error: any) => {
     return throwError(() => error);

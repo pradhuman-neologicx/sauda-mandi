@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class JwtService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+
 
   // admin panel
 

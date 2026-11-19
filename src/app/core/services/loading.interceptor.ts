@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
@@ -10,9 +10,9 @@ import { LoaderService } from './loader.service';
 
 @Injectable()
 export class LoadingInterceptor implements HttpInterceptor {
-  private totalRequests = 0;
+  private loadingService = inject(LoaderService);
 
-  constructor(private loadingService: LoaderService) {}
+  private totalRequests = 0;
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // console.log('caught')

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { LoaderService } from '../core/services/loader.service';
 import { NgOptimizedImage } from '@angular/common';
 
@@ -10,7 +10,8 @@ import { NgOptimizedImage } from '@angular/common';
     imports: [NgOptimizedImage]
 })
 export class SpinnerComponent implements OnInit {
-  constructor(public loader: LoaderService) { }
+  loader = inject(LoaderService);
+
 
   ngOnInit(): void {
   }

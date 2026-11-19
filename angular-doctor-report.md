@@ -4,13 +4,13 @@
 
 ## Summary
 
-- **Health score:** 24/100
-- **Errors:** 327
-- **Warnings:** 652
-- **Infos:** 116
+- **Health score:** 74/100
+- **Errors:** 213
+- **Warnings:** 572
+- **Infos:** 123
 - **Project:** panel (angular-cli)
 - **Angular:** 22.1.3
-- **Scan duration:** 7723ms
+- **Scan duration:** 6746ms
 
 ## Official Angular migrations
 
@@ -32,16 +32,6 @@ Commands deduplicated from this scan, in a sensible order. Scope with the `--pat
 ```bash
 ng generate @angular/core:common-to-standalone --dry-run
 ng generate @angular/core:common-to-standalone
-```
-
-### Control flow syntax
-
-- **Docs:** https://angular.dev/reference/migrations/control-flow
-- **Command:**
-
-```bash
-ng generate @angular/core:control-flow --dry-run
-ng generate @angular/core:control-flow
 ```
 
 ### inject() function
@@ -106,33 +96,11 @@ ng generate @angular/core:service
 
 ## performance
 
-### angular-doctor/getter-in-template (error) — 308 occurrences in 24 files
+### angular-doctor/getter-in-template (error) — 212 occurrences in 8 files
 
-- **Message:** Template reads getter "sidenavWidth". Getters re-run on every change detection cycle, with no caching.
+- **Message:** Template reads getter "totalInvoicedAmountInr". Getters re-run on every change detection cycle, with no caching.
 - **Reference:** https://angular.dev/best-practices/runtime-performance
 - **Locations:**
-  - `src\app\admin\admin.component.html:8:43` (fix: Replace the getter with a computed() and read it as sidenavWidth() in the template, or precompute the value into a signal.)
-  - `src\app\admin\admin.component.ts:8:43` (fix: Replace the getter with a computed() and read it as sidenavWidth() in the template, or precompute the value into a signal.)
-  - `src\app\admin\dashboard\dashboard.component.html:24:46` — Template reads getter "selectedMonthsDisplay". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedMonthsDisplay() in the template, or precompute the value into a signal.)
-  - `src\app\admin\dashboard\dashboard.component.ts:24:46` — Template reads getter "selectedMonthsDisplay". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedMonthsDisplay() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.html:93:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.html:149:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.html:149:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.ts:93:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.ts:149:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\firm-management\firm-management.component.ts:149:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:109:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:170:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:202:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:202:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:202:62` — Template reads getter "activeListLength". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeListLength() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.html:276:24` — Template reads getter "activeCategories". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeCategories() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:109:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:170:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:202:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:202:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:202:62` — Template reads getter "activeListLength". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeListLength() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\categories\categories.component.ts:276:24` — Template reads getter "activeCategories". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeCategories() in the template, or precompute the value into a signal.)
   - `src\app\admin\inventory-management\inventory\inventory.component.html:16:69` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
   - `src\app\admin\inventory-management\inventory\inventory.component.html:22:69` — Template reads getter "isMaker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isMaker() in the template, or precompute the value into a signal.)
   - `src\app\admin\inventory-management\inventory\inventory.component.html:37:8` — Template reads getter "isMaker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isMaker() in the template, or precompute the value into a signal.)
@@ -205,41 +173,7 @@ ng generate @angular/core:service
   - `src\app\admin\inventory-management\inventory\inventory.component.ts:950:14` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
   - `src\app\admin\inventory-management\inventory\inventory.component.ts:1085:24` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
   - `src\app\admin\inventory-management\inventory\inventory.component.ts:1093:24` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.html:91:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.html:127:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.html:127:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.html:166:24` — Template reads getter "activeSubCategories". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeSubCategories() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:91:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:127:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:127:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:166:24` — Template reads getter "activeSubCategories". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeSubCategories() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:110:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:141:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:141:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:182:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:213:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.html:213:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:110:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:141:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:141:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:182:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:213:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\uom\uom.component.ts:213:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:28:34` — Template reads getter "totalCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:38:45` — Template reads getter "activeCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:48:45` — Template reads getter "inactiveCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as inactiveCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:58:46` — Template reads getter "citiesCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as citiesCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:169:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:238:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.html:238:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:28:34` — Template reads getter "totalCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:38:45` — Template reads getter "activeCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:48:45` — Template reads getter "inactiveCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as inactiveCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:58:46` — Template reads getter "citiesCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as citiesCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:169:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:238:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:238:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\party-ledger\party-ledger.component.html:31:12` — Template reads getter "totalInvoicedAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalInvoicedAmountInr() in the template, or precompute the value into a signal.)
+  - `src\app\admin\party-ledger\party-ledger.component.html:31:12` (fix: Replace the getter with a computed() and read it as totalInvoicedAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.html:39:12` — Template reads getter "totalIssuedInvoiceAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalIssuedInvoiceAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.html:47:12` — Template reads getter "totalPaidInvoiceAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalPaidInvoiceAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.html:63:12` — Template reads getter "totalPendingPayableInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalPendingPayableInr() in the template, or precompute the value into a signal.)
@@ -262,7 +196,7 @@ ng generate @angular/core:service
   - `src\app\admin\party-ledger\party-ledger.component.html:1461:24` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.html:1477:77` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.html:1478:24` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
-  - `src\app\admin\party-ledger\party-ledger.component.ts:31:12` — Template reads getter "totalInvoicedAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalInvoicedAmountInr() in the template, or precompute the value into a signal.)
+  - `src\app\admin\party-ledger\party-ledger.component.ts:31:12` (fix: Replace the getter with a computed() and read it as totalInvoicedAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.ts:39:12` — Template reads getter "totalIssuedInvoiceAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalIssuedInvoiceAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.ts:47:12` — Template reads getter "totalPaidInvoiceAmountInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalPaidInvoiceAmountInr() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.ts:63:12` — Template reads getter "totalPendingPayableInr". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as totalPendingPayableInr() in the template, or precompute the value into a signal.)
@@ -285,38 +219,10 @@ ng generate @angular/core:service
   - `src\app\admin\party-ledger\party-ledger.component.ts:1461:24` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.ts:1477:77` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
   - `src\app\admin\party-ledger\party-ledger.component.ts:1478:24` — Template reads getter "selectedSenderFirm". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedSenderFirm() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:16:76` — Template reads getter "isMaker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isMaker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:21:76` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:39:37` — Template reads getter "activeSaudasList". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeSaudasList() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:44:37` — Template reads getter "purchaseCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as purchaseCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:49:37` — Template reads getter "salesCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as salesCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:54:37` — Template reads getter "brokerageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as brokerageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:95:31` — Template reads getter "firmFilterOptions". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as firmFilterOptions() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:192:70` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:210:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:210:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
   - `src\app\admin\sauda-management\sauda-management.component.html:333:22` — Template reads getter "commodityRows". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as commodityRows() in the template, or precompute the value into a signal.)
   - `src\app\admin\sauda-management\sauda-management.component.html:392:70` — Template reads getter "commodityRows". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as commodityRows() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.html:572:14` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:16:76` — Template reads getter "isMaker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isMaker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:21:76` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:39:37` — Template reads getter "activeSaudasList". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeSaudasList() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:44:37` — Template reads getter "purchaseCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as purchaseCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:49:37` — Template reads getter "salesCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as salesCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:54:37` — Template reads getter "brokerageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as brokerageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:95:31` — Template reads getter "firmFilterOptions". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as firmFilterOptions() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:192:70` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:210:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:210:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
   - `src\app\admin\sauda-management\sauda-management.component.ts:333:22` — Template reads getter "commodityRows". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as commodityRows() in the template, or precompute the value into a signal.)
   - `src\app\admin\sauda-management\sauda-management.component.ts:392:70` — Template reads getter "commodityRows". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as commodityRows() in the template, or precompute the value into a signal.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:572:14` — Template reads getter "isChecker". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as isChecker() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:28:37` — Template reads getter "activeTrucksList". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeTrucksList() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:33:37` — Template reads getter "purchaseLinkedCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as purchaseLinkedCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:38:37` — Template reads getter "salesLinkedCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as salesLinkedCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:43:37` — Template reads getter "deliveredCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as deliveredCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:189:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.html:189:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.html:446:15` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.html:453:11` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.html:497:14` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
@@ -362,12 +268,6 @@ ng generate @angular/core:service
   - `src\app\admin\truck-management\truck-management.component.html:701:20` — Template reads getter "availableWarehouseStockMt". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as availableWarehouseStockMt() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.html:702:20` — Template reads getter "formTotalWeightMt". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as formTotalWeightMt() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.html:732:17` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:28:37` — Template reads getter "activeTrucksList". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as activeTrucksList() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:33:37` — Template reads getter "purchaseLinkedCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as purchaseLinkedCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:38:37` — Template reads getter "salesLinkedCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as salesLinkedCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:43:37` — Template reads getter "deliveredCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as deliveredCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:189:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\truck-management\truck-management.component.ts:189:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.ts:446:15` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.ts:453:11` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.ts:497:14` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
@@ -413,12 +313,6 @@ ng generate @angular/core:service
   - `src\app\admin\truck-management\truck-management.component.ts:701:20` — Template reads getter "availableWarehouseStockMt". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as availableWarehouseStockMt() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.ts:702:20` — Template reads getter "formTotalWeightMt". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as formTotalWeightMt() in the template, or precompute the value into a signal.)
   - `src\app\admin\truck-management\truck-management.component.ts:732:17` — Template reads getter "selectedLinkedSauda". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as selectedLinkedSauda() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.html:154:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.html:251:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.html:251:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.ts:154:45` — Template reads getter "itemsPerPageCount". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as itemsPerPageCount() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.ts:251:20` — Template reads getter "showingStart". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingStart() in the template, or precompute the value into a signal.)
-  - `src\app\admin\user-management\user-management.component.ts:251:42` — Template reads getter "showingEnd". Getters re-run on every change detection cycle, with no caching. (fix: Replace the getter with a computed() and read it as showingEnd() in the template, or precompute the value into a signal.)
 
 ### angular-doctor/zone-js (warning) — 2 occurrences in 2 files
 
@@ -434,64 +328,33 @@ ng generate @angular/core:service
 - **Suggested fix:** Omit changeDetection on Angular 22+ (OnPush is the default) or set ChangeDetectionStrategy.OnPush.
 - **Reference:** https://angular.dev/best-practices/runtime-performance
 - **Locations:**
-  - `src\app\admin\admin.component.ts:29:5`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:18:5`
-  - `src\app\admin\loginpages\otp\otp.component.ts:22:5`
-  - `src\app\admin\loginpages\signin\signin.component.ts:59:5`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:37:3`
+  - `src\app\admin\admin.component.ts:16:5`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:16:5`
+  - `src\app\admin\loginpages\otp\otp.component.ts:19:5`
+  - `src\app\admin\loginpages\signin\signin.component.ts:52:5`
+  - `src\app\admin\sidenav-header\sidenav-header.component.ts:28:3`
   - `src\app\admin\sidenav\sidenav.component.ts:23:5`
   - `src\app\app.component.ts:8:5`
   - `src\app\website\components\components.component.ts:7:5`
   - `src\app\website\components\navbar\navbar.component.ts:10:5`
   - `src\app\website\components\testimonials\testimonials.component.ts:26:5`
-  - `src\app\website\home\home.component.ts:13:3`
+  - `src\app\website\home\home.component.ts:12:3`
   - `src\app\website\notification\notification.component.ts:16:5`
 
-## correctness
+### angular-doctor/prefer-inject-async (info) — 7 occurrences in 5 files
 
-### angular-doctor/prefer-take-until-destroyed (error) — 9 occurrences in 9 files
-
-- **Message:** Subject teardown in ngOnDestroy. Prefer takeUntilDestroyed().
-- **Suggested fix:** Remove the destroy subject. Pipe subscriptions with takeUntilDestroyed() from @angular/core/rxjs-interop. Pass DestroyRef when the call is outside an injection context. Complete a subject you still own from DestroyRef.onDestroy(), not ngOnDestroy.
-- **Reference:** https://angular.dev/api/core/rxjs-interop/takeUntilDestroyed
+- **Message:** JwtService is only used inside handlers. Consider injectAsync() so it loads in its own chunk on first use.
+- **Reference:** https://angular.dev/api/core/injectAsync
 - **Locations:**
-  - `src\app\admin\dashboard\dashboard.component.ts:361:5`
-  - `src\app\admin\firm-management\firm-management.component.ts:74:5`
-  - `src\app\admin\inventory-management\categories\categories.component.ts:88:5`
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:102:5`
-  - `src\app\admin\masters\uom\uom.component.ts:85:5`
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:98:5`
-  - `src\app\admin\sauda-management\sauda-management.component.ts:203:5`
-  - `src\app\admin\truck-management\truck-management.component.ts:141:5`
-  - `src\app\admin\user-management\user-management.component.ts:105:5`
-
-### angular-doctor/prefer-control-flow (error) — 1 occurrence
-
-- **Message:** Legacy structural directive *ngIf found. Prefer built-in control flow (@if, @for, @switch).
-- **Suggested fix:** Run the control-flow migration, then verify templates. Add track on every @for.
-- **Migration docs:** https://angular.dev/reference/migrations/control-flow
-- **Automated fix (dry-run first):**
-
-```bash
-ng generate @angular/core:control-flow --dry-run
-ng generate @angular/core:control-flow
-```
-- **Locations:**
-  - `src\app\spinner\spinner.component.html:1:11`
+  - `src\app\core\auth\auth-guard.ts:10:48` (fix: Replace inject(JwtService) with injectAsync(() => import('...').then((m) => m.JwtService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\auth.interceptor.ts:7:58` (fix: Replace inject(JwtService) with injectAsync(() => import('...').then((m) => m.JwtService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\Employee.service.ts:11:37` — ApiService is only used inside handlers. Consider injectAsync() so it loads in its own chunk on first use. (fix: Replace inject(ApiService) with injectAsync(() => import('...').then((m) => m.ApiService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\Employee.service.ts:12:43` (fix: Replace inject(JwtService) with injectAsync(() => import('...').then((m) => m.JwtService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\loading.interceptor.ts:12:61` — LoaderService is only used inside handlers. Consider injectAsync() so it loads in its own chunk on first use. (fix: Replace inject(LoaderService) with injectAsync(() => import('...').then((m) => m.LoaderService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\login.service.ts:10:37` — ApiService is only used inside handlers. Consider injectAsync() so it loads in its own chunk on first use. (fix: Replace inject(ApiService) with injectAsync(() => import('...').then((m) => m.ApiService)) and await it where used. The service must be auto-provided.)
+  - `src\app\core\services\login.service.ts:11:43` (fix: Replace inject(JwtService) with injectAsync(() => import('...').then((m) => m.JwtService)) and await it where used. The service must be auto-provided.)
 
 ## maintainability
-
-### angular-doctor/prefer-host-bindings (error) — 5 occurrences in 4 files
-
-- **Message:** @HostListener is backwards-compatible. Use the host option instead.
-- **Suggested fix:** Move the binding into the host object of @Component or @Directive, for example '[class.active]': 'isActive()' or '(keydown)': 'updateValue($event)'.
-- **Reference:** https://angular.dev/guide/components/host-elements
-- **Locations:**
-  - `src\app\admin\admin.component.ts:115:3`
-  - `src\app\admin\admin.component.ts:164:3`
-  - `src\app\admin\dashboard\dashboard.component.ts:109:3`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:160:3`
-  - `src\app\website\components\navbar\navbar.component.ts:71:3`
 
 ### angular-doctor/deprecated-animations (error) — 1 occurrence
 
@@ -500,50 +363,6 @@ ng generate @angular/core:control-flow
 - **Reference:** https://angular.dev/guide/legacy-animations
 - **Locations:**
   - `package.json:13:5`
-
-### angular-doctor/prefer-inject (warning) — 31 occurrences in 31 files
-
-- **Message:** Constructor parameter injection detected. Prefer the inject() function for dependencies.
-- **Suggested fix:** Run the inject() migration scoped with --path, then fix any manual edge cases.
-- **Migration docs:** https://angular.dev/reference/migrations/inject-function
-- **Automated fix (dry-run first):**
-
-```bash
-ng generate @angular/core:inject --dry-run
-ng generate @angular/core:inject
-```
-- **Locations:**
-  - `src\app\admin\dashboard\dashboard.component.ts:344:3`
-  - `src\app\admin\firm-management\firm-management.component.ts:52:3`
-  - `src\app\admin\inventory-management\categories\categories.component.ts:60:3`
-  - `src\app\admin\inventory-management\product-master\product-master.component.ts:72:3`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:36:3`
-  - `src\app\admin\loginpages\otp\otp.component.ts:29:3`
-  - `src\app\admin\loginpages\signin\signin.component.ts:77:3`
-  - `src\app\admin\masters\uom\uom.component.ts:61:3`
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:74:3`
-  - `src\app\admin\sauda-management\sauda-management.component.ts:129:3`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:122:3`
-  - `src\app\admin\sidenav\sidenav.component.ts:32:3`
-  - `src\app\admin\truck-management\truck-management.component.ts:98:3`
-  - `src\app\admin\user-management\user-management.component.ts:78:3`
-  - `src\app\core\auth\auth-guard.ts:12:3`
-  - `src\app\core\auth\direct-access-guard.ts:15:3`
-  - `src\app\core\auth\student-auth-guard.ts:12:3`
-  - `src\app\core\pipe\safe-url.pipe.ts:6:3`
-  - `src\app\core\services\api.service.ts:12:3`
-  - `src\app\core\services\auth.interceptor.ts:8:3`
-  - `src\app\core\services\calendar.service.ts:13:3`
-  - `src\app\core\services\classe-routines.service.ts:13:3`
-  - `src\app\core\services\Employee.service.ts:17:3`
-  - `src\app\core\services\Inquiry.service.ts:13:3`
-  - `src\app\core\services\jwt.service.ts:9:3`
-  - `src\app\core\services\loading.interceptor.ts:15:3`
-  - `src\app\core\services\login.service.ts:13:3`
-  - `src\app\core\services\notification.service.ts:11:3`
-  - `src\app\core\services\notificationnew.service.ts:19:3`
-  - `src\app\spinner\spinner.component.ts:13:3`
-  - `src\app\website\components\navbar\navbar.component.ts:52:3`
 
 ### angular-doctor/prefer-functional-interceptor (warning) — 7 occurrences in 5 files
 
@@ -559,6 +378,26 @@ ng generate @angular/core:inject
   - `src\app\core\services\internet-interceptor.ts:13:34`
   - `src\app\core\services\loading.interceptor.ts:12:33`
 
+### angular-doctor/prefer-inject (warning) — 7 occurrences in 7 files
+
+- **Message:** Constructor parameter injection detected. Prefer the inject() function for dependencies.
+- **Suggested fix:** Run the inject() migration scoped with --path, then fix any manual edge cases.
+- **Migration docs:** https://angular.dev/reference/migrations/inject-function
+- **Automated fix (dry-run first):**
+
+```bash
+ng generate @angular/core:inject --dry-run
+ng generate @angular/core:inject
+```
+- **Locations:**
+  - `src\app\core\auth\direct-access-guard.ts:13:3`
+  - `src\app\core\auth\student-auth-guard.ts:12:3`
+  - `src\app\core\pipe\safe-url.pipe.ts:6:3`
+  - `src\app\core\services\calendar.service.ts:13:3`
+  - `src\app\core\services\classe-routines.service.ts:13:3`
+  - `src\app\core\services\Inquiry.service.ts:13:3`
+  - `src\app\core\services\notification.service.ts:10:3`
+
 ### angular-doctor/prefer-signal-query (warning) — 3 occurrences in 2 files
 
 - **Message:** Decorator-based query @ViewChild found. Prefer the viewChild() signal query.
@@ -571,9 +410,9 @@ ng generate @angular/core:signal-queries-migration --dry-run
 ng generate @angular/core:signal-queries-migration
 ```
 - **Locations:**
-  - `src\app\admin\admin.component.ts:38:3`
-  - `src\app\admin\admin.component.ts:39:3`
-  - `src\app\admin\dashboard\dashboard.component.ts:107:3`
+  - `src\app\admin\admin.component.ts:33:3`
+  - `src\app\admin\admin.component.ts:34:3`
+  - `src\app\admin\dashboard\dashboard.component.ts:110:3`
 
 ### angular-doctor/lifecycle-hook-complexity (warning) — 2 occurrences in 2 files
 
@@ -581,16 +420,8 @@ ng generate @angular/core:signal-queries-migration
 - **Suggested fix:** Call small private methods from the lifecycle hook.
 - **Reference:** https://angular.dev/style-guide#components-and-directives
 - **Locations:**
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:46:3`
-  - `src\app\admin\loginpages\otp\otp.component.ts:48:3` — ngOnInit contains 25 lines; prefer delegating to named methods.
-
-### angular-doctor/lifecycle-interface (warning) — 1 occurrence
-
-- **Message:** ngOnDestroy is declared but class does not implement OnDestroy.
-- **Suggested fix:** Add implements OnDestroy and import it from @angular/core.
-- **Reference:** https://angular.dev/style-guide#components-and-directives
-- **Locations:**
-  - `src\app\admin\loginpages\signin\signin.component.ts:209:3`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:42:3`
+  - `src\app\admin\loginpages\otp\otp.component.ts:37:3` — ngOnInit contains 25 lines; prefer delegating to named methods.
 
 ### angular-doctor/prefer-class-binding (info) — 63 occurrences in 14 files
 
@@ -606,10 +437,10 @@ ng generate @angular/core:ngclass-to-class
 - **Locations:**
   - `src\app\admin\dashboard\dashboard.component.html:462:53`
   - `src\app\admin\dashboard\dashboard.component.html:595:17`
-  - `src\app\admin\firm-management\firm-management.component.html:119:63`
-  - `src\app\admin\firm-management\firm-management.component.html:133:56`
-  - `src\app\admin\firm-management\firm-management.component.html:135:39`
-  - `src\app\admin\firm-management\firm-management.component.html:260:45`
+  - `src\app\admin\firm-management\firm-management.component.html:120:63`
+  - `src\app\admin\firm-management\firm-management.component.html:134:56`
+  - `src\app\admin\firm-management\firm-management.component.html:136:39`
+  - `src\app\admin\firm-management\firm-management.component.html:261:45`
   - `src\app\admin\inventory-management\categories\categories.component.html:112:63`
   - `src\app\admin\inventory-management\categories\categories.component.html:124:56`
   - `src\app\admin\inventory-management\categories\categories.component.html:126:39`
@@ -681,7 +512,7 @@ ng generate @angular/core:ngclass-to-class
   - `src\app\admin\inventory-management\product-master\product-master.component.ts:3:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
   - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:2:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
   - `src\app\admin\loginpages\otp\otp.component.ts:2:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
-  - `src\app\admin\loginpages\signin\signin.component.ts:16:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
+  - `src\app\admin\loginpages\signin\signin.component.ts:9:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
   - `src\app\admin\masters\uom\uom.component.ts:3:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
   - `src\app\admin\masters\warehouse\warehouse.component.ts:3:1` — Reactive or template-driven forms API (FormGroup, FormBuilder, FormsModule). New forms should use signal forms.
   - `src\app\admin\party-ledger\party-ledger.component.ts:4:1`
@@ -734,11 +565,11 @@ ng generate @angular/core:service
   - `src\app\core\services\classe-routines.service.ts:6:1`
   - `src\app\core\services\Employee.service.ts:7:1`
   - `src\app\core\services\Inquiry.service.ts:6:1`
-  - `src\app\core\services\jwt.service.ts:5:1`
+  - `src\app\core\services\jwt.service.ts:4:1`
   - `src\app\core\services\loader.service.ts:3:1`
   - `src\app\core\services\login.service.ts:6:1`
-  - `src\app\core\services\notification.service.ts:7:1`
-  - `src\app\core\services\notificationnew.service.ts:12:1`
+  - `src\app\core\services\notification.service.ts:6:1`
+  - `src\app\core\services\notificationnew.service.ts:4:1`
   - `src\app\core\services\sauda-erp-mock.service.ts:413:1`
 
 ### angular-doctor/prefer-signal-input (info) — 1 occurrence
@@ -755,57 +586,37 @@ ng generate @angular/core:signal-input-migration
 - **Locations:**
   - `src\app\website\notification\notification.component.ts:33:3`
 
-## security
-
-### angular-doctor/target-blank (error) — 3 occurrences in 2 files
-
-- **Message:** target="_blank" needs rel="noopener" or rel="noreferrer".
-- **Reference:** https://angular.dev/best-practices/security
-- **Locations:**
-  - `src\app\admin\firm-management\firm-management.component.html:110:15`
-  - `src\app\admin\firm-management\firm-management.component.html:289:13`
-  - `src\app\website\components\footer\footer.component.html:187:11`
-
-### angular-doctor/security-bypass (warning) — 1 occurrence
-
-- **Message:** DomSanitizer bypass API usage requires strict review.
-- **Suggested fix:** Avoid bypassing sanitization. Prefer binding safe values or server-side sanitization.
-- **Reference:** https://angular.dev/best-practices/security
-- **Locations:**
-  - `src\app\core\pipe\safe-url.pipe.ts:9:27`
-
 ## hygiene
 
-### oxlint/no-explicit-any (warning) — 229 occurrences in 32 files
+### oxlint/no-explicit-any (warning) — 228 occurrences in 32 files
 
 - **Message:** Unexpected `any`. Specify a different type.
 - **Locations:**
-  - `src\app\admin\admin.component.ts:51:20`
-  - `src\app\admin\admin.component.ts:116:19`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:80:16`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:81:17`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:96:20`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:147:20`
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:179:33`
-  - `src\app\admin\loginpages\otp\otp.component.ts:27:9`
-  - `src\app\admin\loginpages\otp\otp.component.ts:28:11`
-  - `src\app\admin\loginpages\otp\otp.component.ts:47:10`
-  - `src\app\admin\loginpages\otp\otp.component.ts:89:16`
-  - `src\app\admin\loginpages\otp\otp.component.ts:93:17`
-  - `src\app\admin\loginpages\otp\otp.component.ts:117:71`
-  - `src\app\admin\loginpages\otp\otp.component.ts:145:33`
-  - `src\app\admin\loginpages\signin\signin.component.ts:70:16`
-  - `src\app\admin\loginpages\signin\signin.component.ts:71:17`
-  - `src\app\admin\loginpages\signin\signin.component.ts:166:32`
-  - `src\app\admin\loginpages\signin\signin.component.ts:198:33`
-  - `src\app\admin\sauda-management\sauda-management.component.ts:751:56`
+  - `src\app\admin\admin.component.ts:40:20`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:76:16`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:77:17`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:92:20`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:143:20`
+  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:175:33`
+  - `src\app\admin\loginpages\otp\otp.component.ts:32:9`
+  - `src\app\admin\loginpages\otp\otp.component.ts:33:11`
+  - `src\app\admin\loginpages\otp\otp.component.ts:36:10`
+  - `src\app\admin\loginpages\otp\otp.component.ts:78:16`
+  - `src\app\admin\loginpages\otp\otp.component.ts:82:17`
+  - `src\app\admin\loginpages\otp\otp.component.ts:102:71`
+  - `src\app\admin\loginpages\otp\otp.component.ts:130:33`
+  - `src\app\admin\loginpages\signin\signin.component.ts:72:16`
+  - `src\app\admin\loginpages\signin\signin.component.ts:73:17`
+  - `src\app\admin\loginpages\signin\signin.component.ts:157:32`
+  - `src\app\admin\loginpages\signin\signin.component.ts:189:33`
+  - `src\app\admin\sauda-management\sauda-management.component.ts:739:56`
   - `src\app\admin\sidenav-header\sidenav-header.component.ts:46:25`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:166:11`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:189:17`
-  - `src\app\admin\sidenav-header\sidenav-header.component.ts:193:16`
-  - `src\app\admin\sidenav\sidenav.component.ts:39:10`
-  - `src\app\admin\truck-management\truck-management.component.ts:661:56`
-  - `src\app\core\auth\direct-access-guard.ts:26:20`
+  - `src\app\admin\sidenav-header\sidenav-header.component.ts:157:11`
+  - `src\app\admin\sidenav-header\sidenav-header.component.ts:180:17`
+  - `src\app\admin\sidenav-header\sidenav-header.component.ts:184:16`
+  - `src\app\admin\sidenav\sidenav.component.ts:37:10`
+  - `src\app\admin\truck-management\truck-management.component.ts:654:56`
+  - `src\app\core\auth\direct-access-guard.ts:24:20`
   - `src\app\core\model-class\course-batch.ts:13:15`
   - `src\app\core\model-class\course-batch.ts:20:24`
   - `src\app\core\model-class\course-batch.ts:37:14`
@@ -880,29 +691,29 @@ ng generate @angular/core:signal-input-migration
   - `src\app\core\model-class\test.ts:3:11`
   - `src\app\core\model-class\validations.ts:42:36`
   - `src\app\core\pipe\number-format.pipe.ts:9:20`
-  - `src\app\core\services\api.service.ts:19:34`
-  - `src\app\core\services\api.service.ts:76:30`
-  - `src\app\core\services\api.service.ts:76:52`
-  - `src\app\core\services\api.service.ts:82:27`
-  - `src\app\core\services\api.service.ts:82:41`
-  - `src\app\core\services\api.service.ts:82:63`
-  - `src\app\core\services\api.service.ts:92:28`
-  - `src\app\core\services\api.service.ts:92:42`
-  - `src\app\core\services\api.service.ts:92:64`
-  - `src\app\core\services\api.service.ts:102:33`
-  - `src\app\core\services\api.service.ts:102:55`
-  - `src\app\core\services\api.service.ts:112:29`
-  - `src\app\core\services\api.service.ts:112:43`
-  - `src\app\core\services\api.service.ts:112:65`
-  - `src\app\core\services\api.service.ts:122:40`
-  - `src\app\core\services\api.service.ts:122:57`
-  - `src\app\core\services\api.service.ts:132:67`
-  - `src\app\core\services\api.service.ts:142:41`
-  - `src\app\core\services\api.service.ts:142:58`
-  - `src\app\core\services\api.service.ts:155:17`
-  - `src\app\core\services\api.service.ts:164:25`
-  - `src\app\core\services\auth.interceptor.ts:10:30`
-  - `src\app\core\services\auth.interceptor.ts:10:77`
+  - `src\app\core\services\api.service.ts:18:34`
+  - `src\app\core\services\api.service.ts:75:30`
+  - `src\app\core\services\api.service.ts:75:52`
+  - `src\app\core\services\api.service.ts:81:27`
+  - `src\app\core\services\api.service.ts:81:41`
+  - `src\app\core\services\api.service.ts:81:63`
+  - `src\app\core\services\api.service.ts:91:28`
+  - `src\app\core\services\api.service.ts:91:42`
+  - `src\app\core\services\api.service.ts:91:64`
+  - `src\app\core\services\api.service.ts:101:33`
+  - `src\app\core\services\api.service.ts:101:55`
+  - `src\app\core\services\api.service.ts:111:29`
+  - `src\app\core\services\api.service.ts:111:43`
+  - `src\app\core\services\api.service.ts:111:65`
+  - `src\app\core\services\api.service.ts:121:40`
+  - `src\app\core\services\api.service.ts:121:57`
+  - `src\app\core\services\api.service.ts:131:67`
+  - `src\app\core\services\api.service.ts:141:41`
+  - `src\app\core\services\api.service.ts:141:58`
+  - `src\app\core\services\api.service.ts:154:17`
+  - `src\app\core\services\api.service.ts:163:25`
+  - `src\app\core\services\auth.interceptor.ts:11:30`
+  - `src\app\core\services\auth.interceptor.ts:11:77`
   - `src\app\core\services\calendar.service.ts:19:26`
   - `src\app\core\services\calendar.service.ts:24:28`
   - `src\app\core\services\calendar.service.ts:29:29`
@@ -912,14 +723,14 @@ ng generate @angular/core:signal-input-migration
   - `src\app\core\services\calendar.service.ts:57:33`
   - `src\app\core\services\calendar.service.ts:65:31`
   - `src\app\core\services\data.service.ts:12:26`
-  - `src\app\core\services\Employee.service.ts:13:15`
-  - `src\app\core\services\Employee.service.ts:14:18`
-  - `src\app\core\services\Employee.service.ts:15:18`
-  - `src\app\core\services\Employee.service.ts:31:19`
-  - `src\app\core\services\Employee.service.ts:38:21`
-  - `src\app\core\services\Employee.service.ts:38:38`
-  - `src\app\core\services\Employee.service.ts:51:19`
-  - `src\app\core\services\Employee.service.ts:58:30`
+  - `src\app\core\services\Employee.service.ts:18:15`
+  - `src\app\core\services\Employee.service.ts:19:18`
+  - `src\app\core\services\Employee.service.ts:20:18`
+  - `src\app\core\services\Employee.service.ts:29:19`
+  - `src\app\core\services\Employee.service.ts:36:21`
+  - `src\app\core\services\Employee.service.ts:36:38`
+  - `src\app\core\services\Employee.service.ts:49:19`
+  - `src\app\core\services\Employee.service.ts:56:30`
   - `src\app\core\services\error.interceptor.ts:6:30`
   - `src\app\core\services\error.interceptor.ts:8:29`
   - `src\app\core\services\Inquiry.service.ts:23:26`
@@ -929,145 +740,86 @@ ng generate @angular/core:signal-input-migration
   - `src\app\core\services\Inquiry.service.ts:42:31`
   - `src\app\core\services\Inquiry.service.ts:51:23`
   - `src\app\core\services\Inquiry.service.ts:56:27`
-  - `src\app\core\services\Inquiry.service.ts:70:74`
-  - `src\app\core\services\Inquiry.service.ts:87:37`
-  - `src\app\core\services\Inquiry.service.ts:87:47`
-  - `src\app\core\services\Inquiry.service.ts:91:35`
-  - `src\app\core\services\Inquiry.service.ts:91:45`
-  - `src\app\core\services\Inquiry.service.ts:91:60`
-  - `src\app\core\services\Inquiry.service.ts:99:33`
-  - `src\app\core\services\Inquiry.service.ts:103:30`
-  - `src\app\core\services\Inquiry.service.ts:114:39`
-  - `src\app\core\services\Inquiry.service.ts:114:49`
-  - `src\app\core\services\Inquiry.service.ts:119:35`
-  - `src\app\core\services\Inquiry.service.ts:119:45`
-  - `src\app\core\services\Inquiry.service.ts:119:60`
-  - `src\app\core\services\Inquiry.service.ts:126:24`
-  - `src\app\core\services\Inquiry.service.ts:130:30`
-  - `src\app\core\services\Inquiry.service.ts:135:84`
-  - `src\app\core\services\Inquiry.service.ts:147:23`
-  - `src\app\core\services\Inquiry.service.ts:152:26`
-  - `src\app\core\services\Inquiry.service.ts:159:34`
-  - `src\app\core\services\Inquiry.service.ts:166:34`
-  - `src\app\core\services\Inquiry.service.ts:166:50`
-  - `src\app\core\services\Inquiry.service.ts:172:40`
-  - `src\app\core\services\Inquiry.service.ts:181:41`
-  - `src\app\core\services\Inquiry.service.ts:181:51`
-  - `src\app\core\services\Inquiry.service.ts:185:32`
-  - `src\app\core\services\Inquiry.service.ts:185:42`
-  - `src\app\core\services\Inquiry.service.ts:185:57`
-  - `src\app\core\services\Inquiry.service.ts:191:33`
-  - `src\app\core\services\Inquiry.service.ts:191:43`
-  - `src\app\core\services\Inquiry.service.ts:191:58`
-  - `src\app\core\services\Inquiry.service.ts:197:45`
-  - `src\app\core\services\Inquiry.service.ts:197:55`
-  - `src\app\core\services\Inquiry.service.ts:201:28`
-  - `src\app\core\services\Inquiry.service.ts:207:32`
+  - `src\app\core\services\Inquiry.service.ts:69:74`
+  - `src\app\core\services\Inquiry.service.ts:86:37`
+  - `src\app\core\services\Inquiry.service.ts:86:47`
+  - `src\app\core\services\Inquiry.service.ts:90:35`
+  - `src\app\core\services\Inquiry.service.ts:90:45`
+  - `src\app\core\services\Inquiry.service.ts:90:60`
+  - `src\app\core\services\Inquiry.service.ts:98:33`
+  - `src\app\core\services\Inquiry.service.ts:102:30`
+  - `src\app\core\services\Inquiry.service.ts:113:39`
+  - `src\app\core\services\Inquiry.service.ts:113:49`
+  - `src\app\core\services\Inquiry.service.ts:118:35`
+  - `src\app\core\services\Inquiry.service.ts:118:45`
+  - `src\app\core\services\Inquiry.service.ts:118:60`
+  - `src\app\core\services\Inquiry.service.ts:125:24`
+  - `src\app\core\services\Inquiry.service.ts:128:30`
+  - `src\app\core\services\Inquiry.service.ts:132:84`
+  - `src\app\core\services\Inquiry.service.ts:144:23`
+  - `src\app\core\services\Inquiry.service.ts:149:26`
+  - `src\app\core\services\Inquiry.service.ts:156:34`
+  - `src\app\core\services\Inquiry.service.ts:162:34`
+  - `src\app\core\services\Inquiry.service.ts:162:50`
+  - `src\app\core\services\Inquiry.service.ts:167:40`
+  - `src\app\core\services\Inquiry.service.ts:176:41`
+  - `src\app\core\services\Inquiry.service.ts:176:51`
+  - `src\app\core\services\Inquiry.service.ts:180:32`
+  - `src\app\core\services\Inquiry.service.ts:180:42`
+  - `src\app\core\services\Inquiry.service.ts:180:57`
+  - `src\app\core\services\Inquiry.service.ts:186:33`
+  - `src\app\core\services\Inquiry.service.ts:186:43`
+  - `src\app\core\services\Inquiry.service.ts:186:58`
+  - `src\app\core\services\Inquiry.service.ts:192:45`
+  - `src\app\core\services\Inquiry.service.ts:192:55`
+  - `src\app\core\services\Inquiry.service.ts:196:28`
+  - `src\app\core\services\Inquiry.service.ts:202:32`
+  - `src\app\core\services\Inquiry.service.ts:207:23`
+  - `src\app\core\services\Inquiry.service.ts:207:30`
   - `src\app\core\services\Inquiry.service.ts:212:23`
-  - `src\app\core\services\Inquiry.service.ts:212:30`
-  - `src\app\core\services\Inquiry.service.ts:218:23`
-  - `src\app\core\services\Inquiry.service.ts:222:29`
-  - `src\app\core\services\Inquiry.service.ts:232:41`
-  - `src\app\core\services\Inquiry.service.ts:232:51`
-  - `src\app\core\services\Inquiry.service.ts:236:37`
-  - `src\app\core\services\Inquiry.service.ts:236:47`
-  - `src\app\core\services\Inquiry.service.ts:236:62`
-  - `src\app\core\services\Inquiry.service.ts:243:48`
-  - `src\app\core\services\Inquiry.service.ts:243:58`
-  - `src\app\core\services\Inquiry.service.ts:247:39`
-  - `src\app\core\services\Inquiry.service.ts:247:49`
-  - `src\app\core\services\Inquiry.service.ts:247:64`
-  - `src\app\core\services\Inquiry.service.ts:257:39`
-  - `src\app\core\services\Inquiry.service.ts:257:49`
-  - `src\app\core\services\Inquiry.service.ts:257:64`
-  - `src\app\core\services\Inquiry.service.ts:257:73`
-  - `src\app\core\services\Inquiry.service.ts:257:80`
-  - `src\app\core\services\Inquiry.service.ts:257:92`
+  - `src\app\core\services\Inquiry.service.ts:216:29`
+  - `src\app\core\services\Inquiry.service.ts:226:41`
+  - `src\app\core\services\Inquiry.service.ts:226:51`
+  - `src\app\core\services\Inquiry.service.ts:230:37`
+  - `src\app\core\services\Inquiry.service.ts:230:47`
+  - `src\app\core\services\Inquiry.service.ts:230:62`
+  - `src\app\core\services\Inquiry.service.ts:237:48`
+  - `src\app\core\services\Inquiry.service.ts:237:58`
+  - `src\app\core\services\Inquiry.service.ts:241:39`
+  - `src\app\core\services\Inquiry.service.ts:241:49`
+  - `src\app\core\services\Inquiry.service.ts:241:64`
+  - `src\app\core\services\Inquiry.service.ts:251:39`
+  - `src\app\core\services\Inquiry.service.ts:251:49`
+  - `src\app\core\services\Inquiry.service.ts:251:64`
+  - `src\app\core\services\Inquiry.service.ts:251:73`
+  - `src\app\core\services\Inquiry.service.ts:251:80`
+  - `src\app\core\services\Inquiry.service.ts:251:92`
   - `src\app\core\services\internet-interceptor.ts:17:26`
   - `src\app\core\services\internet-interceptor.ts:19:27`
   - `src\app\core\services\jwt.service.ts:29:20`
-  - `src\app\core\services\login.service.ts:19:23`
-  - `src\app\core\services\login.service.ts:19:40`
-  - `src\app\core\services\login.service.ts:23:32`
-  - `src\app\core\services\login.service.ts:23:49`
-  - `src\app\core\services\login.service.ts:25:19`
-  - `src\app\core\services\login.service.ts:32:28`
-  - `src\app\core\services\login.service.ts:32:45`
-  - `src\app\core\services\login.service.ts:34:19`
-  - `src\app\core\services\login.service.ts:41:29`
-  - `src\app\core\services\login.service.ts:51:19`
-  - `src\app\core\services\login.service.ts:57:25`
-  - `src\app\core\services\login.service.ts:57:39`
-  - `src\app\core\services\login.service.ts:61:23`
-  - `src\app\core\services\login.service.ts:61:37`
-  - `src\app\core\services\login.service.ts:65:30`
-  - `src\app\core\services\notification.service.ts:17:29`
-  - `src\app\core\services\notification.service.ts:20:32`
+  - `src\app\core\services\login.service.ts:17:23`
+  - `src\app\core\services\login.service.ts:17:40`
+  - `src\app\core\services\login.service.ts:21:32`
+  - `src\app\core\services\login.service.ts:21:49`
+  - `src\app\core\services\login.service.ts:23:19`
+  - `src\app\core\services\login.service.ts:30:28`
+  - `src\app\core\services\login.service.ts:30:45`
+  - `src\app\core\services\login.service.ts:32:19`
+  - `src\app\core\services\login.service.ts:39:29`
+  - `src\app\core\services\login.service.ts:49:19`
+  - `src\app\core\services\login.service.ts:55:25`
+  - `src\app\core\services\login.service.ts:55:39`
+  - `src\app\core\services\login.service.ts:59:23`
+  - `src\app\core\services\login.service.ts:59:37`
+  - `src\app\core\services\login.service.ts:63:30`
+  - `src\app\core\services\notification.service.ts:16:29`
+  - `src\app\core\services\notification.service.ts:19:32`
   - `src\app\core\services\sauda-erp-mock.service.ts:50:20`
   - `src\app\core\services\sauda-erp-mock.service.ts:2747:14`
   - `src\app\core\services\sauda-erp-mock.service.ts:2810:54`
-  - `src\app\website\components\navbar\navbar.component.ts:58:26`
+  - `src\app\website\components\navbar\navbar.component.ts:61:26`
   - `src\app\website\components\testimonials\testimonials.component.ts:126:52`
   - `src\app\website\components\testimonials\testimonials.component.ts:127:37`
-
-### oxlint/no-unused-vars (warning) — 54 occurrences in 21 files
-
-- **Message:** Identifier 'Observable' is imported but never used.
-- **Locations:**
-  - `src\app\admin\admin.component.ts:16:10` — Identifier 'ThemePalette' is imported but never used.
-  - `src\app\admin\admin.component.ts:116:12` — Parameter 'event' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\admin\dashboard\dashboard.component.ts:12:19` — Identifier 'combineLatest' is imported but never used.
-  - `src\app\admin\dashboard\dashboard.component.ts:18:3` — Identifier 'SaudaRecord' is imported but never used.
-  - `src\app\admin\dashboard\dashboard.component.ts:19:3` — Identifier 'TruckEntryRecord' is imported but never used.
-  - `src\app\admin\dashboard\dashboard.component.ts:20:3` — Identifier 'WarehouseRecord' is imported but never used.
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:2:10` — Identifier 'AbstractControl' is imported but never used.
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:4:10` — Identifier 'SendOtp' is imported but never used.
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:4:19` — Identifier 'OtpVerify' is imported but never used.
-  - `src\app\admin\loginpages\forgot-password\forgot-password.component.ts:5:10` — Identifier 'Validations' is imported but never used.
-  - `src\app\admin\loginpages\loginpages.component.ts:1:46` — Identifier 'signal' is imported but never used.
-  - `src\app\admin\loginpages\otp\otp.component.ts:5:3` — Identifier 'SendOtp' is imported but never used.
-  - `src\app\admin\loginpages\otp\otp.component.ts:6:3` — Identifier 'OtpVerify' is imported but never used.
-  - `src\app\admin\loginpages\otp\otp.component.ts:10:10` — Identifier 'Validations' is imported but never used.
-  - `src\app\admin\loginpages\otp\otp.component.ts:110:13` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\admin\loginpages\signin\signin.component.ts:11:3` — Identifier 'ViewChildren' is imported but never used.
-  - `src\app\admin\loginpages\signin\signin.component.ts:12:3` — Identifier 'QueryList' is imported but never used.
-  - `src\app\admin\loginpages\signin\signin.component.ts:13:3` — Identifier 'ElementRef' is imported but never used.
-  - `src\app\admin\loginpages\signin\signin.component.ts:23:19` — Identifier 'NgOptimizedImage' is imported but never used.
-  - `src\app\admin\party-ledger\party-ledger.component.ts:10:3` — Identifier 'InvoiceLinkedSauda' is imported but never used.
-  - `src\app\admin\party-ledger\party-ledger.component.ts:11:3` — Identifier 'InvoicePaymentRecord' is imported but never used.
-  - `src\app\admin\party-ledger\party-ledger.component.ts:13:3` — Identifier 'InvoiceStatus' is imported but never used.
-  - `src\app\admin\sauda-management\sauda-management.component.ts:23:3` — Identifier 'SaudaAmendmentRecord' is imported but never used.
-  - `src\app\admin\user-management\user-management.component.ts:18:3` — Identifier 'AccountStatus' is imported but never used.
-  - `src\app\admin\user-management\user-management.component.ts:19:3` — Identifier 'PasswordSetupStatus' is imported but never used.
-  - `src\app\core\auth\auth-guard.ts:17:5` — Parameter 'next' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\auth\auth-guard.ts:18:5` — Parameter 'state' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\auth\direct-access-guard.ts:7:3` — Identifier 'PRIMARY_OUTLET' is imported but never used.
-  - `src\app\core\auth\direct-access-guard.ts:8:3` — Identifier 'UrlTree' is imported but never used.
-  - `src\app\core\auth\direct-access-guard.ts:18:5` — Parameter 'next' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\auth\direct-access-guard.ts:19:5` — Parameter 'state' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\auth\student-auth-guard.ts:17:5` — Parameter 'next' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\auth\student-auth-guard.ts:18:5` — Parameter 'state' is declared but never used. Unused parameters should start with a '_'.
-  - `src\app\core\services\api.service.ts:2:35` — Identifier 'HttpParams' is imported but never used.
-  - `src\app\core\services\api.service.ts:3:22` — Identifier 'of' is imported but never used.
-  - `src\app\core\services\api.service.ts:4:22` — Identifier 'map' is imported but never used.
-  - `src\app\core\services\calendar.service.ts:5:27`
-  - `src\app\core\services\classe-routines.service.ts:5:27`
-  - `src\app\core\services\Employee.service.ts:5:27` — Identifier 'catchError' is imported but never used.
-  - `src\app\core\services\Employee.service.ts:5:56` — Identifier 'throwError' is imported but never used.
-  - `src\app\core\services\Inquiry.service.ts:57:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\Inquiry.service.ts:127:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\Inquiry.service.ts:131:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\Inquiry.service.ts:160:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\Inquiry.service.ts:167:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\Inquiry.service.ts:213:11` — Variable 'headers' is declared but never used. Unused variables should start with a '_'.
-  - `src\app\core\services\jwt.service.ts:3:10`
-  - `src\app\core\services\notification.service.ts:1:22` — Identifier 'HttpHeaders' is imported but never used.
-  - `src\app\core\services\notification.service.ts:5:10` — Identifier 'BehaviorSubject' is imported but never used.
-  - `src\app\core\services\notification.service.ts:5:27`
-  - `src\app\core\services\notificationnew.service.ts:4:3` — Identifier 'Injector' is imported but never used.
-  - `src\app\core\services\notificationnew.service.ts:9:10` — Identifier 'BehaviorSubject' is imported but never used.
-  - `src\app\website\home\home.component.ts:6:10` — Identifier 'RouterLink' is imported but never used.
-  - `src\app\website\home\home.component.ts:8:10` — Identifier 'NgOptimizedImage' is imported but never used.
 
 ### oxlint/no-wrapper-object-types (warning) — 29 occurrences in 4 files
 
@@ -1076,8 +828,8 @@ ng generate @angular/core:signal-input-migration
   - `src\app\core\model-class\fee-management.ts:57:12`
   - `src\app\core\model-class\login-signup.ts:43:22`
   - `src\app\core\model-class\login-signup.ts:56:12`
-  - `src\app\core\services\Inquiry.service.ts:70:54`
-  - `src\app\core\services\Inquiry.service.ts:135:64`
+  - `src\app\core\services\Inquiry.service.ts:69:54`
+  - `src\app\core\services\Inquiry.service.ts:132:64`
   - `src\app\core\services\jwt.service.ts:76:21`
   - `src\app\core\services\jwt.service.ts:80:27`
   - `src\app\core\services\jwt.service.ts:83:18`
@@ -1153,24 +905,24 @@ ng generate @angular/core:signal-input-migration
 
 ### oxlint/eqeqeq (warning) — 16 occurrences in 6 files
 
-- **Message:** Expected !== and instead saw !=
+- **Message:** Expected === and instead saw ==
 - **Locations:**
-  - `src\app\core\auth\direct-access-guard.ts:29:30` — Expected === and instead saw ==
-  - `src\app\core\auth\direct-access-guard.ts:35:19`
-  - `src\app\core\model-class\file-extension-validator.directive.ts:9:24` — Expected === and instead saw ==
-  - `src\app\core\services\error.interceptor.ts:19:37` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:261:18`
-  - `src\app\core\services\Inquiry.service.ts:267:14`
-  - `src\app\core\services\Inquiry.service.ts:271:14`
-  - `src\app\core\services\Inquiry.service.ts:271:33` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:274:19`
-  - `src\app\core\services\Inquiry.service.ts:274:40` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:277:19`
-  - `src\app\core\services\Inquiry.service.ts:277:40`
-  - `src\app\core\services\jwt.service.ts:18:18`
-  - `src\app\core\services\jwt.service.ts:42:20`
-  - `src\app\core\services\jwt.service.ts:147:23`
-  - `src\app\core\services\loading.interceptor.ts:25:32` — Expected === and instead saw ==
+  - `src\app\core\auth\direct-access-guard.ts:27:30`
+  - `src\app\core\auth\direct-access-guard.ts:33:19` — Expected !== and instead saw !=
+  - `src\app\core\model-class\file-extension-validator.directive.ts:9:24`
+  - `src\app\core\services\error.interceptor.ts:19:37`
+  - `src\app\core\services\Inquiry.service.ts:255:18` — Expected !== and instead saw !=
+  - `src\app\core\services\Inquiry.service.ts:261:14` — Expected !== and instead saw !=
+  - `src\app\core\services\Inquiry.service.ts:265:14` — Expected !== and instead saw !=
+  - `src\app\core\services\Inquiry.service.ts:265:33`
+  - `src\app\core\services\Inquiry.service.ts:268:19` — Expected !== and instead saw !=
+  - `src\app\core\services\Inquiry.service.ts:268:40`
+  - `src\app\core\services\Inquiry.service.ts:271:19` — Expected !== and instead saw !=
+  - `src\app\core\services\Inquiry.service.ts:271:40` — Expected !== and instead saw !=
+  - `src\app\core\services\jwt.service.ts:18:18` — Expected !== and instead saw !=
+  - `src\app\core\services\jwt.service.ts:42:20` — Expected !== and instead saw !=
+  - `src\app\core\services\jwt.service.ts:147:23` — Expected !== and instead saw !=
+  - `src\app\core\services\loading.interceptor.ts:25:32`
 
 ### angular-doctor/file-hyphen-case (warning) — 2 occurrences in 2 files
 
@@ -1195,9 +947,9 @@ ng generate @angular/core:signal-input-migration
 - **Locations:**
   - `src\app\admin\dashboard\dashboard.component.html:5:7`
   - `src\app\admin\dashboard\dashboard.component.html:18:7`
-  - `src\app\admin\firm-management\firm-management.component.html:187:9`
-  - `src\app\admin\firm-management\firm-management.component.html:198:9`
-  - `src\app\admin\firm-management\firm-management.component.html:208:9`
+  - `src\app\admin\firm-management\firm-management.component.html:188:9`
+  - `src\app\admin\firm-management\firm-management.component.html:199:9`
+  - `src\app\admin\firm-management\firm-management.component.html:209:9`
   - `src\app\admin\inventory-management\categories\categories.component.html:232:9`
   - `src\app\admin\inventory-management\categories\categories.component.html:273:9`
   - `src\app\admin\inventory-management\categories\categories.component.html:283:9`
@@ -1361,10 +1113,10 @@ ng generate @angular/core:signal-input-migration
 - **Locations:**
   - `src\app\admin\dashboard\dashboard.component.html:32:9`
   - `src\app\admin\dashboard\dashboard.component.html:590:15`
-  - `src\app\admin\firm-management\firm-management.component.html:159:1`
-  - `src\app\admin\firm-management\firm-management.component.html:160:3`
-  - `src\app\admin\firm-management\firm-management.component.html:237:1`
-  - `src\app\admin\firm-management\firm-management.component.html:238:3`
+  - `src\app\admin\firm-management\firm-management.component.html:160:1`
+  - `src\app\admin\firm-management\firm-management.component.html:161:3`
+  - `src\app\admin\firm-management\firm-management.component.html:238:1`
+  - `src\app\admin\firm-management\firm-management.component.html:239:3`
   - `src\app\admin\inventory-management\categories\categories.component.html:212:1`
   - `src\app\admin\inventory-management\categories\categories.component.html:213:3`
   - `src\app\admin\inventory-management\categories\categories.component.html:253:1`
@@ -1445,24 +1197,34 @@ ng generate @angular/core:signal-input-migration
 
 - **Message:** The `autofocus` attribute should not be used, as it reduces usability and accessibility for users
 - **Locations:**
-  - `src\app\admin\firm-management\firm-management.component.html:189:11`
+  - `src\app\admin\firm-management\firm-management.component.html:190:11`
+
+## security
+
+### angular-doctor/security-bypass (warning) — 1 occurrence
+
+- **Message:** DomSanitizer bypass API usage requires strict review.
+- **Suggested fix:** Avoid bypassing sanitization. Prefer binding safe values or server-side sanitization.
+- **Reference:** https://angular.dev/best-practices/security
+- **Locations:**
+  - `src\app\core\pipe\safe-url.pipe.ts:9:27`
 
 ---
 
 ```json
 {
-  "score": 24.25,
+  "score": 73.75,
   "totals": {
-    "error": 327,
-    "warning": 652,
-    "info": 116,
+    "error": 213,
+    "warning": 572,
+    "info": 123,
     "byCategory": {
-      "correctness": 10,
-      "performance": 322,
-      "maintainability": 154,
-      "security": 4,
+      "correctness": 0,
+      "performance": 233,
+      "maintainability": 124,
+      "security": 1,
       "accessibility": 238,
-      "hygiene": 367
+      "hygiene": 312
     }
   },
   "migrationsHub": "https://angular.dev/reference/migrations",
@@ -1470,7 +1232,6 @@ ng generate @angular/core:signal-input-migration
   "ruleCatalogVersion": "1",
   "recommendedCommands": [
     "ng generate @angular/core:common-to-standalone",
-    "ng generate @angular/core:control-flow",
     "ng generate @angular/core:inject",
     "ng generate @angular/core:signal-input-migration",
     "ng generate @angular/core:signal-queries-migration",

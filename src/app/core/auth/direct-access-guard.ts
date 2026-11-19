@@ -4,8 +4,6 @@ import {
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   Router,
-  PRIMARY_OUTLET,
-  UrlTree,
 } from "@angular/router";
 import { Observable } from "rxjs/internal/Observable";
 import { JwtService } from "../services/jwt.service";
@@ -15,8 +13,8 @@ export class DirectAccessGuard implements CanActivate {
   constructor(private router: Router, private jwtService: JwtService) {}
 
   canActivate(
-    next: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    _next: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
     const pageAccessedByReload =
       (window.performance.navigation &&

@@ -250,8 +250,8 @@
       <div class="pagination-info">
         Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredUsers.length }} entries
       </div>
-      <pagination-controls id="userPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
-        class="my-pagination"></pagination-controls>
+      <pagination-controls id="userPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev"
+        nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
   </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,8 +8,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   InvCategoryRecord,
   InvSubCategoryRecord,
@@ -24,8 +24,12 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss',
 })
-export class CategoriesComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class CategoriesComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
+
   activeTab: 'Categories' | 'Sub Categories' = 'Categories';
 
   categories: InvCategoryRecord[] = [];
@@ -44,6 +48,12 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
+  activeCategories: InvCategoryRecord[] = [];
+  activeListLength: number = 0;
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+
   // Modals
   isCatModalOpen = false;
   isCatEdit = false;
@@ -56,12 +66,6 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   subCategoryForm!: FormGroup;
 
   formError = '';
-
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
 
   ngOnInit(): void {
     this.categoryForm = this.fb.group({
@@ -76,17 +80,13 @@ export class CategoriesComponent implements OnInit, OnDestroy {
       this.erpService.invCategories$,
       this.erpService.invSubCategories$,
     ])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([cats, subs]) => {
         this.categories = cats;
         this.subCategories = subs;
+        this.activeCategories = this.categories.filter((c) => c.isActive);
         this.applyFilters();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   setActiveTab(tab: 'Categories' | 'Sub Categories'): void {
@@ -116,6 +116,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
         sc.name.toLowerCase().includes(q) ||
         this.getCategoryName(sc.categoryId).toLowerCase().includes(q),
     );
+    this.updatePaginationCounters();
   }
 
   resetFilters(): void {
@@ -126,37 +127,35 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  get activeCategories(): InvCategoryRecord[] {
-    return this.categories.filter((c) => c.isActive);
-  }
-
-  get activeListLength(): number {
-    return this.activeTab === 'Categories'
-      ? this.filteredCategories.length
-      : this.filteredSubCategories.length;
-  }
-
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.activeListLength)
-      : Number(this.tableSize);
-  }
-
-  get showingStart(): number {
-    if (this.activeListLength === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(this.page * this.itemsPerPageCount, this.activeListLength);
+  updatePaginationCounters(): void {
+    this.activeListLength =
+      this.activeTab === 'Categories'
+        ? this.filteredCategories.length
+        : this.filteredSubCategories.length;
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.activeListLength)
+        : Number(this.tableSize);
+    if (this.activeListLength === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.activeListLength,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updatePaginationCounters();
   }
 
   onTableDataChange(pageNumber: number): void {
     this.page = pageNumber;
+    this.updatePaginationCounters();
   }
 
   getCategoryName(categoryId: string): string {

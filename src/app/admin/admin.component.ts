@@ -1,16 +1,5 @@
 
-import {
-  Component,
-  Inject,
-  Renderer2,
-  DOCUMENT,
-  ChangeDetectionStrategy,
-  ViewChild,
-  ElementRef,
-  DestroyRef,
-  inject,
-  OnInit,
-} from '@angular/core';
+import { Component, Renderer2, DOCUMENT, ChangeDetectionStrategy, ViewChild, ElementRef, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDrawerMode, MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { OverlayContainer } from '@angular/cdk/overlay';
@@ -32,6 +21,10 @@ import { filter } from 'rxjs/operators';
     }
 })
 export class AdminComponent implements OnInit {
+  private document = inject<Document>(DOCUMENT);
+  private render = inject(Renderer2);
+  private overlay = inject(OverlayContainer);
+
   title = 'mat_admin';
   themeSectionOpen: boolean = false;
   isMobile: boolean = false;
@@ -43,12 +36,6 @@ export class AdminComponent implements OnInit {
 
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-
-  constructor(
-    @Inject(DOCUMENT) private document: Document,
-    private render: Renderer2,
-    private overlay: OverlayContainer
-  ) {}
 
   ChangeLang(lang: any) {
     const selectedLanguage = lang.target.value;

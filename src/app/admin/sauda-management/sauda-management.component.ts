@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import {
   FormArray,
@@ -10,8 +10,8 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BuyerRecord,
   CommodityLineItem,
@@ -20,7 +20,6 @@ import {
   InvProductRecord,
   InvSubCategoryRecord,
   PackagingUom,
-  SaudaAmendmentRecord,
   SaudaErpMockService,
   SaudaRecord,
   SaudaType,
@@ -52,8 +51,12 @@ export interface InventoryCommodityOption {
   templateUrl: './sauda-management.component.html',
   styleUrl: './sauda-management.component.scss',
 })
-export class SaudaManagementComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class SaudaManagementComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  public erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   viewMode: 'listing' | 'form' = 'listing';
 
@@ -99,14 +102,18 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   // Active Role for testing Maker-Checker Amendment Workflow
   currentActorRole: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)' =
     'Business Owner / Admin (Checker)';
+  isChecker: boolean = true;
+  isMaker: boolean = false;
 
-  get isChecker(): boolean {
-    return this.currentActorRole === 'Business Owner / Admin (Checker)';
-  }
+  activeSaudasList: SaudaRecord[] = [];
+  purchaseCount: number = 0;
+  salesCount: number = 0;
+  brokerageCount: number = 0;
+  firmFilterOptions: string[] = [];
 
-  get isMaker(): boolean {
-    return this.currentActorRole === 'Operations Executive (Maker)';
-  }
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
 
   // Screen states
   isEditMode = false;
@@ -126,17 +133,12 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
   rejectionReason = '';
   showRejectionInput = false;
 
-  constructor(
-    private fb: FormBuilder,
-    public erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-    private route: ActivatedRoute,
-  ) {}
-
   switchActorRole(
     role: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)',
   ): void {
     this.currentActorRole = role;
+    this.isChecker = role === 'Business Owner / Admin (Checker)';
+    this.isMaker = role === 'Operations Executive (Maker)';
     this.notificationService.show(`Switched active role to: ${role}`, 'info', 2500);
   }
 
@@ -152,7 +154,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       this.erpService.invSubCategories$,
       this.erpService.invCategories$,
     ])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
         ([
           saudas,
@@ -191,17 +193,12 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
       );
 
     this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         if (params['action'] === 'create') {
           this.openCreateForm();
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private initForms(): void {
@@ -230,7 +227,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
 
     this.saudaForm
       .get('saudaType')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((type: SaudaType) => {
         this.updatePartyValidators(type);
         this.recomputeBrokerageAmounts();
@@ -238,31 +235,31 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
 
     this.saudaForm
       .get('buyerBrokerageAmount')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeBrokerageAmounts());
 
     this.saudaForm
       .get('sellerBrokerageAmount')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeBrokerageAmounts());
 
     // Auto-calculate Seller & Buyer Due Dates using calendar days
     this.saudaForm
       .get('sellerCreditPeriodDays')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeDueDate('seller'));
     this.saudaForm
       .get('sellerCreditStartDate')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeDueDate('seller'));
 
     this.saudaForm
       .get('buyerCreditPeriodDays')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeDueDate('buyer'));
     this.saudaForm
       .get('buyerCreditStartDate')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeDueDate('buyer'));
 
     this.voidForm = this.fb.group({
@@ -300,13 +297,13 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
 
     row
       .get('actualWeight')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.recomputeRowLineTotal(row);
       });
     row
       .get('rate')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.recomputeRowLineTotal(row);
       });
@@ -515,35 +512,6 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     dueCtrl.setValue(iso, { emitEvent: false });
   }
 
-  // ── KPI Counts (matching active Saudas breakdown) ──
-  get activeSaudasList(): SaudaRecord[] {
-    return this.allSaudas.filter((s) => s.status !== 'Voided');
-  }
-
-  get purchaseCount(): number {
-    return this.activeSaudasList.filter((s) => s.saudaType === 'Purchase')
-      .length;
-  }
-
-  get salesCount(): number {
-    return this.activeSaudasList.filter((s) => s.saudaType === 'Sales').length;
-  }
-
-  get brokerageCount(): number {
-    return this.activeSaudasList.filter(
-      (s) => s.saudaType === 'Direct Sale' || s.saudaType === 'Brokerage',
-    ).length;
-  }
-
-  get firmFilterOptions(): string[] {
-    const names = new Set<string>();
-    this.activeFirms.forEach((f) => names.add(f.name));
-    this.allSaudas.forEach((s) => {
-      if (s.clientFirm) names.add(s.clientFirm);
-    });
-    return Array.from(names);
-  }
-
   // ── Listing Search, Filter & Pagination ──
   onSearch(): void {
     this.appliedSearchTerm = this.searchTerm.trim();
@@ -584,6 +552,7 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
             : s.status === 'Voided';
       return matchesQuery && matchesType && matchesFirm && matchesVoid;
     });
+    this.updateSummaryAndPagination();
   }
 
   resetFilters(): void {
@@ -600,30 +569,49 @@ export class SaudaManagementComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.filteredSaudas.length)
-      : Number(this.tableSize);
-  }
+  updateSummaryAndPagination(): void {
+    this.activeSaudasList = this.allSaudas.filter((s) => s.status !== 'Voided');
+    this.purchaseCount = this.activeSaudasList.filter(
+      (s) => s.saudaType === 'Purchase',
+    ).length;
+    this.salesCount = this.activeSaudasList.filter(
+      (s) => s.saudaType === 'Sales',
+    ).length;
+    this.brokerageCount = this.activeSaudasList.filter(
+      (s) => s.saudaType === 'Direct Sale' || s.saudaType === 'Brokerage',
+    ).length;
 
-  get showingStart(): number {
-    if (this.filteredSaudas.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
+    const names = new Set<string>();
+    this.activeFirms.forEach((f) => names.add(f.name));
+    this.allSaudas.forEach((s) => {
+      if (s.clientFirm) names.add(s.clientFirm);
+    });
+    this.firmFilterOptions = Array.from(names);
 
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredSaudas.length,
-    );
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.filteredSaudas.length)
+        : Number(this.tableSize);
+    if (this.filteredSaudas.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredSaudas.length,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updateSummaryAndPagination();
   }
 
   onTableDataChange(pageNumber: number): void {
     this.page = pageNumber;
+    this.updateSummaryAndPagination();
   }
 
   // ── Screen 2: Create / Edit Sauda View ──

@@ -141,7 +141,7 @@
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ filteredPackagingUoms.length }} entries
       </div>
-      <pagination-controls id="pkgPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+      <pagination-controls id="pkgPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev" nextLabel="Next"
         class="my-pagination"></pagination-controls>
     </div>
     } @else {
@@ -213,7 +213,7 @@
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ filteredWeightUoms.length }} entries
       </div>
-      <pagination-controls id="wtPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+      <pagination-controls id="wtPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev" nextLabel="Next"
         class="my-pagination"></pagination-controls>
     </div>
     }

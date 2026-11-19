@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import {
   FormBuilder,
@@ -8,8 +8,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   InvCategoryRecord,
   InvProductRecord,
@@ -33,8 +33,11 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   templateUrl: './product-master.component.html',
   styleUrl: './product-master.component.scss',
 })
-export class ProductMasterComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class ProductMasterComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   products: InvProductRecord[] = [];
   filteredProducts: InvProductRecord[] = [];
@@ -61,6 +64,11 @@ export class ProductMasterComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
+  activeSubCategories: InvSubCategoryRecord[] = [];
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+
   // Modals
   isFormOpen = false;
   isViewOpen = false;
@@ -68,12 +76,6 @@ export class ProductMasterComponent implements OnInit, OnDestroy {
   selectedProduct: InvProductRecord | null = null;
   productForm!: FormGroup;
   formError = '';
-
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
 
   ngOnInit(): void {
     this.productForm = this.fb.group({
@@ -89,23 +91,17 @@ export class ProductMasterComponent implements OnInit, OnDestroy {
       this.erpService.invCategories$,
       this.erpService.invSubCategories$,
     ])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([products, cats, subs]) => {
         this.products = products;
         this.categories = cats;
         this.subCategories = subs;
+        this.activeSubCategories = this.subCategories.filter((sc) => sc.isActive);
         this.applyFilters();
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
-  get activeSubCategories(): InvSubCategoryRecord[] {
-    return this.subCategories.filter((sc) => sc.isActive);
-  }
 
   getSubCategoryName(subId: string): string {
     return this.subCategories.find((s) => s.id === subId)?.name || '—';
@@ -133,6 +129,7 @@ export class ProductMasterComponent implements OnInit, OnDestroy {
         this.getSubCategoryName(p.subCategoryId).toLowerCase().includes(q) ||
         this.getCategoryNameForSub(p.subCategoryId).toLowerCase().includes(q),
     );
+    this.updatePaginationCounters();
   }
 
   resetFilters(): void {
@@ -143,30 +140,31 @@ export class ProductMasterComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.filteredProducts.length)
-      : Number(this.tableSize);
-  }
-
-  get showingStart(): number {
-    if (this.filteredProducts.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredProducts.length,
-    );
+  updatePaginationCounters(): void {
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.filteredProducts.length)
+        : Number(this.tableSize);
+    if (this.filteredProducts.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredProducts.length,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updatePaginationCounters();
   }
 
   onTableDataChange(pageNumber: number): void {
     this.page = pageNumber;
+    this.updatePaginationCounters();
   }
 
   openAddModal(): void {

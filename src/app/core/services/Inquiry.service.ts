@@ -54,7 +54,6 @@ export class InquiryService {
   }
 
   Uploaddocuemt(formData: any) {
-    const headers = { 'content-type': 'multipart/form-data' };
     return this.apiservice.postWithoutHeader('onboarding/student', formData);
   }
 
@@ -124,11 +123,9 @@ export class InquiryService {
   
 
   StudentOnboard(body: any) {
-    const headers = { 'content-type': 'multipart/form-data' };
     return this.apiservice.postWithoutHeader('onboarding/student', body);
   }
   StudentOnboardUpdate(body: any) {
-    const headers = { 'content-type': 'multipart/form-data' };
     return this.apiservice.putWithoutHeader('onboarding/update', body);
   }
 
@@ -157,14 +154,12 @@ export class InquiryService {
   }
 
   Bulkuploadinquiryapi(formData: any) {
-    const headers = { 'content-type': 'application/json' };
     return this.apiservice.postWithoutHeader(
       'imports/import-enquiries',
       formData
     );
   }
   GetStudentdetailtab(sessionId: any, studentid: any) {
-    const headers = new HttpHeaders().set('Content-Type', 'application/json');
     return this.apiservice.get(
       'students/students/' + sessionId + '/' + studentid
     );
@@ -210,7 +205,6 @@ export class InquiryService {
   }
 
   StudentUpdate(body: any,id:any) {
-    const headers = { 'content-type': 'multipart/form-data' };
     return this.apiservice.putWithoutHeader('students/update-student/'+id, body);
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,15 +8,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FirmRecord,
   SaudaErpMockService,
   UserRecord,
   UserType,
-  AccountStatus,
-  PasswordSetupStatus,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
@@ -27,8 +24,11 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss',
 })
-export class UserManagementComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class UserManagementComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   // Master lists
   allUsers: UserRecord[] = [];
@@ -59,6 +59,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+
   // Add / Edit Form Modal
   isFormModalOpen = false;
   isEditMode = false;
@@ -75,35 +79,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   statusTargetUser: UserRecord | null = null;
   statusModalError = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
-
   ngOnInit(): void {
     this.initForm();
 
     // Subscribe to firms
     this.erpService.firms$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((firms) => {
         this.firmsList = firms.filter((f) => f.isActive);
       });
 
     // Subscribe to users
     this.erpService.users$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((users) => {
         this.allUsers = users;
         this.computeKpis();
         this.applyFilters();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private initForm(): void {
@@ -158,6 +151,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       this.selectedFirm !== 'All';
 
     this.page = 1;
+    this.updatePaginationCounters();
+  }
+
+  updatePaginationCounters(): void {
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? this.filteredUsers.length || 10
+        : Number(this.tableSize);
+    if (this.filteredUsers.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredUsers.length,
+      );
+    }
   }
 
   onSearch(): void {
@@ -173,24 +184,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updatePaginationCounters();
   }
 
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? this.filteredUsers.length || 10
-      : Number(this.tableSize);
-  }
-
-  get showingStart(): number {
-    if (this.filteredUsers.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredUsers.length,
-    );
+  onTableDataChange(pageNumber: number): void {
+    this.page = pageNumber;
+    this.updatePaginationCounters();
   }
 
   // -------------------------------------------------------------

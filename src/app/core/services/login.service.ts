@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { JwtService } from './jwt.service';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
@@ -7,14 +7,12 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
   providedIn: 'root',
 })
 export class LoginService {
+  private http = inject(HttpClient);
+  private apiservice = inject(ApiService);
+  private jwtService = inject(JwtService);
+
   private approvalStageMessage = new BehaviorSubject('');
   currentApprovalStageMessage = this.approvalStageMessage.asObservable();
-
-  constructor(
-    private http: HttpClient,
-    private apiservice: ApiService,
-    private jwtService: JwtService,
-  ) {}
 
   AdminLoginapi(body: any): Observable<any> {
     return this.apiservice.postWithoutHeader(`login`, body);

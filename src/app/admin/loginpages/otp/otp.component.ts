@@ -1,13 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroup, AbstractControl, FormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { FormGroup, FormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
-  SendOtp,
-  OtpVerify,
   ChangePassword,
   ChangePasswordresponse,
 } from 'src/app/core/model-class/login-signup';
-import { Validations } from 'src/app/core/model-class/validations';
 import { ApiService } from 'src/app/core/services/api.service';
 import { DataService } from 'src/app/core/services/data.service';
 import { JwtService } from 'src/app/core/services/jwt.service';
@@ -23,25 +20,17 @@ import { NgClass } from '@angular/common';
     imports: [FormsModule, ReactiveFormsModule, NgClass, RouterLink]
 })
 export class OtpComponent implements OnInit {
+  private formBuilder = inject(FormBuilder);
+  private router = inject(Router);
+  private apiservice = inject(ApiService);
+  private dataService = inject(DataService);
+  private jwtService = inject(JwtService);
+  private loginService = inject(LoginService);
+  private route = inject(ActivatedRoute);
+
   activeLink: string = 'Login';
   url1: any;
   userId: any;
-  constructor(
-    private formBuilder: FormBuilder,
-    private router: Router,
-    private apiservice: ApiService,
-    private dataService: DataService,
-    private jwtService: JwtService,
-    private loginService: LoginService,
-    private route: ActivatedRoute,
-  ) {
-    // this.dataService.changeMessage({ message: "reset" });
-    // const urlDelimitators = new RegExp(/[?//,;&:#$+=%]/);
-    // this.url1 = router.url.slice(0).split(urlDelimitators)[3];
-    // this.userId = router.url.slice(0).split(urlDelimitators)[2];
-    // console.log(this.userId);
-    // console.log(this.url1);
-  }
 
   ResetPassword!: FormGroup;
   Token: any;
@@ -107,10 +96,6 @@ export class OtpComponent implements OnInit {
       this.ChangePassword.password_confirmation =
         this.ResetPassword.get('confirmPassword')?.value;
       this.ChangePassword.type = 'admin';
-      const headers = {
-        'content-type': 'application/json',
-        Authorization: 'Bearer ' + this.Token,
-      };
       const body = JSON.stringify(this.ChangePassword);
 
       console.log(body);

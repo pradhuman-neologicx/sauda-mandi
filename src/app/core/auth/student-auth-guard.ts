@@ -14,8 +14,8 @@ export class StudentAuthGuard implements CanActivate {
   }
 
   canActivate(
-    next: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+    _next: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
     // return this.authService.getisLoggedIn();
     if (this.authService.getstudentLoggedIn()) {
         return true; // User is authenticated, allow access

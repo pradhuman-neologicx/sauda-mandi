@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,8 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FirmRecord,
   SaudaErpMockService,
@@ -26,8 +25,11 @@ export type WarehouseSortField = 'id' | 'name' | 'city' | 'status' | 'createdAt'
   templateUrl: './warehouse.component.html',
   styleUrl: './warehouse.component.scss',
 })
-export class WarehouseComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class WarehouseComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   warehouses: WarehouseRecord[] = [];
   filteredWarehouses: WarehouseRecord[] = [];
@@ -48,6 +50,15 @@ export class WarehouseComponent implements OnInit, OnDestroy {
   page = 1;
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
+
+  // Summary & pagination properties
+  totalCount: number = 0;
+  activeCount: number = 0;
+  inactiveCount: number = 0;
+  citiesCount: number = 0;
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
 
   // Modal 1: Add / Edit Warehouse Modal (UC-WH-01 & UC-WH-03)
   isModalOpen = false;
@@ -71,32 +82,21 @@ export class WarehouseComponent implements OnInit, OnDestroy {
   } | null = null;
   statusModalError = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
-
   ngOnInit(): void {
     this.initForm();
 
     this.erpService.firms$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((firms) => {
         this.firms = firms.filter((f) => f.isActive);
       });
 
     this.erpService.warehouses$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((list) => {
         this.warehouses = list;
         this.applyFilters();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private initForm(): void {
@@ -112,24 +112,6 @@ export class WarehouseComponent implements OnInit, OnDestroy {
       ],
       remarks: [''],
     });
-  }
-
-  // ── KPI Summary Calculations ──
-  get totalCount(): number {
-    return this.warehouses.length;
-  }
-
-  get activeCount(): number {
-    return this.warehouses.filter((w) => w.isActive).length;
-  }
-
-  get inactiveCount(): number {
-    return this.warehouses.filter((w) => !w.isActive).length;
-  }
-
-  get citiesCount(): number {
-    const set = new Set(this.warehouses.map((w) => w.city.toLowerCase().trim()));
-    return set.size;
   }
 
   // ── Search & Filter Logic ──
@@ -220,29 +202,40 @@ export class WarehouseComponent implements OnInit, OnDestroy {
     });
 
     this.filteredWarehouses = result;
+    this.updateSummaryAndPagination();
   }
 
-  // ── Pagination Helpers ──
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.filteredWarehouses.length)
-      : this.tableSize;
-  }
-
-  get showingStart(): number {
-    if (this.filteredWarehouses.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredWarehouses.length,
-    );
+  updateSummaryAndPagination(): void {
+    this.totalCount = this.warehouses.length;
+    this.activeCount = this.warehouses.filter((w) => w.isActive).length;
+    this.inactiveCount = this.warehouses.filter((w) => !w.isActive).length;
+    this.citiesCount = new Set(
+      this.warehouses.map((w) => w.city.toLowerCase().trim()),
+    ).size;
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.filteredWarehouses.length)
+        : Number(this.tableSize);
+    if (this.filteredWarehouses.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredWarehouses.length,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updateSummaryAndPagination();
+  }
+
+  onTableDataChange(pageNumber: number): void {
+    this.page = pageNumber;
+    this.updateSummaryAndPagination();
   }
 
   // ── UC-WH-01 & UC-WH-03: Create & Edit Warehouse ──

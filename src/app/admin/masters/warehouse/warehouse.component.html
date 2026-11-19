@@ -238,7 +238,7 @@
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ filteredWarehouses.length }} entries
       </div>
-      <pagination-controls id="whPagination" (pageChange)="page = $event" previousLabel="Prev" nextLabel="Next"
+      <pagination-controls id="whPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev" nextLabel="Next"
         class="my-pagination"></pagination-controls>
     </div>
   </div>

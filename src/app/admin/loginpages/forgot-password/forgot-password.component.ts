@@ -1,8 +1,6 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { SendOtp, OtpVerify } from '../../../core/model-class/login-signup';
-import { Validations } from '../../../core/model-class/validations';
 import { ApiService } from '../../../core/services/api.service';
 import { DataService } from '../../../core/services/data.service';
 import { JwtService } from '../../../core/services/jwt.service';
@@ -19,6 +17,14 @@ import { NgClass } from '@angular/common';
     imports: [FormsModule, ReactiveFormsModule, NgClass, RouterLink]
 })
 export class ForgotPasswordComponent implements OnInit {
+  private formBuilder = inject(FormBuilder);
+  private router = inject(Router);
+  private apiservice = inject(ApiService);
+  private dataService = inject(DataService);
+  private jwtService = inject(JwtService);
+  private loginService = inject(LoginService);
+  private notificationService = inject(NotificationService);
+
   title = 'Forgot Password';
   subtitle = 'Enter your email address to receive a verification OTP';
   Email: string = '';
@@ -32,16 +38,6 @@ export class ForgotPasswordComponent implements OnInit {
   ForgotForm!: FormGroup;
   loginAS!: number;
   email_pattern = '^[A-Za-z0-9_.]+@[a-zA-Z]+(\\.[a-zA-Z]{2,4})+$';
-
-  constructor(
-    private formBuilder: FormBuilder,
-    private router: Router,
-    private apiservice: ApiService,
-    private dataService: DataService,
-    private jwtService: JwtService,
-    private loginService: LoginService,
-    private notificationService: NotificationService,
-  ) {}
 
   ngOnInit() {
     this.ForgotForm = this.formBuilder.group(

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router, NavigationEnd, RouterLink } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -14,6 +14,8 @@ import { filter } from 'rxjs/operators';
     }
 })
 export class NavbarComponent implements OnInit {
+  private router = inject(Router);
+
   isMenuOpen = false;
   isScrolled = false;
   forceScrolled = false;
@@ -51,8 +53,6 @@ export class NavbarComponent implements OnInit {
       ],
     },
   ];
-
-  constructor(private router: Router) { }
 
   ngOnInit() {
     this.checkRoute(this.router.url);

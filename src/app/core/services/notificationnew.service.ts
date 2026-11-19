@@ -1,25 +1,15 @@
-import {
-  Injectable,
-  ComponentRef,
-  Injector,
-  ApplicationRef,
-  createComponent,
-  EnvironmentInjector,
-} from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, ComponentRef, ApplicationRef, createComponent, EnvironmentInjector, inject } from '@angular/core';
 import { NotificationComponent } from 'src/app/website/notification/notification.component';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
+  private appRef = inject(ApplicationRef);
+  private environmentInjector = inject(EnvironmentInjector);
+
   private activeNotifications: ComponentRef<NotificationComponent>[] = [];
   private notificationHosts: HTMLElement[] = [];
-
-  constructor(
-    private appRef: ApplicationRef,
-    private environmentInjector: EnvironmentInjector
-  ) {}
 
   show(
     message: string,

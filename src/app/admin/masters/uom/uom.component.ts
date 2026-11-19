@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,8 +8,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   PackagingUomRecord,
   SaudaErpMockService,
@@ -24,8 +24,12 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   templateUrl: './uom.component.html',
   styleUrl: './uom.component.scss',
 })
-export class UomComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class UomComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
+
   activeTab: 'Packaging UOM' | 'Weight UOM' = 'Packaging UOM';
 
   packagingUoms: PackagingUomRecord[] = [];
@@ -44,6 +48,10 @@ export class UomComponent implements OnInit, OnDestroy {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+
   // Packaging UOM Modal
   isPkgModalOpen = false;
   isPkgEdit = false;
@@ -58,12 +66,6 @@ export class UomComponent implements OnInit, OnDestroy {
 
   formError = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-  ) {}
-
   ngOnInit(): void {
     this.pkgForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -73,17 +75,12 @@ export class UomComponent implements OnInit, OnDestroy {
     });
 
     combineLatest([this.erpService.packagingUoms$, this.erpService.weightUoms$])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([pkgList, wtList]) => {
         this.packagingUoms = pkgList;
         this.weightUoms = wtList;
         this.applyFilters();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   setActiveTab(tab: 'Packaging UOM' | 'Weight UOM'): void {
@@ -117,35 +114,33 @@ export class UomComponent implements OnInit, OnDestroy {
         !q ? true : u.name.toLowerCase().includes(q),
       );
     }
+    this.updatePaginationCounters();
   }
 
-  get itemsPerPageCount(): number {
+  updatePaginationCounters(): void {
     const currentLength =
       this.activeTab === 'Packaging UOM'
         ? this.filteredPackagingUoms.length
         : this.filteredWeightUoms.length;
-    return this.tableSize === 'all' ? Math.max(1, currentLength) : this.tableSize;
-  }
-
-  get showingStart(): number {
-    const total =
-      this.activeTab === 'Packaging UOM'
-        ? this.filteredPackagingUoms.length
-        : this.filteredWeightUoms.length;
-    if (total === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    const total =
-      this.activeTab === 'Packaging UOM'
-        ? this.filteredPackagingUoms.length
-        : this.filteredWeightUoms.length;
-    return Math.min(this.page * this.itemsPerPageCount, total);
+    this.itemsPerPageCount =
+      this.tableSize === 'all' ? Math.max(1, currentLength) : Number(this.tableSize);
+    if (currentLength === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(this.page * this.itemsPerPageCount, currentLength);
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updatePaginationCounters();
+  }
+
+  onTableDataChange(pageNumber: number): void {
+    this.page = pageNumber;
+    this.updatePaginationCounters();
   }
 
   // ── Packaging UOM Modal Handlers ──

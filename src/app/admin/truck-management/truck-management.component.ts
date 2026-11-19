@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import {
   FormArray,
@@ -10,8 +10,8 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CommodityLineItem,
   PackagingUom,
@@ -38,8 +38,12 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
   templateUrl: './truck-management.component.html',
   styleUrl: './truck-management.component.scss',
 })
-export class TruckManagementComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class TruckManagementComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  public erpService = inject(SaudaErpMockService);
+  private notificationService = inject(NotificationService);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   viewMode: 'listing' | 'details' | 'form' = 'listing';
   activeDetailTab: 'details' | 'commodities' | 'revisions' = 'details';
@@ -84,6 +88,18 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   ];
   readonly weightUoms: WeightUom[] = ['KG', 'Quintal', 'MT'];
 
+  // Summary & Pagination properties
+  activeTrucksList: TruckEntryRecord[] = [];
+  purchaseLinkedCount: number = 0;
+  salesLinkedCount: number = 0;
+  deliveredCount: number = 0;
+  inTransitCount: number = 0;
+  brokerageLinkedCount: number = 0;
+
+  itemsPerPageCount: number = 10;
+  showingStart: number = 0;
+  showingEnd: number = 0;
+
   // Form / Modal states
   isEditMode = false;
   isRemoveOpen = false;
@@ -95,13 +111,6 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
   formError = '';
   removeError = '';
 
-  constructor(
-    private fb: FormBuilder,
-    public erpService: SaudaErpMockService,
-    private notificationService: NotificationService,
-    private route: ActivatedRoute,
-  ) {}
-
   ngOnInit(): void {
     this.initForms();
 
@@ -110,7 +119,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
       this.erpService.saudas$,
       this.erpService.warehouses$,
     ])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([trucks, saudas, warehouses]) => {
         this.allTrucks = trucks;
         this.allSaudas = saudas;
@@ -123,7 +132,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
       });
 
     this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         if (params['action'] === 'create' || params['saudaId']) {
           const forceType =
@@ -135,11 +144,6 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
           this.openCreateForm(params['saudaId'], forceType);
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private initForms(): void {
@@ -170,9 +174,9 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
 
     this.truckForm
       .get('saudaId')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe((saudaId: string) => {
-        this.onLinkedSaudaChanged(saudaId);
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((saudaId) => {
+        this.onLinkedSaudaChanged(saudaId as string);
       });
 
     this.removeForm = this.fb.group({
@@ -246,36 +250,6 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── KPI Counts (active non-removed entries) ──
-  get activeTrucksList(): TruckEntryRecord[] {
-    return this.allTrucks.filter((t) => t.status !== 'Removed');
-  }
-
-  get purchaseLinkedCount(): number {
-    return this.activeTrucksList.filter((t) => t.saudaType === 'Purchase')
-      .length;
-  }
-
-  get salesLinkedCount(): number {
-    return this.activeTrucksList.filter((t) => t.saudaType === 'Sales').length;
-  }
-
-  get deliveredCount(): number {
-    return this.activeTrucksList.filter((t) => t.status === 'Delivered').length;
-  }
-
-  get inTransitCount(): number {
-    return this.activeTrucksList.filter(
-      (t) => t.status === 'In Transit' || t.status === 'Loaded',
-    ).length;
-  }
-
-  get brokerageLinkedCount(): number {
-    return this.activeTrucksList.filter(
-      (t) => t.saudaType === 'Brokerage' || t.saudaType === 'Direct Sale',
-    ).length;
-  }
-
   // ── Search, Filters & Pagination ──
   onSearch(): void {
     this.appliedSearchTerm = this.searchTerm.trim();
@@ -322,6 +296,7 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
         matchesDate
       );
     });
+    this.updateSummaryAndPagination();
   }
 
   resetFilters(): void {
@@ -340,30 +315,48 @@ export class TruckManagementComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  get itemsPerPageCount(): number {
-    return this.tableSize === 'all'
-      ? Math.max(1, this.filteredTrucks.length)
-      : Number(this.tableSize);
-  }
+  updateSummaryAndPagination(): void {
+    this.activeTrucksList = this.allTrucks.filter((t) => t.status !== 'Removed');
+    this.purchaseLinkedCount = this.activeTrucksList.filter(
+      (t) => t.saudaType === 'Purchase',
+    ).length;
+    this.salesLinkedCount = this.activeTrucksList.filter(
+      (t) => t.saudaType === 'Sales',
+    ).length;
+    this.deliveredCount = this.activeTrucksList.filter(
+      (t) => t.status === 'Delivered',
+    ).length;
+    this.inTransitCount = this.activeTrucksList.filter(
+      (t) => t.status === 'In Transit' || t.status === 'Loaded',
+    ).length;
+    this.brokerageLinkedCount = this.activeTrucksList.filter(
+      (t) => t.saudaType === 'Brokerage' || t.saudaType === 'Direct Sale',
+    ).length;
 
-  get showingStart(): number {
-    if (this.filteredTrucks.length === 0) return 0;
-    return (this.page - 1) * this.itemsPerPageCount + 1;
-  }
-
-  get showingEnd(): number {
-    return Math.min(
-      this.page * this.itemsPerPageCount,
-      this.filteredTrucks.length,
-    );
+    this.itemsPerPageCount =
+      this.tableSize === 'all'
+        ? Math.max(1, this.filteredTrucks.length)
+        : Number(this.tableSize);
+    if (this.filteredTrucks.length === 0) {
+      this.showingStart = 0;
+      this.showingEnd = 0;
+    } else {
+      this.showingStart = (this.page - 1) * this.itemsPerPageCount + 1;
+      this.showingEnd = Math.min(
+        this.page * this.itemsPerPageCount,
+        this.filteredTrucks.length,
+      );
+    }
   }
 
   onTableSizeChange(): void {
     this.page = 1;
+    this.updateSummaryAndPagination();
   }
 
   onTableDataChange(pageNumber: number): void {
     this.page = pageNumber;
+    this.updateSummaryAndPagination();
   }
 
   // ── Helpers for Form ──
