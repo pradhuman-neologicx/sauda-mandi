@@ -1429,12 +1429,12 @@
           </div>
 
           <!-- From: Firm Dropdown -->
-          <div class="form-group mb-3">
-            <label class="form-label-erp fw-bold d-flex justify-content-between align-items-center">
-              <span>From:</span>
-              <span class="text-xs text-muted">Select Sender Firm</span>
+          <div class="field-group mb-3">
+            <label class="d-flex justify-content-between align-items-center">
+              <span>From: <span class="req">*</span></span>
+              <span class="text-xs text-muted fw-normal">Select Sender Firm</span>
             </label>
-            <select class="form-control-erp" [(ngModel)]="sendInvoiceForm.fromFirm" name="fromFirm"
+            <select class="erp-input" [(ngModel)]="sendInvoiceForm.fromFirm" name="fromFirm"
               (change)="onSendFirmChange()" required>
               @for (firm of firms; track firm.id) {
               <option [value]="firm.name">{{ firm.name }}</option>
@@ -1442,10 +1442,9 @@
             </select>
           </div>
 
-
           <!-- Channel Selection (Email or WhatsApp Number) -->
-          <div class="mb-3">
-            <label class="form-label-erp fw-bold mb-2">Send Via (Choose One):</label>
+          <div class="field-group mb-3">
+            <label>Send Via (Choose One): <span class="req">*</span></label>
             <div class="channel-selection-grid">
               <!-- Email Option -->
               <label class="channel-card" [class.active]="sendInvoiceForm.sendChannel === 'email'">
@@ -1458,7 +1457,7 @@
                 </div>
                 <div class="channel-details small mt-2">
                   <div class="text-muted text-xs">Firm Sender Email:</div>
-                  <div class="fw-semibold text-truncate text-dark">
+                  <div class="fw-semibold text-truncate text-dark" [title]="selectedSenderFirm?.email || 'N/A'">
                     {{ selectedSenderFirm?.email || 'N/A' }}
                   </div>
                 </div>
@@ -1475,7 +1474,7 @@
                 </div>
                 <div class="channel-details small mt-2">
                   <div class="text-muted text-xs">Firm Sender WhatsApp:</div>
-                  <div class="fw-semibold text-truncate text-dark">
+                  <div class="fw-semibold text-truncate text-dark" [title]="selectedSenderFirm?.whatsappNumber || 'N/A'">
                     {{ selectedSenderFirm?.whatsappNumber || 'N/A' }}
                   </div>
                 </div>
@@ -1485,36 +1484,39 @@
 
           <!-- Recipient Destination Input based on selected channel -->
           @if (sendInvoiceForm.sendChannel === 'email') {
-          <div class="form-group mb-3">
-            <label class="form-label-erp fw-bold">
-              Recipient Email ({{ sendingInvoice.partyName }}):
+          <div class="field-group mb-3">
+            <label>
+              Recipient Email ({{ sendingInvoice.partyName }}): <span class="req">*</span>
             </label>
-            <div class="input-group-erp">
-              <span class="input-icon"><i class="fa-solid fa-at text-muted"></i></span>
-              <input type="email" class="form-control-erp" [(ngModel)]="sendInvoiceForm.recipientEmail"
+            <div class="input-with-icon">
+              <i class="fa-solid fa-at input-icon"></i>
+              <input type="email" class="erp-input" [(ngModel)]="sendInvoiceForm.recipientEmail"
                 name="recipientEmail" placeholder="e.g. accounts@party.com" required>
             </div>
-            <div class="form-hint-erp">Settled invoice receipt PDF will be sent to this email address.</div>
+            <small class="text-muted mt-1 d-block">
+              <i class="fa-solid fa-circle-info me-1"></i>Settled invoice receipt PDF will be sent to this email address.
+            </small>
           </div>
           } @else {
-          <div class="form-group mb-3">
-            <label class="form-label-erp fw-bold">
-              Recipient WhatsApp Number ({{ sendingInvoice.partyName }}):
+          <div class="field-group mb-3">
+            <label>
+              Recipient WhatsApp Number ({{ sendingInvoice.partyName }}): <span class="req">*</span>
             </label>
-            <div class="input-group-erp">
-              <span class="input-icon"><i class="fa-brands fa-whatsapp text-success"></i></span>
-              <input type="tel" class="form-control-erp" [(ngModel)]="sendInvoiceForm.recipientWhatsapp"
+            <div class="input-with-icon">
+              <i class="fa-brands fa-whatsapp input-icon text-success"></i>
+              <input type="tel" class="erp-input" [(ngModel)]="sendInvoiceForm.recipientWhatsapp"
                 name="recipientWhatsapp" placeholder="e.g. 9829012345" required>
             </div>
-            <div class="form-hint-erp">Invoice details &amp; receipt link will be dispatched to this WhatsApp number.
-            </div>
+            <small class="text-muted mt-1 d-block">
+              <i class="fa-solid fa-circle-info me-1"></i>Invoice details &amp; receipt link will be dispatched to this WhatsApp number.
+            </small>
           </div>
           }
 
           <!-- Remarks / Note -->
-          <div class="form-group mb-2">
-            <label class="form-label-erp">Optional Note / Message:</label>
-            <textarea class="form-control-erp" rows="2" [(ngModel)]="sendInvoiceForm.notes" name="notes"
+          <div class="field-group mb-2">
+            <label>Optional Note / Message:</label>
+            <textarea rows="3" class="erp-input" [(ngModel)]="sendInvoiceForm.notes" name="notes"
               placeholder="e.g. Dear Partner, please find attached the settled invoice statement."></textarea>
           </div>
         </div>
