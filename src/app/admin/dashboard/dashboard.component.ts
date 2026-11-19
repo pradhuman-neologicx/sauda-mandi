@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subject, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { BsDatepickerConfig, BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import {
   FirmRecord,
   SaudaErpMockService,
@@ -49,7 +50,13 @@ interface RecentSaudaItem {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DecimalPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    DecimalPipe,
+    BsDatepickerModule,
+  ],
   selector: 'app-dashboard',
   styleUrl: './dashboard.component.scss',
   templateUrl: './dashboard.component.html',
@@ -71,6 +78,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Year & Multi-Month Filter State
   availableYears: number[] = [2026, 2025, 2024, 2023];
   selectedYear = 2026;
+  selectedYearDate: Date = new Date(2026, 0, 1);
+  bsYearConfig: Partial<BsDatepickerConfig> = {
+    minMode: 'year',
+    dateInputFormat: 'YYYY',
+    adaptivePosition: true,
+    containerClass: 'theme-blue',
+  };
   isMonthDropdownOpen = false;
 
   readonly monthsList = [
@@ -94,12 +108,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (
+      target.closest('bs-datepicker-container') ||
+      target.closest('.bs-datepicker') ||
+      target.closest('.bs-datepicker-head') ||
+      target.closest('.bs-datepicker-body')
+    ) {
+      return;
+    }
     if (
       this.isMonthDropdownOpen &&
       this.monthPickerContainer &&
       !this.monthPickerContainer.nativeElement.contains(event.target)
     ) {
       this.isMonthDropdownOpen = false;
+    }
+  }
+
+  onYearDateChange(date: Date | null): void {
+    if (date && date instanceof Date && !isNaN(date.getTime())) {
+      this.selectedYear = date.getFullYear();
+      this.selectedYearDate = date;
+      this.updateSelectedPeriodText();
     }
   }
 

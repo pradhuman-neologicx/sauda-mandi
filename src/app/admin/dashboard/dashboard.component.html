@@ -36,11 +36,9 @@
             </span>
             <div class="popover-year-pill">
               <span>Year:</span>
-              <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange()" class="popover-inline-year">
-                @for (y of availableYears; track y) {
-                <option [value]="y">{{ y }}</option>
-                }
-              </select>
+              <input type="text" class="form-control popover-inline-year" bsDatepicker [(bsValue)]="selectedYearDate"
+                (bsValueChange)="onYearDateChange($event)"
+                [bsConfig]="{ minMode: 'year', dateInputFormat: 'YYYY', adaptivePosition: true, containerClass: 'theme-blue' }">
             </div>
           </div>
 

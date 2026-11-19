@@ -215,9 +215,14 @@
           color: #0f172a;
           cursor: pointer;
           outline: none;
+          width: 68px;
+          text-align: center;
+          height: 26px;
 
           &:focus {
             border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
           }
         }
       }
