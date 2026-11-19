@@ -286,94 +286,68 @@ export class PartyLedgerComponent implements OnInit {
       });
   }
 
-  // ── KPI Totals ──
+  // ── KPI Totals & Precomputed Properties ──
+  totalPendingPayableInr = 0;
+  totalPayableInr = 0;
+  totalPaidInr = 0;
+  totalPendingReceivableInr = 0;
+  totalReceivableInr = 0;
+  totalReceivedInr = 0;
+  netOverallPositionInr = 0;
+  payablePartiesCount = 0;
+  receivablePartiesCount = 0;
+  totalInvoicedAmountInr = 0;
+  totalIssuedInvoiceAmountInr = 0;
+  totalPaidInvoiceAmountInr = 0;
+  issuedInvoicesCount = 0;
+  paidInvoicesCount = 0;
+  pageSize = 10;
+  partyDropdownOptions: Array<{ name: string; role: 'Seller' | 'Buyer' }> = [];
+  saudaOptionsForPayment: SaudaRecord[] = [];
 
-  get totalPendingPayableInr(): number {
-    return this.allPartySummaries.reduce((s, p) => s + p.pendingPayableInr, 0);
-  }
+  updateLedgerKpis(): void {
+    this.totalPendingPayableInr = this.allPartySummaries.reduce((s, p) => s + p.pendingPayableInr, 0);
+    this.totalPayableInr = this.allPartySummaries.reduce((s, p) => s + p.totalPayableInr, 0);
+    this.totalPaidInr = this.allPartySummaries.reduce((s, p) => s + p.totalPaidInr, 0);
+    this.totalPendingReceivableInr = this.allPartySummaries.reduce((s, p) => s + p.pendingReceivableInr, 0);
+    this.totalReceivableInr = this.allPartySummaries.reduce((s, p) => s + p.totalReceivableInr, 0);
+    this.totalReceivedInr = this.allPartySummaries.reduce((s, p) => s + p.totalReceivedInr, 0);
+    this.netOverallPositionInr = this.totalPendingReceivableInr - this.totalPendingPayableInr;
+    this.payablePartiesCount = this.allPartySummaries.filter((p) => p.pendingPayableInr > 0).length;
+    this.receivablePartiesCount = this.allPartySummaries.filter((p) => p.pendingReceivableInr > 0).length;
 
-  get totalPayableInr(): number {
-    return this.allPartySummaries.reduce((s, p) => s + p.totalPayableInr, 0);
-  }
-
-  get totalPaidInr(): number {
-    return this.allPartySummaries.reduce((s, p) => s + p.totalPaidInr, 0);
-  }
-
-  get totalPendingReceivableInr(): number {
-    return this.allPartySummaries.reduce(
-      (s, p) => s + p.pendingReceivableInr,
-      0,
-    );
-  }
-
-  get totalReceivableInr(): number {
-    return this.allPartySummaries.reduce((s, p) => s + p.totalReceivableInr, 0);
-  }
-
-  get totalReceivedInr(): number {
-    return this.allPartySummaries.reduce((s, p) => s + p.totalReceivedInr, 0);
-  }
-
-  get netOverallPositionInr(): number {
-    return this.totalPendingReceivableInr - this.totalPendingPayableInr;
-  }
-
-  get payablePartiesCount(): number {
-    return this.allPartySummaries.filter((p) => p.pendingPayableInr > 0).length;
-  }
-
-  get receivablePartiesCount(): number {
-    return this.allPartySummaries.filter((p) => p.pendingReceivableInr > 0)
-      .length;
-  }
-
-  // ── Invoice KPIs ──
-
-  get totalInvoicedAmountInr(): number {
-    return this.invoices.reduce(
-      (sum, inv) => sum + Number(inv.finalAmount || 0),
-      0,
-    );
-  }
-
-  get totalIssuedInvoiceAmountInr(): number {
-    return this.invoices
+    this.totalInvoicedAmountInr = this.invoices.reduce((sum, inv) => sum + Number(inv.finalAmount || 0), 0);
+    this.totalIssuedInvoiceAmountInr = this.invoices
       .filter((inv) => inv.status === 'Issued')
       .reduce((sum, inv) => sum + Number(inv.finalAmount || 0), 0);
-  }
-
-  get totalPaidInvoiceAmountInr(): number {
-    return this.invoices
+    this.totalPaidInvoiceAmountInr = this.invoices
       .filter((inv) => inv.status === 'Paid')
       .reduce((sum, inv) => sum + Number(inv.finalAmount || 0), 0);
+    this.issuedInvoicesCount = this.invoices.filter((inv) => inv.status === 'Issued').length;
+    this.paidInvoicesCount = this.invoices.filter((inv) => inv.status === 'Paid').length;
+
+    this.updatePageSize();
+    this.updatePartyDropdownOptions();
+    this.updateSaudaOptionsForPayment();
   }
 
-  get issuedInvoicesCount(): number {
-    return this.invoices.filter((inv) => inv.status === 'Issued').length;
-  }
-
-  get paidInvoicesCount(): number {
-    return this.invoices.filter((inv) => inv.status === 'Paid').length;
-  }
-
-  get pageSize(): number {
+  updatePageSize(): void {
     if (this.viewTab === 'invoices') {
-      return this.tableSize === 'all'
+      this.pageSize = this.tableSize === 'all'
         ? Math.max(this.filteredInvoices.length, 1)
         : this.tableSize;
-    }
-    if (this.viewTab === 'transactions') {
-      return this.tableSize === 'all'
+    } else if (this.viewTab === 'transactions') {
+      this.pageSize = this.tableSize === 'all'
         ? Math.max(this.filteredTransactions.length, 1)
         : this.tableSize;
+    } else {
+      this.pageSize = this.tableSize === 'all'
+        ? Math.max(this.filteredSummaries.length, 1)
+        : this.tableSize;
     }
-    return this.tableSize === 'all'
-      ? Math.max(this.filteredSummaries.length, 1)
-      : this.tableSize;
   }
 
-  get partyDropdownOptions(): Array<{ name: string; role: 'Seller' | 'Buyer' }> {
+  updatePartyDropdownOptions(): void {
     const map = new Map<string, { name: string; role: 'Seller' | 'Buyer' }>();
     for (const s of this.sellers) {
       if (s.isActive) {
@@ -393,12 +367,12 @@ export class PartyLedgerComponent implements OnInit {
         });
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    this.partyDropdownOptions = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  get saudaOptionsForPayment(): SaudaRecord[] {
+  updateSaudaOptionsForPayment(): void {
     const pName = (this.paymentForm.partyName || '').trim().toLowerCase();
-    return this.saudas.filter((s) => {
+    this.saudaOptionsForPayment = this.saudas.filter((s) => {
       if (s.status === 'Voided') return false;
       if (!pName) return true;
       return (
@@ -769,6 +743,7 @@ export class PartyLedgerComponent implements OnInit {
           (p) => p.partyKey === this.selectedStatementParty!.partyKey,
         ) || null;
     }
+    this.updateLedgerKpis();
   }
 
   onSearch(): void {
@@ -799,6 +774,7 @@ export class PartyLedgerComponent implements OnInit {
     this.page = 1;
     this.txnPage = 1;
     this.invoicePage = 1;
+    this.updatePageSize();
   }
 
   setTab(tab: 'invoices' | 'parties' | 'transactions'): void {
@@ -806,15 +782,17 @@ export class PartyLedgerComponent implements OnInit {
     this.page = 1;
     this.txnPage = 1;
     this.invoicePage = 1;
+    this.updatePageSize();
   }
 
   // ── Invoice Management Methods (UC-FIN-01 & UC-FIN-04) ──
+  originalCalculatedInvoiceTotal = 0;
 
-  get originalCalculatedInvoiceTotal(): number {
+  updateCalculatedInvoiceTotal(): void {
     const selected = this.eligibleSaudasForInvoicing.filter((s) =>
       this.createInvoiceForm.selectedSaudaIds.includes(s.id),
     );
-    return selected.reduce((sum, s) => sum + Number(s.totalAmountInr || 0), 0);
+    this.originalCalculatedInvoiceTotal = selected.reduce((sum, s) => sum + Number(s.totalAmountInr || 0), 0);
   }
 
   applyInvoiceFilters(): void {
@@ -845,6 +823,7 @@ export class PartyLedgerComponent implements OnInit {
         )
       );
     });
+    this.updateLedgerKpis();
   }
 
   onInvoiceSearch(): void {
@@ -877,6 +856,7 @@ export class PartyLedgerComponent implements OnInit {
       adjustmentReason: '',
     };
     this.refreshEligibleSaudas();
+    this.updateCalculatedInvoiceTotal();
     this.showCreateInvoiceModal = true;
   }
 
@@ -901,6 +881,7 @@ export class PartyLedgerComponent implements OnInit {
     }
 
     this.refreshEligibleSaudas();
+    this.updateCalculatedInvoiceTotal();
   }
 
   refreshEligibleSaudas(): void {
@@ -925,6 +906,7 @@ export class PartyLedgerComponent implements OnInit {
     } else {
       this.createInvoiceForm.selectedSaudaIds.push(saudaId);
     }
+    this.updateCalculatedInvoiceTotal();
     this.createInvoiceForm.finalAmount = this.originalCalculatedInvoiceTotal;
   }
 
@@ -935,11 +917,13 @@ export class PartyLedgerComponent implements OnInit {
   selectAllEligibleSaudas(): void {
     this.createInvoiceForm.selectedSaudaIds =
       this.eligibleSaudasForInvoicing.map((s) => s.id);
+    this.updateCalculatedInvoiceTotal();
     this.createInvoiceForm.finalAmount = this.originalCalculatedInvoiceTotal;
   }
 
   deselectAllSaudas(): void {
     this.createInvoiceForm.selectedSaudaIds = [];
+    this.updateCalculatedInvoiceTotal();
     this.createInvoiceForm.finalAmount = 0;
   }
 
@@ -1115,6 +1099,7 @@ export class PartyLedgerComponent implements OnInit {
       recipientWhatsapp: partyPhone,
       notes: '',
     };
+    this.updateSelectedSenderFirm();
 
     this.showSendInvoiceModal = true;
   }
@@ -1125,8 +1110,10 @@ export class PartyLedgerComponent implements OnInit {
     this.sendingInvoice = null;
   }
 
-  get selectedSenderFirm(): FirmRecord | undefined {
-    return this.firms.find(
+  selectedSenderFirm: FirmRecord | undefined = undefined;
+
+  updateSelectedSenderFirm(): void {
+    this.selectedSenderFirm = this.firms.find(
       (f) =>
         f.name.toLowerCase() ===
         (this.sendInvoiceForm.fromFirm || '').trim().toLowerCase(),
@@ -1135,6 +1122,7 @@ export class PartyLedgerComponent implements OnInit {
 
   onSendFirmChange(): void {
     this.sendInvoiceError = '';
+    this.updateSelectedSenderFirm();
   }
 
   executeSendInvoice(): void {
@@ -1278,6 +1266,7 @@ export class PartyLedgerComponent implements OnInit {
       remarks: '',
     };
 
+    this.updateSaudaOptionsForPayment();
     const matchingSauda = this.saudaOptionsForPayment[0];
     if (matchingSauda) {
       this.paymentForm.clientFirm = matchingSauda.clientFirm;
@@ -1315,6 +1304,7 @@ export class PartyLedgerComponent implements OnInit {
         this.paymentForm.entryKind = 'Payment Paid';
       }
     }
+    this.updateSaudaOptionsForPayment();
     const matchingSauda = this.saudaOptionsForPayment[0];
     if (matchingSauda) {
       this.paymentForm.clientFirm = matchingSauda.clientFirm;

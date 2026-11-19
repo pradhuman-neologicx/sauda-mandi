@@ -111,6 +111,15 @@ export class TruckManagementComponent implements OnInit {
   formError = '';
   removeError = '';
 
+  commodityRows!: FormArray;
+  eligibleSaudasForForm: SaudaRecord[] = [];
+  selectedWarehouse: string = '';
+  availableWarehouseStockMt: number = 0;
+  selectedLinkedSauda: SaudaRecord | undefined = undefined;
+  selectedSaudaCommodities: CommodityLineItem[] = [];
+  selectedSaudaRemainingMt: number = 0;
+  formTotalWeightMt: number = 0;
+
   ngOnInit(): void {
     this.initForms();
 
@@ -172,11 +181,19 @@ export class TruckManagementComponent implements OnInit {
       revisionReason: [''],
     });
 
+    this.commodityRows = this.truckForm.get('commodityItems') as FormArray;
+
     this.truckForm
       .get('saudaId')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((saudaId) => {
         this.onLinkedSaudaChanged(saudaId as string);
+      });
+
+    this.truckForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.updateFormCalculations();
       });
 
     this.removeForm = this.fb.group({
@@ -201,9 +218,6 @@ export class TruckManagementComponent implements OnInit {
     });
   }
 
-  get commodityRows(): FormArray {
-    return this.truckForm.get('commodityItems') as FormArray;
-  }
 
   addCommodityRow(): void {
     const first = this.selectedSaudaCommodities[0];
@@ -220,11 +234,13 @@ export class TruckManagementComponent implements OnInit {
           : undefined,
       ),
     );
+    this.updateFormCalculations();
   }
 
   removeCommodityRow(index: number): void {
     if (this.commodityRows.length > 1) {
       this.commodityRows.removeAt(index);
+      this.updateFormCalculations();
     }
   }
 
@@ -248,6 +264,7 @@ export class TruckManagementComponent implements OnInit {
         }),
       );
     }
+    this.updateFormCalculations();
   }
 
   // ── Search, Filters & Pagination ──
@@ -360,8 +377,9 @@ export class TruckManagementComponent implements OnInit {
   }
 
   // ── Helpers for Form ──
-  get eligibleSaudasForForm(): SaudaRecord[] {
-    return this.allSaudas.filter((s) => {
+  updateFormCalculations(): void {
+    // 1. eligibleSaudasForForm
+    this.eligibleSaudasForForm = this.allSaudas.filter((s) => {
       if (
         s.status === 'Voided' ||
         s.saudaType === 'Brokerage' ||
@@ -375,6 +393,63 @@ export class TruckManagementComponent implements OnInit {
       );
       return available > 0 || s.id === this.truckForm?.get('saudaId')?.value;
     });
+
+    // 2. selectedLinkedSauda
+    const saudaId = this.truckForm?.get('saudaId')?.value;
+    this.selectedLinkedSauda = saudaId ? this.getSaudaById(saudaId) : undefined;
+
+    // 3. selectedWarehouse
+    this.selectedWarehouse = this.truckForm?.get('warehouse')?.value || '';
+
+    // 4. selectedSaudaCommodities
+    this.selectedSaudaCommodities = this.selectedLinkedSauda?.commodityItems || [];
+
+    // 5. selectedSaudaRemainingMt
+    this.selectedSaudaRemainingMt = saudaId
+      ? this.erpService.getRemainingQtyMt(
+          saudaId,
+          this.isEditMode ? this.selectedTruck?.id : undefined,
+        )
+      : 0;
+
+    // 6. formTotalWeightMt
+    const rows = (this.truckForm?.getRawValue()?.commodityItems ||
+      []) as CommodityLineItem[];
+    this.formTotalWeightMt = this.erpService.computeTotalWeightMt(rows);
+
+    // 7. availableWarehouseStockMt
+    const sauda = this.selectedLinkedSauda;
+    const wh = this.selectedWarehouse;
+    if (!sauda || !wh || rows.length === 0) {
+      this.availableWarehouseStockMt = 0;
+    } else {
+      let totalAvail = 0;
+      for (const item of rows) {
+        if (!item.commodity) continue;
+        let avail = this.erpService.getWarehouseCommodityStock(
+          sauda.clientFirm,
+          wh,
+          item.commodity,
+        );
+        if (
+          this.isEditMode &&
+          this.selectedTruck &&
+          (this.selectedTruck.warehouse || '').trim().toLowerCase() ===
+            wh.trim().toLowerCase()
+        ) {
+          const prev = this.selectedTruck.commodityItems.find(
+            (ci) =>
+              ci.commodity.trim().toLowerCase() ===
+              item.commodity.trim().toLowerCase(),
+          );
+          if (prev) {
+            avail += this.erpService.convertItemToMt(prev);
+          }
+        }
+        totalAvail += avail;
+      }
+      this.availableWarehouseStockMt = Number(totalAvail.toFixed(3));
+    }
   }
 
   setFulfilmentType(type: 'Purchase' | 'Sales'): void {
@@ -395,47 +470,7 @@ export class TruckManagementComponent implements OnInit {
       this.commodityRows.clear();
       this.commodityRows.push(this.createCommodityRow());
     }
-  }
-
-  get selectedWarehouse(): string {
-    return this.truckForm?.get('warehouse')?.value || '';
-  }
-
-  get availableWarehouseStockMt(): number {
-    const sauda = this.selectedLinkedSauda;
-    const wh = this.selectedWarehouse;
-    if (!sauda || !wh) return 0;
-
-    const rawItems = (this.truckForm?.getRawValue()?.commodityItems ||
-      []) as CommodityLineItem[];
-    if (rawItems.length === 0) return 0;
-
-    let totalAvail = 0;
-    for (const item of rawItems) {
-      if (!item.commodity) continue;
-      let avail = this.erpService.getWarehouseCommodityStock(
-        sauda.clientFirm,
-        wh,
-        item.commodity,
-      );
-      if (
-        this.isEditMode &&
-        this.selectedTruck &&
-        (this.selectedTruck.warehouse || '').trim().toLowerCase() ===
-          wh.trim().toLowerCase()
-      ) {
-        const prev = this.selectedTruck.commodityItems.find(
-          (ci) =>
-            ci.commodity.trim().toLowerCase() ===
-            item.commodity.trim().toLowerCase(),
-        );
-        if (prev) {
-          avail += this.erpService.convertItemToMt(prev);
-        }
-      }
-      totalAvail += avail;
-    }
-    return Number(totalAvail.toFixed(3));
+    this.updateFormCalculations();
   }
 
   getWarehouseStockForItem(commodityName: string): number {
@@ -463,30 +498,6 @@ export class TruckManagementComponent implements OnInit {
       }
     }
     return Number(avail.toFixed(3));
-  }
-
-  get selectedLinkedSauda(): SaudaRecord | undefined {
-    const id = this.truckForm?.get('saudaId')?.value;
-    return id ? this.getSaudaById(id) : undefined;
-  }
-
-  get selectedSaudaCommodities(): CommodityLineItem[] {
-    return this.selectedLinkedSauda?.commodityItems || [];
-  }
-
-  get selectedSaudaRemainingMt(): number {
-    const saudaId = this.truckForm?.get('saudaId')?.value;
-    if (!saudaId) return 0;
-    return this.erpService.getRemainingQtyMt(
-      saudaId,
-      this.isEditMode ? this.selectedTruck?.id : undefined,
-    );
-  }
-
-  get formTotalWeightMt(): number {
-    const rows = (this.truckForm?.getRawValue()?.commodityItems ||
-      []) as CommodityLineItem[];
-    return this.erpService.computeTotalWeightMt(rows);
   }
 
   getSaudaById(saudaId: string): SaudaRecord | undefined {
@@ -581,6 +592,7 @@ export class TruckManagementComponent implements OnInit {
 
     this.truckForm.get('revisionReason')?.clearValidators();
     this.truckForm.get('revisionReason')?.updateValueAndValidity();
+    this.updateFormCalculations();
     this.viewMode = 'form';
   }
 
@@ -626,6 +638,7 @@ export class TruckManagementComponent implements OnInit {
       .get('revisionReason')
       ?.setValidators([Validators.required, Validators.minLength(5)]);
     this.truckForm.get('revisionReason')?.updateValueAndValidity();
+    this.updateFormCalculations();
     this.viewMode = 'form';
   }
 

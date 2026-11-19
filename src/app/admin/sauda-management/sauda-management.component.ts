@@ -126,6 +126,7 @@ export class SaudaManagementComponent implements OnInit {
   linkedTrucks: TruckEntryRecord[] = [];
 
   saudaForm!: FormGroup;
+  commodityRows!: FormArray;
   voidForm!: FormGroup;
   formError = '';
   voidError = '';
@@ -224,6 +225,7 @@ export class SaudaManagementComponent implements OnInit {
       remarks: [''],
       revisionReason: [''],
     });
+    this.commodityRows = this.saudaForm.get('commodityItems') as FormArray;
 
     this.saudaForm
       .get('saudaType')
@@ -381,9 +383,6 @@ export class SaudaManagementComponent implements OnInit {
     }
   }
 
-  get commodityRows(): FormArray {
-    return this.saudaForm.get('commodityItems') as FormArray;
-  }
 
   private buildInventoryCommodityOptions(
     invProducts: InvProductRecord[],
