@@ -40,13 +40,8 @@ export class InventoryComponent implements OnInit {
   currentActorName = 'Rajesh Sharma';
   readonly assignedPrimaryFirm = 'Desert Fresh Traders';
 
-  get isChecker(): boolean {
-    return this.currentActorRole === 'Business Owner / Admin (Checker)';
-  }
-
-  get isMaker(): boolean {
-    return this.currentActorRole === 'Operations Executive (Maker)';
-  }
+  isChecker = true;
+  isMaker = false;
 
   // Master Data
   inventoryList: InventoryRecord[] = [];
@@ -204,6 +199,8 @@ export class InventoryComponent implements OnInit {
   // ── Actor Role Toggle ──
   switchActorRole(role: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)'): void {
     this.currentActorRole = role;
+    this.isChecker = this.currentActorRole === 'Business Owner / Admin (Checker)';
+    this.isMaker = this.currentActorRole === 'Operations Executive (Maker)';
     if (this.isMaker) {
       this.currentActorName = 'Amit Patel';
       this.stockFirmFilter = this.assignedPrimaryFirm;
@@ -223,26 +220,26 @@ export class InventoryComponent implements OnInit {
   }
 
   // ── Tab 1: Current Stock Helpers & Filtering (UC-INV-01) ──
-  get stockPageSize(): number {
-    return this.stockTableSize === 'all'
+  stockPageSize: number = 10;
+  totalCommoditiesCount: number = 0;
+  totalStockWeightMt: number = 0;
+  totalUnitsByUomSummary: string = '0 Units';
+  zeroStockCount: number = 0;
+
+  updateStockKpis(): void {
+    this.stockPageSize = this.stockTableSize === 'all'
       ? Math.max(this.filteredInventory.length, 1)
       : this.stockTableSize;
-  }
 
-  get totalCommoditiesCount(): number {
     const unique = new Set(this.filteredInventory.map((i) => i.commodity.trim().toLowerCase()));
-    return unique.size;
-  }
+    this.totalCommoditiesCount = unique.size;
 
-  get totalStockWeightMt(): number {
-    return Number(
+    this.totalStockWeightMt = Number(
       this.filteredInventory
         .reduce((sum, item) => sum + item.availableWeightMt, 0)
         .toFixed(2),
     );
-  }
 
-  get totalUnitsByUomSummary(): string {
     const uomMap = new Map<string, number>();
     for (const item of this.filteredInventory) {
       if (item.availableUnits > 0) {
@@ -251,17 +248,21 @@ export class InventoryComponent implements OnInit {
       }
     }
     if (uomMap.size === 0) {
-      return '0 Units';
+      this.totalUnitsByUomSummary = '0 Units';
+    } else {
+      const parts: string[] = [];
+      uomMap.forEach((qty, uom) => {
+        parts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
+      });
+      this.totalUnitsByUomSummary = parts.join(' • ');
     }
-    const parts: string[] = [];
-    uomMap.forEach((qty, uom) => {
-      parts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
-    });
-    return parts.join(' • ');
+
+    this.zeroStockCount = this.filteredInventory.filter((i) => i.availableUnits <= 0 || i.availableWeightMt <= 0).length;
   }
 
-  get zeroStockCount(): number {
-    return this.filteredInventory.filter((i) => i.availableUnits <= 0 || i.availableWeightMt <= 0).length;
+  onStockTableSizeChange(): void {
+    this.stockPage = 1;
+    this.updateStockKpis();
   }
 
   onStockSearch(): void {
@@ -339,17 +340,23 @@ export class InventoryComponent implements OnInit {
         (item.categoryName || '').toLowerCase().includes(term)
       );
     });
+    this.updateStockKpis();
   }
 
   // ── Tab 2: Stock Adjustments Helpers & Workflow (UC-INV-04 & UC-INV-05) ──
-  get pendingAdjustmentsCount(): number {
-    return this.stockAdjustments.filter((a) => a.status === 'Pending Approval').length;
-  }
+  pendingAdjustmentsCount: number = 0;
+  adjPageSize: number = 10;
 
-  get adjPageSize(): number {
-    return this.adjTableSize === 'all'
+  updateAdjKpis(): void {
+    this.pendingAdjustmentsCount = this.stockAdjustments.filter((a) => a.status === 'Pending Approval').length;
+    this.adjPageSize = this.adjTableSize === 'all'
       ? Math.max(this.filteredAdjustments.length, 1)
       : this.adjTableSize;
+  }
+
+  onAdjTableSizeChange(): void {
+    this.adjPage = 1;
+    this.updateAdjKpis();
   }
 
   setAdjSubView(view: 'pending' | 'history'): void {
@@ -417,6 +424,7 @@ export class InventoryComponent implements OnInit {
         adj.reason.toLowerCase().includes(term)
       );
     });
+    this.updateAdjKpis();
   }
 
   // Create Adjustment Modal (UC-INV-04)
@@ -440,6 +448,7 @@ export class InventoryComponent implements OnInit {
       reason: '',
       adjustmentDate: today,
     };
+    this.updateAdjCalculations();
     this.showCreateAdjModal = true;
   }
 
@@ -448,24 +457,30 @@ export class InventoryComponent implements OnInit {
     this.createAdjError = '';
   }
 
-  get liveSelectedStock(): InventoryRecord | undefined {
-    if (!this.createAdjForm.clientFirm || !this.createAdjForm.warehouseId || !this.createAdjForm.commodity) {
-      return undefined;
-    }
-    return this.inventoryList.find(
-      (i) =>
-        i.clientFirm.toLowerCase() === this.createAdjForm.clientFirm.toLowerCase() &&
-        (i.warehouseId === this.createAdjForm.warehouseId ||
-          i.warehouseName.toLowerCase() === this.createAdjForm.warehouseId.toLowerCase()) &&
-        i.commodity.toLowerCase() === this.createAdjForm.commodity.toLowerCase(),
-    );
-  }
+  liveSelectedStock: InventoryRecord | undefined = undefined;
+  computedAverageWeightKg: number = 0;
 
-  get computedAverageWeightKg(): number {
-    const qty = Number(this.createAdjForm.quantity);
-    const wt = Number(this.createAdjForm.totalWeightMt);
-    if (!qty || qty <= 0 || !wt || wt <= 0) return 0;
-    return Number(((wt * 1000) / qty).toFixed(2));
+  updateAdjCalculations(): void {
+    const form = this.createAdjForm;
+    if (!form.clientFirm || !form.warehouseId || !form.commodity) {
+      this.liveSelectedStock = undefined;
+    } else {
+      this.liveSelectedStock = this.inventoryList.find(
+        (i) =>
+          i.clientFirm.toLowerCase() === form.clientFirm.toLowerCase() &&
+          (i.warehouseId === form.warehouseId ||
+            i.warehouseName.toLowerCase() === form.warehouseId.toLowerCase()) &&
+          i.commodity.toLowerCase() === form.commodity.toLowerCase(),
+      );
+    }
+
+    const qty = Number(form.quantity);
+    const wt = Number(form.totalWeightMt);
+    if (!qty || qty <= 0 || !wt || wt <= 0) {
+      this.computedAverageWeightKg = 0;
+    } else {
+      this.computedAverageWeightKg = Number(((wt * 1000) / qty).toFixed(2));
+    }
   }
 
   submitCreateAdjustment(): void {
@@ -591,68 +606,72 @@ export class InventoryComponent implements OnInit {
   }
 
   // ── Tab 3: Stock Movement History (UC-INV-06) ──
-  get movPageSize(): number {
-    return this.movTableSize === 'all'
+  movPageSize: number = 10;
+  totalStockInKpi: { unitsSummary: string; weightMt: number } = { unitsSummary: '0 Units', weightMt: 0 };
+  totalStockOutKpi: { unitsSummary: string; weightMt: number } = { unitsSummary: '0 Units', weightMt: 0 };
+  netStockMovementKpi: { unitsSummary: string; weightMt: number } = { unitsSummary: '0 Units', weightMt: 0 };
+
+  updateMovKpis(): void {
+    this.movPageSize = this.movTableSize === 'all'
       ? Math.max(this.filteredMovements.length, 1)
       : this.movTableSize;
-  }
 
-  get totalStockInKpi(): { unitsSummary: string; weightMt: number } {
     const inMovs = this.filteredMovements.filter((m) => m.movementDirection === 'Stock In');
-    const uomMap = new Map<string, number>();
-    let weight = 0;
+    const inUomMap = new Map<string, number>();
+    let inWeight = 0;
     for (const m of inMovs) {
       const uom = m.packagingUom || 'Units';
-      uomMap.set(uom, (uomMap.get(uom) || 0) + m.quantity);
-      weight += m.totalWeightMt;
+      inUomMap.set(uom, (inUomMap.get(uom) || 0) + m.quantity);
+      inWeight += m.totalWeightMt;
     }
-    const parts: string[] = [];
-    uomMap.forEach((qty, uom) => {
-      parts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
+    const inParts: string[] = [];
+    inUomMap.forEach((qty, uom) => {
+      inParts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
     });
-    return {
-      unitsSummary: parts.length > 0 ? parts.join(' • ') : '0 Units',
-      weightMt: Number(weight.toFixed(2)),
+    this.totalStockInKpi = {
+      unitsSummary: inParts.length > 0 ? inParts.join(' • ') : '0 Units',
+      weightMt: Number(inWeight.toFixed(2)),
     };
-  }
 
-  get totalStockOutKpi(): { unitsSummary: string; weightMt: number } {
     const outMovs = this.filteredMovements.filter((m) => m.movementDirection === 'Stock Out');
-    const uomMap = new Map<string, number>();
-    let weight = 0;
+    const outUomMap = new Map<string, number>();
+    let outWeight = 0;
     for (const m of outMovs) {
       const uom = m.packagingUom || 'Units';
-      uomMap.set(uom, (uomMap.get(uom) || 0) + m.quantity);
-      weight += m.totalWeightMt;
+      outUomMap.set(uom, (outUomMap.get(uom) || 0) + m.quantity);
+      outWeight += m.totalWeightMt;
     }
-    const parts: string[] = [];
-    uomMap.forEach((qty, uom) => {
-      parts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
+    const outParts: string[] = [];
+    outUomMap.forEach((qty, uom) => {
+      outParts.push(`${qty.toLocaleString()} ${uom}${qty > 1 ? 's' : ''}`);
     });
-    return {
-      unitsSummary: parts.length > 0 ? parts.join(' • ') : '0 Units',
-      weightMt: Number(weight.toFixed(2)),
+    this.totalStockOutKpi = {
+      unitsSummary: outParts.length > 0 ? outParts.join(' • ') : '0 Units',
+      weightMt: Number(outWeight.toFixed(2)),
     };
-  }
 
-  get netStockMovementKpi(): { unitsSummary: string; weightMt: number } {
-    const uomMap = new Map<string, number>();
+    const netUomMap = new Map<string, number>();
     let netWeight = 0;
     for (const m of this.filteredMovements) {
       const sign = m.movementDirection === 'Stock In' ? 1 : -1;
       const uom = m.packagingUom || 'Units';
-      uomMap.set(uom, (uomMap.get(uom) || 0) + sign * m.quantity);
+      netUomMap.set(uom, (netUomMap.get(uom) || 0) + sign * m.quantity);
       netWeight += sign * m.totalWeightMt;
     }
-    const parts: string[] = [];
-    uomMap.forEach((qty, uom) => {
+    const netParts: string[] = [];
+    netUomMap.forEach((qty, uom) => {
       const prefix = qty >= 0 ? '+' : '';
-      parts.push(`${prefix}${qty.toLocaleString()} ${uom}`);
+      netParts.push(`${prefix}${qty.toLocaleString()} ${uom}`);
     });
-    return {
-      unitsSummary: parts.length > 0 ? parts.join(' • ') : '0 Units',
+    this.netStockMovementKpi = {
+      unitsSummary: netParts.length > 0 ? netParts.join(' • ') : '0 Units',
       weightMt: Number(netWeight.toFixed(2)),
     };
+  }
+
+  onMovTableSizeChange(): void {
+    this.movPage = 1;
+    this.updateMovKpis();
   }
 
   onMovSearch(): void {
@@ -735,5 +754,6 @@ export class InventoryComponent implements OnInit {
         (m.truckNo || '').toLowerCase().includes(term)
       );
     });
+    this.updateMovKpis();
   }
 }

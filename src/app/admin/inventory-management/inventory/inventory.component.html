@@ -108,7 +108,7 @@
         </div>
         <div class="table-size-selector">
           <span>Show</span>
-          <select class="limit-select" [(ngModel)]="stockTableSize" (ngModelChange)="stockPage = 1">
+          <select class="limit-select" [(ngModel)]="stockTableSize" (ngModelChange)="onStockTableSizeChange()">
             @for (size of tableSizes; track size) {
             <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
             }
@@ -323,7 +323,7 @@
 
           <div class="table-size-selector">
             <span>Show</span>
-            <select class="limit-select" [(ngModel)]="adjTableSize" (ngModelChange)="adjPage = 1">
+            <select class="limit-select" [(ngModel)]="adjTableSize" (ngModelChange)="onAdjTableSizeChange()">
               @for (size of tableSizes; track size) {
               <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
               }
@@ -543,7 +543,7 @@
         </div>
         <div class="table-size-selector">
           <span>Show</span>
-          <select class="limit-select" [(ngModel)]="movTableSize" (ngModelChange)="movPage = 1">
+          <select class="limit-select" [(ngModel)]="movTableSize" (ngModelChange)="onMovTableSizeChange()">
             @for (size of tableSizes; track size) {
             <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
             }
@@ -784,7 +784,7 @@
             @if (isMaker) {
             <input type="text" class="erp-input bg-light" [value]="assignedPrimaryFirm" disabled />
             } @else {
-            <select class="erp-input" [(ngModel)]="createAdjForm.clientFirm" (ngModelChange)="createAdjError = ''">
+            <select class="erp-input" [(ngModel)]="createAdjForm.clientFirm" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (f of firms; track f.id) {
               <option [value]="f.name">{{ f.name }}</option>
               }
@@ -795,7 +795,7 @@
           <!-- Warehouse -->
           <div class="field-group">
             <label class="erp-label">Warehouse *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId" (ngModelChange)="createAdjError = ''">
+            <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (wh of warehouses; track wh.id) {
               <option [value]="wh.id">
                 {{ wh.name }}{{ wh.isActive ? '' : ' (Inactive)' }}
@@ -807,7 +807,7 @@
           <!-- Commodity -->
           <div class="field-group">
             <label class="erp-label">Commodity *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.commodity" (ngModelChange)="createAdjError = ''">
+            <select class="erp-input" [(ngModel)]="createAdjForm.commodity" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (c of commodities; track c.id) {
               <option [value]="c.name">{{ c.name }}</option>
               }
@@ -876,13 +876,13 @@
           <!-- Quantity (Units) -->
           <div class="field-group">
             <label class="erp-label">Quantity (Units) *</label>
-            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" placeholder="e.g. 50" />
+            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" (ngModelChange)="updateAdjCalculations()" placeholder="e.g. 50" />
           </div>
 
           <!-- Total Weight (MT) -->
           <div class="field-group">
             <label class="erp-label">Total Weight (MT) *</label>
-            <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt"
+            <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt" (ngModelChange)="updateAdjCalculations()"
               placeholder="e.g. 2.500" />
           </div>
 
