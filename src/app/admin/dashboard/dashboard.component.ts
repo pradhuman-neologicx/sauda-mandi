@@ -233,7 +233,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       'info',
       2500,
     );
-    this.router.navigate(['/admin/sauda-management']);
+    this.router.navigate(['/admin/party-ledger']);
   }
 
   // Row navigation for Recent Saudas
