@@ -4,13 +4,13 @@
 
 ## Summary
 
-- **Health score:** 87/100
+- **Health score:** 90/100
 - **Errors:** 0
-- **Warnings:** 572
+- **Warnings:** 494
 - **Infos:** 123
 - **Project:** panel (angular-cli)
 - **Angular:** 22.1.3
-- **Scan duration:** 5976ms
+- **Scan duration:** 5520ms
 
 ## Official Angular migrations
 
@@ -263,7 +263,7 @@ ng generate @angular/core:service
   - `src\app\core\services\Inquiry.service.ts:118:60`
   - `src\app\core\services\Inquiry.service.ts:125:24`
   - `src\app\core\services\Inquiry.service.ts:128:30`
-  - `src\app\core\services\Inquiry.service.ts:132:84`
+  - `src\app\core\services\Inquiry.service.ts:132:85`
   - `src\app\core\services\Inquiry.service.ts:144:23`
   - `src\app\core\services\Inquiry.service.ts:149:26`
   - `src\app\core\services\Inquiry.service.ts:156:34`
@@ -329,66 +329,6 @@ ng generate @angular/core:service
   - `src\app\website\components\testimonials\testimonials.component.ts:126:52`
   - `src\app\website\components\testimonials\testimonials.component.ts:127:37`
 
-### oxlint/no-wrapper-object-types (warning) — 29 occurrences in 4 files
-
-- **Message:** Do not use wrapper object types.
-- **Locations:**
-  - `src\app\core\model-class\fee-management.ts:57:12`
-  - `src\app\core\model-class\login-signup.ts:43:22`
-  - `src\app\core\model-class\login-signup.ts:56:12`
-  - `src\app\core\services\Inquiry.service.ts:69:54`
-  - `src\app\core\services\Inquiry.service.ts:132:64`
-  - `src\app\core\services\jwt.service.ts:76:21`
-  - `src\app\core\services\jwt.service.ts:80:27`
-  - `src\app\core\services\jwt.service.ts:83:18`
-  - `src\app\core\services\jwt.service.ts:91:25`
-  - `src\app\core\services\jwt.service.ts:94:23`
-  - `src\app\core\services\jwt.service.ts:97:18`
-  - `src\app\core\services\jwt.service.ts:100:22`
-  - `src\app\core\services\jwt.service.ts:104:25`
-  - `src\app\core\services\jwt.service.ts:108:14`
-  - `src\app\core\services\jwt.service.ts:112:18`
-  - `src\app\core\services\jwt.service.ts:116:15`
-  - `src\app\core\services\jwt.service.ts:120:20`
-  - `src\app\core\services\jwt.service.ts:125:18`
-  - `src\app\core\services\jwt.service.ts:129:26`
-  - `src\app\core\services\jwt.service.ts:133:16`
-  - `src\app\core\services\jwt.service.ts:137:23`
-  - `src\app\core\services\jwt.service.ts:174:28`
-  - `src\app\core\services\jwt.service.ts:178:34`
-  - `src\app\core\services\jwt.service.ts:182:22`
-  - `src\app\core\services\jwt.service.ts:186:27`
-  - `src\app\core\services\jwt.service.ts:191:25`
-  - `src\app\core\services\jwt.service.ts:195:33`
-  - `src\app\core\services\jwt.service.ts:199:23`
-  - `src\app\core\services\jwt.service.ts:203:30`
-
-### angular-doctor/missing-spec-file (warning) — 20 occurrences in 20 files
-
-- **Message:** Testable Angular declaration has no sibling .spec.ts file.
-- **Reference:** https://angular.dev/style-guide#naming
-- **Locations:**
-  - `src\app\admin\masters\uom\uom.component.ts:1:1` (fix: Add uom.component.spec.ts next to this file.)
-  - `src\app\admin\masters\warehouse\warehouse.component.ts:1:1` (fix: Add warehouse.component.spec.ts next to this file.)
-  - `src\app\admin\party-ledger\party-ledger.component.ts:1:1` (fix: Add party-ledger.component.spec.ts next to this file.)
-  - `src\app\admin\sauda-management\sauda-management.component.ts:1:1` (fix: Add sauda-management.component.spec.ts next to this file.)
-  - `src\app\admin\truck-management\truck-management.component.ts:1:1` (fix: Add truck-management.component.spec.ts next to this file.)
-  - `src\app\core\auth\auth-guard.ts:1:1` (fix: Add auth-guard.spec.ts next to this file.)
-  - `src\app\core\auth\direct-access-guard.ts:1:1` (fix: Add direct-access-guard.spec.ts next to this file.)
-  - `src\app\core\auth\student-auth-guard.ts:1:1` (fix: Add student-auth-guard.spec.ts next to this file.)
-  - `src\app\core\pipe\reverse-list.pipe.ts:1:1` (fix: Add reverse-list.pipe.spec.ts next to this file.)
-  - `src\app\core\pipe\safe-url.pipe.ts:1:1` (fix: Add safe-url.pipe.spec.ts next to this file.)
-  - `src\app\core\services\auth.interceptor.ts:1:1` (fix: Add auth.interceptor.spec.ts next to this file.)
-  - `src\app\core\services\calendar.service.ts:1:1` (fix: Add calendar.service.spec.ts next to this file.)
-  - `src\app\core\services\classe-routines.service.ts:1:1` (fix: Add classe-routines.service.spec.ts next to this file.)
-  - `src\app\core\services\Employee.service.ts:1:1` (fix: Add Employee.service.spec.ts next to this file.)
-  - `src\app\core\services\Inquiry.service.ts:1:1` (fix: Add Inquiry.service.spec.ts next to this file.)
-  - `src\app\core\services\internet-interceptor.ts:1:1` (fix: Add internet-interceptor.spec.ts next to this file.)
-  - `src\app\core\services\jwt.service.ts:1:1` (fix: Add jwt.service.spec.ts next to this file.)
-  - `src\app\core\services\notification.service.ts:1:1` (fix: Add notification.service.spec.ts next to this file.)
-  - `src\app\core\services\notificationnew.service.ts:1:1` (fix: Add notificationnew.service.spec.ts next to this file.)
-  - `src\app\core\services\sauda-erp-mock.service.ts:1:1` (fix: Add sauda-erp-mock.service.spec.ts next to this file.)
-
 ### angular-doctor/filename-class-mismatch (warning) — 16 occurrences in 16 files
 
 - **Message:** File stem "calendar" does not match class "UpdateHoliday".
@@ -410,27 +350,6 @@ ng generate @angular/core:service
   - `src\app\core\services\Inquiry.service.ts:1:1` — File stem "Inquiry" does not match class "InquiryService". (fix: Prefer a file name like inquiry.ts for this class.)
   - `src\app\core\services\loading.interceptor.ts:1:1` — File stem "loading.interceptor" does not match class "LoadingInterceptor". (fix: Prefer a file name like loading-interceptor.ts for this class.)
   - `src\app\core\services\notificationnew.service.ts:1:1` — File stem "notificationnew" does not match class "NotificationService". (fix: Prefer a file name like notification.ts for this class.)
-
-### oxlint/eqeqeq (warning) — 16 occurrences in 6 files
-
-- **Message:** Expected !== and instead saw !=
-- **Locations:**
-  - `src\app\core\auth\direct-access-guard.ts:27:30` — Expected === and instead saw ==
-  - `src\app\core\auth\direct-access-guard.ts:33:19`
-  - `src\app\core\model-class\file-extension-validator.directive.ts:9:24` — Expected === and instead saw ==
-  - `src\app\core\services\error.interceptor.ts:19:37` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:255:18`
-  - `src\app\core\services\Inquiry.service.ts:261:14`
-  - `src\app\core\services\Inquiry.service.ts:265:14`
-  - `src\app\core\services\Inquiry.service.ts:265:33` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:268:19`
-  - `src\app\core\services\Inquiry.service.ts:268:40` — Expected === and instead saw ==
-  - `src\app\core\services\Inquiry.service.ts:271:19`
-  - `src\app\core\services\Inquiry.service.ts:271:40`
-  - `src\app\core\services\jwt.service.ts:18:18`
-  - `src\app\core\services\jwt.service.ts:42:20`
-  - `src\app\core\services\jwt.service.ts:147:23`
-  - `src\app\core\services\loading.interceptor.ts:25:32` — Expected === and instead saw ==
 
 ### angular-doctor/file-hyphen-case (warning) — 2 occurrences in 2 files
 
@@ -517,44 +436,44 @@ ng generate @angular/core:service
   - `src\app\admin\party-ledger\party-ledger.component.html:183:13`
   - `src\app\admin\party-ledger\party-ledger.component.html:192:13`
   - `src\app\admin\party-ledger\party-ledger.component.html:202:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:760:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:770:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:775:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:786:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:796:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:805:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:811:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:820:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:832:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:838:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:881:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:889:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:895:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:901:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:907:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:950:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:955:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:961:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:967:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:973:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1016:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1026:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1036:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1047:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1115:15`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1130:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1193:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1200:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1205:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1214:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1220:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1226:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1232:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1433:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1447:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1488:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1502:13`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1518:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:763:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:773:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:778:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:789:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:799:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:808:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:814:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:823:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:835:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:841:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:884:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:892:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:898:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:904:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:910:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:953:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:958:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:964:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:970:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:976:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1019:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1029:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1039:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1050:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1118:15`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1133:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1196:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1203:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1208:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1217:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1223:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1229:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1235:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1436:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1450:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1491:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1505:13`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1521:13`
   - `src\app\admin\sauda-management\sauda-management.component.html:76:11`
   - `src\app\admin\sauda-management\sauda-management.component.html:82:11`
   - `src\app\admin\sauda-management\sauda-management.component.html:92:11`
@@ -647,20 +566,20 @@ ng generate @angular/core:service
   - `src\app\admin\masters\warehouse\warehouse.component.html:373:3`
   - `src\app\admin\masters\warehouse\warehouse.component.html:483:1`
   - `src\app\admin\masters\warehouse\warehouse.component.html:484:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:739:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:740:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:860:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:861:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:929:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:930:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:995:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:996:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1154:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1155:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1254:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1255:5`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1392:3`
-  - `src\app\admin\party-ledger\party-ledger.component.html:1393:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:742:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:743:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:863:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:864:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:932:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:933:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:998:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:999:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1157:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1158:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1257:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1258:5`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1395:3`
+  - `src\app\admin\party-ledger\party-ledger.component.html:1396:5`
   - `src\app\admin\sauda-management\sauda-management.component.html:543:1`
   - `src\app\admin\sauda-management\sauda-management.component.html:544:3`
   - `src\app\admin\sauda-management\sauda-management.component.html:783:1`
@@ -682,24 +601,6 @@ ng generate @angular/core:service
   - `src\app\admin\user-management\user-management.component.html:385:3`
   - `src\app\admin\user-management\user-management.component.html:499:1`
   - `src\app\admin\user-management\user-management.component.html:500:3`
-
-### template-eslint/button-has-type (warning) — 13 occurrences in 4 files
-
-- **Message:** Type for <button> is missing
-- **Locations:**
-  - `src\app\admin\sidenav-header\sidenav-header.component.html:4:5`
-  - `src\app\admin\sidenav-header\sidenav-header.component.html:35:11`
-  - `src\app\admin\sidenav\sidenav.component.html:52:5`
-  - `src\app\website\components\navbar\navbar.component.html:17:9`
-  - `src\app\website\components\navbar\navbar.component.html:43:9`
-  - `src\app\website\components\navbar\navbar.component.html:61:9`
-  - `src\app\website\components\navbar\navbar.component.html:92:7`
-  - `src\app\website\components\navbar\navbar.component.html:109:9`
-  - `src\app\website\components\navbar\navbar.component.html:130:9`
-  - `src\app\website\components\navbar\navbar.component.html:144:9`
-  - `src\app\website\components\testimonials\testimonials.component.html:45:5`
-  - `src\app\website\components\testimonials\testimonials.component.html:52:9`
-  - `src\app\website\components\testimonials\testimonials.component.html:56:5`
 
 ### template-eslint/no-autofocus (warning) — 1 occurrence
 
@@ -824,8 +725,8 @@ ng generate @angular/core:ngclass-to-class
   - `src\app\admin\masters\warehouse\warehouse.component.html:562:9`
   - `src\app\admin\party-ledger\party-ledger.component.html:84:34`
   - `src\app\admin\party-ledger\party-ledger.component.html:257:42`
-  - `src\app\admin\party-ledger\party-ledger.component.html:379:44`
-  - `src\app\admin\party-ledger\party-ledger.component.html:515:44`
+  - `src\app\admin\party-ledger\party-ledger.component.html:382:44`
+  - `src\app\admin\party-ledger\party-ledger.component.html:518:44`
   - `src\app\admin\sauda-management\sauda-management.component.html:175:42`
   - `src\app\admin\sauda-management\sauda-management.component.html:549:38`
   - `src\app\admin\truck-management\truck-management.component.html:164:39`
@@ -987,18 +888,18 @@ ng generate @angular/core:signal-input-migration
 
 ```json
 {
-  "score": 87.25,
+  "score": 90.25,
   "totals": {
     "error": 0,
-    "warning": 572,
+    "warning": 494,
     "info": 123,
     "byCategory": {
       "correctness": 0,
       "performance": 21,
       "maintainability": 123,
       "security": 1,
-      "accessibility": 238,
-      "hygiene": 312
+      "accessibility": 225,
+      "hygiene": 247
     }
   },
   "migrationsHub": "https://angular.dev/reference/migrations",
