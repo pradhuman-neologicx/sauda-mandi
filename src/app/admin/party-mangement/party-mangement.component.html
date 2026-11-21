@@ -44,56 +44,9 @@
     </div>
   </div>
 
-  <!-- Filter Bar & Role Tabs -->
+  <!-- Filter Toolbar (Role Dropdown to Left of Search) -->
   <div class="erp-card filter-card mb-4">
-    <div class="party-filter-top">
-      <!-- Role Tabs -->
-      <div class="subview-pills">
-        <button
-          type="button"
-          class="subview-btn"
-          [class.active]="roleFilter === 'All'"
-          (click)="setRoleFilter('All')"
-        >
-          <span>All Parties</span>
-          <span class="subview-badge">{{ totalPartiesCount }}</span>
-        </button>
-
-        <button
-          type="button"
-          class="subview-btn"
-          [class.active]="roleFilter === 'Seller'"
-          (click)="setRoleFilter('Seller')"
-        >
-          <span>Sellers (Suppliers)</span>
-        </button>
-
-        <button
-          type="button"
-          class="subview-btn"
-          [class.active]="roleFilter === 'Buyer'"
-          (click)="setRoleFilter('Buyer')"
-        >
-          <span>Buyers (Customers)</span>
-        </button>
-      </div>
-
-      <!-- Status Filter Dropdown -->
-      <div class="d-flex align-items-center gap-2">
-        <span class="text-xs text-muted fw-semibold">Status:</span>
-        <select
-          class="erp-select-sm"
-          [ngModel]="statusFilter"
-          (ngModelChange)="setStatusFilter($event)"
-        >
-          <option value="All">All Status</option>
-          <option value="Active">Active Only</option>
-          <option value="Inactive">Inactive Only</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="filter-toolbar mt-3">
+    <div class="filter-toolbar">
       <div class="table-size-selector">
         <span>Show</span>
         <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
@@ -105,14 +58,24 @@
       </div>
 
       <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <!-- Role Filter Dropdown to the left of Search -->
+        <select class="filter-select" name="roleFilter" [ngModel]="roleFilter" (ngModelChange)="setRoleFilter($event)">
+          <option value="All">All Roles </option>
+          <option value="Seller">Sellers (Suppliers)</option>
+          <option value="Buyer">Buyers (Customers)</option>
+        </select>
+
+        <!-- Role Filter Dropdown to the left of Search -->
+        <select class="filter-select" name="roleFilter" [ngModel]="roleFilter" (ngModelChange)="setRoleFilter($event)">
+          <option value="All">All Roles ({{ totalPartiesCount }})</option>
+          <option value="Seller">Sellers (Suppliers)</option>
+          <option value="Buyer">Buyers (Customers)</option>
+        </select>
+
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="text"
-            name="searchTerm"
-            [(ngModel)]="searchTerm"
-            placeholder="Search party by name, phone, email..."
-          />
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search party by name, phone, email..." />
         </div>
 
         <button type="submit" class="btn-erp-primary">
@@ -146,10 +109,10 @@
         </thead>
         <tbody>
           @for (
-            party of filteredParties
-              | paginate: { itemsPerPage: itemsPerPageCount, currentPage: page, id: 'party-pg' };
-            track party.id;
-            let i = $index
+          party of filteredParties
+          | paginate: { itemsPerPage: itemsPerPageCount, currentPage: page, id: 'party-pg' };
+          track party.id;
+          let i = $index
           ) {
           <tr [class.inactive-row]="!party.isActive">
             <td class="w-sno text-muted">
@@ -204,14 +167,9 @@
             </td>
 
             <td>
-              <button
-                type="button"
-                class="status-toggle-btn"
-                [class.is-active]="party.isActive"
-                [class.is-inactive]="!party.isActive"
-                (click)="openToggleModal(party)"
-                [title]="party.isActive ? 'Click to Deactivate' : 'Click to Activate'"
-              >
+              <button type="button" class="status-toggle-btn" [class.is-active]="party.isActive"
+                [class.is-inactive]="!party.isActive" (click)="openToggleModal(party)"
+                [title]="party.isActive ? 'Click to Deactivate' : 'Click to Activate'">
                 <span class="dot"></span>
                 <span>{{ party.isActive ? 'Active' : 'Inactive' }}</span>
               </button>
@@ -219,41 +177,23 @@
 
             <td class="text-center">
               <div class="table-action-btns">
-                <button
-                  type="button"
-                  class="icon-btn btn-view"
-                  (click)="openViewModal(party)"
-                  title="View Party Details"
-                >
+                <button type="button" class="icon-btn btn-view" (click)="openViewModal(party)"
+                  title="View Party Details">
                   <i class="fa-solid fa-eye"></i>
                 </button>
 
-                <button
-                  type="button"
-                  class="icon-btn btn-edit"
-                  (click)="openEditModal(party)"
-                  title="Edit Party"
-                >
+                <button type="button" class="icon-btn btn-edit" (click)="openEditModal(party)" title="Edit Party">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
 
-                <button
-                  type="button"
-                  class="icon-btn"
-                  [class.text-danger]="party.isActive"
-                  [class.text-success]="!party.isActive"
-                  (click)="openToggleModal(party)"
-                  [title]="party.isActive ? 'Deactivate Party' : 'Activate Party'"
-                >
+                <button type="button" class="icon-btn" [class.text-danger]="party.isActive"
+                  [class.text-success]="!party.isActive" (click)="openToggleModal(party)"
+                  [title]="party.isActive ? 'Deactivate Party' : 'Activate Party'">
                   <i class="fa-solid" [class.fa-ban]="party.isActive" [class.fa-check]="!party.isActive"></i>
                 </button>
 
-                <button
-                  type="button"
-                  class="icon-btn text-primary"
-                  (click)="viewPartyStatement(party)"
-                  title="Open in Party Ledger"
-                >
+                <button type="button" class="icon-btn text-primary" (click)="viewPartyStatement(party)"
+                  title="Open in Party Ledger">
                   <i class="fa-solid fa-receipt"></i>
                 </button>
               </div>
@@ -283,15 +223,8 @@
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ filteredParties.length }} entries
       </div>
-      <pagination-controls
-        id="party-pg"
-        (pageChange)="onTableDataChange($event)"
-        [maxSize]="5"
-        [responsive]="true"
-        previousLabel="Prev"
-        nextLabel="Next"
-        class="my-pagination"
-      ></pagination-controls>
+      <pagination-controls id="party-pg" (pageChange)="onTableDataChange($event)" [maxSize]="5" [responsive]="true"
+        previousLabel="Prev" nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
     }
   </div>
@@ -333,48 +266,26 @@
 
         <div class="field-group">
           <label>Default Credit Days</label>
-          <input
-            type="number"
-            min="0"
-            class="erp-input"
-            name="defaultCreditDays"
-            [(ngModel)]="partyForm.defaultCreditDays"
-            placeholder="e.g. 15"
-          />
+          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+            [(ngModel)]="partyForm.defaultCreditDays" placeholder="e.g. 15" />
         </div>
 
         <div class="field-group ledger-span-2">
           <label>Party Name <span class="req">*</span></label>
-          <input
-            type="text"
-            class="erp-input"
-            name="name"
-            [(ngModel)]="partyForm.name"
-            placeholder="e.g. Goyal Cold Storage"
-          />
+          <input type="text" class="erp-input" name="name" [(ngModel)]="partyForm.name"
+            placeholder="e.g. Goyal Cold Storage" />
         </div>
 
         <div class="field-group">
           <label>Contact Phone</label>
-          <input
-            type="text"
-            maxlength="10"
-            class="erp-input"
-            name="phone"
-            [(ngModel)]="partyForm.phone"
-            placeholder="10-digit mobile number"
-          />
+          <input type="text" maxlength="10" class="erp-input" name="phone" [(ngModel)]="partyForm.phone"
+            placeholder="10-digit mobile number" />
         </div>
 
         <div class="field-group">
           <label>Email Address</label>
-          <input
-            type="email"
-            class="erp-input"
-            name="email"
-            [(ngModel)]="partyForm.email"
-            placeholder="e.g. contact@party.com"
-          />
+          <input type="email" class="erp-input" name="email" [(ngModel)]="partyForm.email"
+            placeholder="e.g. contact@party.com" />
         </div>
       </div>
 
@@ -420,58 +331,32 @@
       <div class="form-grid-2">
         <div class="field-group">
           <label>Party Role</label>
-          <input
-            type="text"
-            class="erp-input bg-light"
-            [value]="editForm.role === 'Seller' ? 'Seller (Supplier)' : 'Buyer (Customer)'"
-            disabled
-          />
+          <input type="text" class="erp-input bg-light"
+            [value]="editForm.role === 'Seller' ? 'Seller (Supplier)' : 'Buyer (Customer)'" disabled />
         </div>
 
         <div class="field-group">
           <label>Default Credit Days</label>
-          <input
-            type="number"
-            min="0"
-            class="erp-input"
-            name="defaultCreditDays"
-            [(ngModel)]="editForm.defaultCreditDays"
-            placeholder="e.g. 15"
-          />
+          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+            [(ngModel)]="editForm.defaultCreditDays" placeholder="e.g. 15" />
         </div>
 
         <div class="field-group ledger-span-2">
           <label>Party Name <span class="req">*</span></label>
-          <input
-            type="text"
-            class="erp-input"
-            name="name"
-            [(ngModel)]="editForm.name"
-            placeholder="e.g. Goyal Cold Storage"
-          />
+          <input type="text" class="erp-input" name="name" [(ngModel)]="editForm.name"
+            placeholder="e.g. Goyal Cold Storage" />
         </div>
 
         <div class="field-group">
           <label>Contact Phone</label>
-          <input
-            type="text"
-            maxlength="10"
-            class="erp-input"
-            name="phone"
-            [(ngModel)]="editForm.phone"
-            placeholder="10-digit mobile number"
-          />
+          <input type="text" maxlength="10" class="erp-input" name="phone" [(ngModel)]="editForm.phone"
+            placeholder="10-digit mobile number" />
         </div>
 
         <div class="field-group">
           <label>Email Address</label>
-          <input
-            type="email"
-            class="erp-input"
-            name="email"
-            [(ngModel)]="editForm.email"
-            placeholder="e.g. contact@party.com"
-          />
+          <input type="email" class="erp-input" name="email" [(ngModel)]="editForm.email"
+            placeholder="e.g. contact@party.com" />
         </div>
       </div>
 
@@ -522,7 +407,8 @@
           <div class="view-item">
             <span class="view-label">Status</span>
             <span class="view-val">
-              <span class="badge-erp" [class.badge-green]="selectedParty.isActive" [class.badge-gray]="!selectedParty.isActive">
+              <span class="badge-erp" [class.badge-green]="selectedParty.isActive"
+                [class.badge-gray]="!selectedParty.isActive">
                 {{ selectedParty.isActive ? 'Active' : 'Inactive' }}
               </span>
             </span>
@@ -541,7 +427,8 @@
           <div class="view-item">
             <span class="view-label">Default Credit Terms</span>
             <span class="view-val fw-bold text-primary">
-              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days (Immediate)' }}
+              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days
+              (Immediate)' }}
             </span>
           </div>
 
@@ -553,19 +440,11 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-        <button
-          type="button"
-          class="btn-erp-outline"
-          (click)="closeViewModal(); openEditModal(selectedParty)"
-        >
+        <button type="button" class="btn-erp-outline" (click)="closeViewModal(); openEditModal(selectedParty)">
           <i class="fa-solid fa-pen-to-square me-1"></i> Edit Party
         </button>
 
-        <button
-          type="button"
-          class="btn-erp-primary"
-          (click)="closeViewModal(); viewPartyStatement(selectedParty)"
-        >
+        <button type="button" class="btn-erp-primary" (click)="closeViewModal(); viewPartyStatement(selectedParty)">
           <i class="fa-solid fa-receipt me-1"></i> View Ledger Statement
         </button>
       </div>
@@ -611,13 +490,8 @@
         <button type="button" class="btn-erp-ghost" (click)="closeToggleModal()">
           Cancel
         </button>
-        <button
-          type="button"
-          class="btn-erp"
-          [class.btn-erp-danger]="partyToToggle.isActive"
-          [class.btn-erp-primary]="!partyToToggle.isActive"
-          (click)="confirmStatusToggle()"
-        >
+        <button type="button" class="btn-erp" [class.btn-erp-danger]="partyToToggle.isActive"
+          [class.btn-erp-primary]="!partyToToggle.isActive" (click)="confirmStatusToggle()">
           <i class="fa-solid" [class.fa-ban]="partyToToggle.isActive" [class.fa-check]="!partyToToggle.isActive"></i>
           <span>Confirm {{ partyToToggle.isActive ? 'Deactivation' : 'Activation' }}</span>
         </button>
