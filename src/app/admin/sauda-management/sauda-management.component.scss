@@ -484,6 +484,11 @@
   gap: 14px;
 }
 
+.span-2,
+.ledger-span-2 {
+  grid-column: span 2;
+}
+
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

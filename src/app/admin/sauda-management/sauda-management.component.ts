@@ -121,6 +121,21 @@ export class SaudaManagementComponent implements OnInit {
   isRevisionOpen = false;
   isVoidOpen = false;
   isReviewOpen = false;
+  showAddPartyModal = false;
+  partyError = '';
+  newPartyForm: {
+    role: 'Seller' | 'Buyer';
+    name: string;
+    phone: string;
+    email: string;
+    defaultCreditDays: number | null;
+  } = {
+    role: 'Seller',
+    name: '',
+    phone: '',
+    email: '',
+    defaultCreditDays: 15,
+  };
 
   selectedSauda: SaudaRecord | null = null;
   linkedTrucks: TruckEntryRecord[] = [];
@@ -924,10 +939,66 @@ export class SaudaManagementComponent implements OnInit {
     this.isRevisionOpen = false;
     this.isVoidOpen = false;
     this.isReviewOpen = false;
+    this.showAddPartyModal = false;
+    this.partyError = '';
     this.voidError = '';
     this.reviewError = '';
     this.showRejectionInput = false;
     this.rejectionReason = '';
+  }
+
+  // ── Add Party Modal (UC-FIN-03 & Sauda Quick Party Creation) ──
+
+  openAddPartyModal(defaultRole?: 'Seller' | 'Buyer'): void {
+    this.partyError = '';
+    this.newPartyForm = {
+      role: defaultRole || 'Seller',
+      name: '',
+      phone: '',
+      email: '',
+      defaultCreditDays: 15,
+    };
+    this.showAddPartyModal = true;
+  }
+
+  closeAddPartyModal(): void {
+    this.showAddPartyModal = false;
+    this.partyError = '';
+  }
+
+  submitNewParty(): void {
+    this.partyError = '';
+    const name = (this.newPartyForm.name || '').trim();
+    if (name.length < 2) {
+      this.partyError = 'Party name must be at least 2 characters.';
+      return;
+    }
+    const phone = (this.newPartyForm.phone || '').trim();
+    const email = (this.newPartyForm.email || '').trim();
+    const creditDays = this.newPartyForm.defaultCreditDays;
+    const res =
+      this.newPartyForm.role === 'Seller'
+        ? this.erpService.createSeller(name, phone, email, creditDays)
+        : this.erpService.createBuyer(name, phone, email, creditDays);
+
+    if (!res.ok) {
+      this.partyError = res.message;
+      return;
+    }
+
+    // Auto-select party in form if Sauda Create/Edit form is currently open
+    if (this.viewMode === 'form' && this.saudaForm) {
+      if (this.newPartyForm.role === 'Seller') {
+        this.saudaForm.patchValue({ sellerName: name });
+        this.onSellerSelected();
+      } else {
+        this.saudaForm.patchValue({ buyerName: name });
+        this.onBuyerSelected();
+      }
+    }
+
+    this.closeAddPartyModal();
+    this.notificationService.show(res.message, 'success', 3000);
   }
 
   getRecordBadgeClass(status: string): string {

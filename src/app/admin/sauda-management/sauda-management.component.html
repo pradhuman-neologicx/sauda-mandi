@@ -25,6 +25,11 @@
         </button>
       </div>
 
+      <button type="button" class="btn-erp-outline" (click)="openAddPartyModal()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add Party</span>
+      </button>
+
       <button type="button" class="btn-erp-primary" (click)="openCreateForm()">
         <i class="fa-solid fa-plus"></i>
         <span>Create Sauda</span>
@@ -225,6 +230,13 @@
       <p class="erp-subtitle">
         Manage purchase, sales and direct sale agreements
       </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-outline" (click)="openAddPartyModal()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add Party</span>
+      </button>
     </div>
   </div>
 
@@ -1007,6 +1019,75 @@
         }
       </div>
     </div>
+  </div>
+</div>
+}
+
+<!-- Add Party Modal (UC-FIN-03 & Sauda Management) -->
+@if (showAddPartyModal) {
+<div class="modal-backdrop-erp" (click)="closeAddPartyModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">Add Seller / Buyer Party</h3>
+        <p class="modal-sub-erp">
+          New parties become available in Sauda Management &amp; Party Ledger
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeAddPartyModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitNewParty()" class="modal-body-erp">
+      @if (partyError) {
+      <div class="alert-erp alert-danger-erp mb-3">{{ partyError }}</div>
+      }
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Party Role <span class="req">*</span></label>
+          <select class="erp-input" name="role" [(ngModel)]="newPartyForm.role">
+            <option value="Seller">Seller (Supplier)</option>
+            <option value="Buyer">Buyer (Customer)</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Default Credit Days</label>
+          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+            [(ngModel)]="newPartyForm.defaultCreditDays" placeholder="e.g. 15" />
+        </div>
+
+        <div class="field-group ledger-span-2">
+          <label>Party Name <span class="req">*</span></label>
+          <input type="text" class="erp-input" name="name" [(ngModel)]="newPartyForm.name"
+            placeholder="e.g. Goyal Cold Storage" />
+        </div>
+
+        <div class="field-group">
+          <label>Contact Phone</label>
+          <input type="text" maxlength="10" class="erp-input" name="phone" [(ngModel)]="newPartyForm.phone"
+            placeholder="10-digit mobile number" />
+        </div>
+
+        <div class="field-group">
+          <label>Email Address</label>
+          <input type="email" class="erp-input" name="email" [(ngModel)]="newPartyForm.email"
+            placeholder="e.g. contact@party.com" />
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeAddPartyModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>Add Party</span>
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 }
