@@ -1,6 +1,121 @@
-@import '../sauda-management/sauda-management.component.scss';
+// ── Party Management Styles (Standalone & Modern ERP Standard) ─────────────
 
-// ── Subview Pills Toggle (All Parties / Sellers / Buyers) ──
+.erp-page {
+  padding: 20px 24px 64px;
+  max-width: 1480px;
+  margin: 0 auto 40px;
+}
+
+.erp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.erp-breadcrumb {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #2563eb;
+  margin-bottom: 4px;
+}
+
+.erp-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.erp-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.erp-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// ── KPI Summary Cards ───────────────────────────────────────────────────────
+.sauda-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 540px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sauda-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.sauda-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.sauda-kpi-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.text-indigo {
+  color: #4f46e5 !important;
+}
+
+// ── ERP Card & Filter Toolbar ───────────────────────────────────────────────
+.erp-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.filter-card {
+  padding: 16px 18px;
+}
+
+.party-filter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+// ── Subview Pills (All Parties / Sellers / Buyers) ──────────────────────────
 .subview-pills {
   display: inline-flex;
   align-items: center;
@@ -19,10 +134,10 @@
   border: none;
   background: transparent;
   color: #475569;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease-in-out;
 
   &:hover {
     color: #0f172a;
@@ -51,22 +166,12 @@
   line-height: 1;
 }
 
-.party-filter-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
 .erp-select-sm {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 5px 10px;
+  padding: 6px 12px;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 600;
   color: #334155;
   background-color: #ffffff;
   outline: none;
@@ -78,24 +183,167 @@
   }
 }
 
-.sub-cell-text {
-  font-size: 11.5px;
-  color: #64748b;
-  margin-top: 2px;
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.table-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+
+  .limit-select {
+    height: 36px;
+    min-width: 72px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 8px;
+    font-size: 13px;
+    color: #0f172a;
+    background: #ffffff;
+  }
+}
+
+.filter-form-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 280px;
+}
+
+.search-box {
+  position: relative;
+  flex: 0 1 280px;
+  min-width: 240px;
+
+  @media (max-width: 640px) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 12px 0 36px;
+    font-size: 13px;
+    color: #0f172a;
+
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+  }
+}
+
+// ── Table Styling ──────────────────────────────────────────────────────────
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td {
+    background: #f8fafc;
+  }
+
+  .w-sno {
+    width: 65px;
+    text-align: center;
+  }
 }
 
 .party-name-link {
+  font-size: 13.5px;
   color: #0f172a;
   transition: color 0.15s ease;
 
   &:hover {
     color: #2563eb;
+    text-decoration: underline;
   }
 }
 
+.sub-cell-text {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  font-family: monospace;
+}
+
 .inactive-row td {
-  opacity: 0.72;
-  background-color: #fcfcfd;
+  opacity: 0.65;
+  background-color: #fafbfc;
+}
+
+// ── Badges ─────────────────────────────────────────────────────────────────
+.badge-erp {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+
+  &.badge-blue {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  &.badge-green {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  &.badge-gray {
+    background: #f1f5f9;
+    color: #64748b;
+  }
 }
 
 .status-toggle-btn {
@@ -145,31 +393,6 @@
   }
 }
 
-.table-action-btns {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: center;
-}
-
-.icon-btn.btn-view {
-  color: #2563eb;
-
-  &:hover:not(:disabled) {
-    background: #eff6ff;
-    border-color: #93c5fd;
-  }
-}
-
-.icon-btn.btn-edit {
-  color: #475569;
-
-  &:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-  }
-}
-
 .contact-link {
   color: #1e293b;
   text-decoration: none;
@@ -183,14 +406,280 @@
   }
 }
 
-.kpi-sub {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 4px;
+// ── Action Buttons ─────────────────────────────────────────────────────────
+.table-action-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
 }
 
-.text-indigo {
-  color: #4f46e5 !important;
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  &.btn-view {
+    color: #2563eb;
+    &:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+  }
+
+  &.btn-edit {
+    color: #475569;
+    &:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  }
+}
+
+.btn-erp-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+}
+
+.btn-erp-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #1e3a8a;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+  }
+}
+
+.btn-erp-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.btn-erp-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+}
+
+.erp-table-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #64748b;
+
+  i {
+    font-size: 32px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+.modal-backdrop-erp {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+
+  &.modal-sm {
+    max-width: 480px;
+  }
+  &.modal-md {
+    max-width: 580px;
+  }
+}
+
+.modal-header-erp {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.modal-title-erp {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modal-sub-erp {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 3px 0 0;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+
+  &:hover {
+    color: #0f172a;
+  }
+}
+
+.modal-body-erp {
+  padding: 22px 24px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-footer-erp {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #334155;
+  }
+}
+
+.req {
+  color: #dc2626;
+}
+
+.erp-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+}
+
+.span-2,
+.ledger-span-2 {
+  grid-column: span 2;
+}
+
+.alert-erp {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+
+  &.alert-danger-erp {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+  }
+
+  &.alert-warning-erp {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #b45309;
+  }
 }
 
 .view-detail-card {
@@ -213,8 +702,8 @@
 }
 
 .view-label {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -225,12 +714,7 @@
   color: #0f172a;
 }
 
-.span-2,
-.ledger-span-2 {
-  grid-column: span 2;
-}
-
-// Table Footer & ERP Pagination Layout
+// ── Table Footer & ERP Pagination Layout ────────────────────────────────────
 .table-footer {
   display: flex !important;
   align-items: center !important;
