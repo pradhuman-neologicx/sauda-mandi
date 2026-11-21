@@ -51,6 +51,12 @@ export class SidenavComponent implements OnInit {
         route: '/admin/firm-management',
       },
       {
+        index: 22,
+        icon: 'groups',
+        label: 'Party Management',
+        route: '/admin/party-management',
+      },
+      {
         index: 25,
         icon: 'manage_accounts',
         label: 'User Management',

@@ -1,0 +1,628 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
+      <h1 class="erp-title">Party Management</h1>
+      <p class="erp-subtitle">
+        Manage sellers, buyers, credit terms, and active/inactive status
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add Party</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="sauda-kpi-grid mb-4">
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Total Parties</div>
+      <div class="sauda-kpi-val text-primary">{{ totalPartiesCount }}</div>
+      <div class="kpi-sub">Sellers + Buyers registered</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Active Sellers</div>
+      <div class="sauda-kpi-val text-success">{{ activeSellersCount }}</div>
+      <div class="kpi-sub">Available for Purchase Saudas</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Active Buyers</div>
+      <div class="sauda-kpi-val text-indigo">{{ activeBuyersCount }}</div>
+      <div class="kpi-sub">Available for Sales Saudas</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Inactive Parties</div>
+      <div class="sauda-kpi-val text-danger">{{ inactivePartiesCount }}</div>
+      <div class="kpi-sub">Disabled from new transactions</div>
+    </div>
+  </div>
+
+  <!-- Filter Bar & Role Tabs -->
+  <div class="erp-card filter-card mb-4">
+    <div class="party-filter-top">
+      <!-- Role Tabs -->
+      <div class="subview-pills">
+        <button
+          type="button"
+          class="subview-btn"
+          [class.active]="roleFilter === 'All'"
+          (click)="setRoleFilter('All')"
+        >
+          <span>All Parties</span>
+          <span class="subview-badge">{{ totalPartiesCount }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="subview-btn"
+          [class.active]="roleFilter === 'Seller'"
+          (click)="setRoleFilter('Seller')"
+        >
+          <span>Sellers (Suppliers)</span>
+        </button>
+
+        <button
+          type="button"
+          class="subview-btn"
+          [class.active]="roleFilter === 'Buyer'"
+          (click)="setRoleFilter('Buyer')"
+        >
+          <span>Buyers (Customers)</span>
+        </button>
+      </div>
+
+      <!-- Status Filter Dropdown -->
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-xs text-muted fw-semibold">Status:</span>
+        <select
+          class="erp-select-sm"
+          [ngModel]="statusFilter"
+          (ngModelChange)="setStatusFilter($event)"
+        >
+          <option value="All">All Status</option>
+          <option value="Active">Active Only</option>
+          <option value="Inactive">Inactive Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-toolbar mt-3">
+      <div class="table-size-selector">
+        <span>Show</span>
+        <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+          @for (size of tableSizes; track size) {
+          <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+          }
+        </select>
+        <span>entries</span>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search party by name, phone, email..."
+          />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+        <button type="button" class="btn-erp-ghost" (click)="resetFilters()">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Parties Table -->
+  <div class="erp-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th class="w-sno">S.No.</th>
+            <th>Party Name</th>
+            <th>Role</th>
+            <th>Contact Details</th>
+            <th>Default Credit</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+            party of filteredParties
+              | paginate: { itemsPerPage: itemsPerPageCount, currentPage: page, id: 'party-pg' };
+            track party.id;
+            let i = $index
+          ) {
+          <tr [class.inactive-row]="!party.isActive">
+            <td class="w-sno text-muted">
+              {{ (page - 1) * itemsPerPageCount + i + 1 }}
+            </td>
+
+            <td>
+              <div class="fw-bold text-dark cursor-pointer party-name-link" (click)="openViewModal(party)">
+                {{ party.name }}
+              </div>
+              <div class="sub-cell-text">ID: {{ party.id }}</div>
+            </td>
+
+            <td>
+              @if (party.role === 'Seller') {
+              <span class="badge-erp badge-green">
+                <i class="fa-solid fa-truck-ramp-box me-1"></i> Seller
+              </span>
+              } @else {
+              <span class="badge-erp badge-blue">
+                <i class="fa-solid fa-cart-shopping me-1"></i> Buyer
+              </span>
+              }
+            </td>
+
+            <td>
+              <div class="d-flex flex-column gap-1">
+                @if (party.phone) {
+                <a [href]="'tel:' + party.phone" class="contact-link">
+                  <i class="fa-solid fa-phone text-muted me-1"></i>
+                  <span>{{ party.phone }}</span>
+                </a>
+                } @else {
+                <span class="text-muted text-xs">No phone</span>
+                }
+
+                @if (party.email) {
+                <a [href]="'mailto:' + party.email" class="contact-link text-xs">
+                  <i class="fa-solid fa-envelope text-muted me-1"></i>
+                  <span>{{ party.email }}</span>
+                </a>
+                }
+              </div>
+            </td>
+
+            <td>
+              @if (party.defaultCreditDays !== null && party.defaultCreditDays > 0) {
+              <span class="fw-semibold text-dark">{{ party.defaultCreditDays }} Days</span>
+              } @else {
+              <span class="text-muted">Immediate (0 d)</span>
+              }
+            </td>
+
+            <td>
+              <button
+                type="button"
+                class="status-toggle-btn"
+                [class.is-active]="party.isActive"
+                [class.is-inactive]="!party.isActive"
+                (click)="openToggleModal(party)"
+                [title]="party.isActive ? 'Click to Deactivate' : 'Click to Activate'"
+              >
+                <span class="dot"></span>
+                <span>{{ party.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+
+            <td class="text-center">
+              <div class="table-action-btns">
+                <button
+                  type="button"
+                  class="icon-btn btn-view"
+                  (click)="openViewModal(party)"
+                  title="View Party Details"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-btn btn-edit"
+                  (click)="openEditModal(party)"
+                  title="Edit Party"
+                >
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [class.text-danger]="party.isActive"
+                  [class.text-success]="!party.isActive"
+                  (click)="openToggleModal(party)"
+                  [title]="party.isActive ? 'Deactivate Party' : 'Activate Party'"
+                >
+                  <i class="fa-solid" [class.fa-ban]="party.isActive" [class.fa-check]="!party.isActive"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-btn text-primary"
+                  (click)="viewPartyStatement(party)"
+                  title="Open in Party Ledger"
+                >
+                  <i class="fa-solid fa-receipt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="7" class="erp-table-empty">
+              <i class="fa-solid fa-users-slash"></i>
+              <p>No parties found matching your search or filter criteria.</p>
+              @if (showReset) {
+              <button type="button" class="btn-erp-ghost mt-2" (click)="resetFilters()">
+                Reset Filters
+              </button>
+              }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Pagination -->
+    @if (filteredParties.length > 0) {
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of
+        {{ filteredParties.length }} entries
+      </div>
+      <pagination-controls
+        id="party-pg"
+        (pageChange)="onTableDataChange($event)"
+        [maxSize]="5"
+        [responsive]="true"
+        previousLabel="Prev"
+        nextLabel="Next"
+        class="my-pagination"
+      ></pagination-controls>
+    </div>
+    }
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- MODAL 1: Add Party Modal                                             -->
+<!-- ==================================================================== -->
+@if (showAddModal) {
+<div class="modal-backdrop-erp" (click)="closeAddModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">Add Seller / Buyer Party</h3>
+        <p class="modal-sub-erp">
+          New parties are immediately available across Sauda Management &amp; Ledger
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeAddModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitAddParty()" class="modal-body-erp">
+      @if (modalError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>{{ modalError }}
+      </div>
+      }
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Party Role <span class="req">*</span></label>
+          <select class="erp-input" name="role" [(ngModel)]="partyForm.role">
+            <option value="Seller">Seller (Supplier)</option>
+            <option value="Buyer">Buyer (Customer)</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Default Credit Days</label>
+          <input
+            type="number"
+            min="0"
+            class="erp-input"
+            name="defaultCreditDays"
+            [(ngModel)]="partyForm.defaultCreditDays"
+            placeholder="e.g. 15"
+          />
+        </div>
+
+        <div class="field-group ledger-span-2">
+          <label>Party Name <span class="req">*</span></label>
+          <input
+            type="text"
+            class="erp-input"
+            name="name"
+            [(ngModel)]="partyForm.name"
+            placeholder="e.g. Goyal Cold Storage"
+          />
+        </div>
+
+        <div class="field-group">
+          <label>Contact Phone</label>
+          <input
+            type="text"
+            maxlength="10"
+            class="erp-input"
+            name="phone"
+            [(ngModel)]="partyForm.phone"
+            placeholder="10-digit mobile number"
+          />
+        </div>
+
+        <div class="field-group">
+          <label>Email Address</label>
+          <input
+            type="email"
+            class="erp-input"
+            name="email"
+            [(ngModel)]="partyForm.email"
+            placeholder="e.g. contact@party.com"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeAddModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>Add Party</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 2: Edit Party Modal                                            -->
+<!-- ==================================================================== -->
+@if (showEditModal) {
+<div class="modal-backdrop-erp" (click)="closeEditModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">Edit Party</h3>
+        <p class="modal-sub-erp">
+          Update contact info and default credit terms for {{ editForm.name }}
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeEditModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitEditParty()" class="modal-body-erp">
+      @if (modalError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>{{ modalError }}
+      </div>
+      }
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Party Role</label>
+          <input
+            type="text"
+            class="erp-input bg-light"
+            [value]="editForm.role === 'Seller' ? 'Seller (Supplier)' : 'Buyer (Customer)'"
+            disabled
+          />
+        </div>
+
+        <div class="field-group">
+          <label>Default Credit Days</label>
+          <input
+            type="number"
+            min="0"
+            class="erp-input"
+            name="defaultCreditDays"
+            [(ngModel)]="editForm.defaultCreditDays"
+            placeholder="e.g. 15"
+          />
+        </div>
+
+        <div class="field-group ledger-span-2">
+          <label>Party Name <span class="req">*</span></label>
+          <input
+            type="text"
+            class="erp-input"
+            name="name"
+            [(ngModel)]="editForm.name"
+            placeholder="e.g. Goyal Cold Storage"
+          />
+        </div>
+
+        <div class="field-group">
+          <label>Contact Phone</label>
+          <input
+            type="text"
+            maxlength="10"
+            class="erp-input"
+            name="phone"
+            [(ngModel)]="editForm.phone"
+            placeholder="10-digit mobile number"
+          />
+        </div>
+
+        <div class="field-group">
+          <label>Email Address</label>
+          <input
+            type="email"
+            class="erp-input"
+            name="email"
+            [(ngModel)]="editForm.email"
+            placeholder="e.g. contact@party.com"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeEditModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check"></i>
+          <span>Save Changes</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 3: View Party Details Modal                                    -->
+<!-- ==================================================================== -->
+@if (showViewModal && selectedParty) {
+<div class="modal-backdrop-erp" (click)="closeViewModal()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">{{ selectedParty.name }}</h3>
+        <p class="modal-sub-erp">Party Profile &amp; Configuration</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <div class="view-detail-card mb-3">
+        <div class="view-grid">
+          <div class="view-item">
+            <span class="view-label">Role</span>
+            <span class="view-val">
+              @if (selectedParty.role === 'Seller') {
+              <span class="badge-erp badge-green">Seller (Supplier)</span>
+              } @else {
+              <span class="badge-erp badge-blue">Buyer (Customer)</span>
+              }
+            </span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Status</span>
+            <span class="view-val">
+              <span class="badge-erp" [class.badge-green]="selectedParty.isActive" [class.badge-gray]="!selectedParty.isActive">
+                {{ selectedParty.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Phone</span>
+            <span class="view-val fw-bold">{{ selectedParty.phone || 'Not Provided' }}</span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Email</span>
+            <span class="view-val">{{ selectedParty.email || 'Not Provided' }}</span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Default Credit Terms</span>
+            <span class="view-val fw-bold text-primary">
+              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days (Immediate)' }}
+            </span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">System Party ID</span>
+            <span class="view-val font-monospace text-xs">{{ selectedParty.id }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <button
+          type="button"
+          class="btn-erp-outline"
+          (click)="closeViewModal(); openEditModal(selectedParty)"
+        >
+          <i class="fa-solid fa-pen-to-square me-1"></i> Edit Party
+        </button>
+
+        <button
+          type="button"
+          class="btn-erp-primary"
+          (click)="closeViewModal(); viewPartyStatement(selectedParty)"
+        >
+          <i class="fa-solid fa-receipt me-1"></i> View Ledger Statement
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ==================================================================== -->
+<!-- MODAL 4: Confirm Active / Inactive Status Toggle Modal               -->
+<!-- ==================================================================== -->
+@if (showToggleModal && partyToToggle) {
+<div class="modal-backdrop-erp" (click)="closeToggleModal()">
+  <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          {{ partyToToggle.isActive ? 'Deactivate Party' : 'Activate Party' }}
+        </h3>
+        <p class="modal-sub-erp">Confirm status change</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeToggleModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <p class="mb-3">
+        Are you sure you want to mark <strong>{{ partyToToggle.name }}</strong> as
+        <strong [class.text-danger]="partyToToggle.isActive" [class.text-success]="!partyToToggle.isActive">
+          {{ partyToToggle.isActive ? 'Inactive' : 'Active' }}
+        </strong>?
+      </p>
+
+      @if (partyToToggle.isActive) {
+      <div class="alert-erp alert-warning-erp mb-3">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+        Inactive parties will not appear in new Sauda contract dropdowns. Existing contracts remain intact.
+      </div>
+      }
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeToggleModal()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-erp"
+          [class.btn-erp-danger]="partyToToggle.isActive"
+          [class.btn-erp-primary]="!partyToToggle.isActive"
+          (click)="confirmStatusToggle()"
+        >
+          <i class="fa-solid" [class.fa-ban]="partyToToggle.isActive" [class.fa-check]="!partyToToggle.isActive"></i>
+          <span>Confirm {{ partyToToggle.isActive ? 'Deactivation' : 'Activation' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}

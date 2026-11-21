@@ -26,6 +26,19 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
+        path: 'party-management',
+        canActivate: [AuthGuard],
+        loadComponent: () =>
+          import('./party-mangement/party-mangement.component').then(
+            (c) => c.PartyMangementComponent,
+          ),
+      },
+      {
+        path: 'party-mangement',
+        redirectTo: 'party-management',
+        pathMatch: 'full',
+      },
+      {
         path: 'masters',
         canActivate: [AuthGuard],
         children: [
