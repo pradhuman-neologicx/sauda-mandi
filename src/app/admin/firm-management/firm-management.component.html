@@ -3,9 +3,16 @@
   <div class="erp-header">
     <div>
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
-      <h1 class="erp-title">Firm Management</h1>
+      <h1 class="erp-title">
+        <span>Firm Management</span>
+        <button type="button" class="btn-info-badge" (click)="showGuide = !showGuide"
+          [title]="showGuide ? 'Hide explanation' : 'Show What is Firm guide'">
+          <i class="fa-solid fa-circle-question"></i>
+          <span>What is Firm?</span>
+        </button>
+      </h1>
       <p class="erp-subtitle">
-        Add, edit, and activate/deactivate trading firms
+        Add, edit, and configure your registered Mandi trading entities (Client Firms)
       </p>
     </div>
 
@@ -16,6 +23,65 @@
       </button>
     </div>
   </div>
+
+  <!-- What is Firm & Its Purpose Guide Banner -->
+  @if (showGuide) {
+  <div class="firm-guide-card mb-4">
+    <div class="guide-header">
+      <div class="guide-title-wrap">
+        <div class="guide-icon-badge">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <h3 class="guide-title">What is a Trading Firm &amp; What is its Purpose?</h3>
+          <p class="guide-sub">Core Business Entity architecture powering multi-firm Mandi trading</p>
+        </div>
+      </div>
+      <button type="button" class="guide-close-btn" (click)="showGuide = false" title="Dismiss guide">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="guide-grid">
+      <!-- 1. What is Firm -->
+      <div class="guide-col">
+        <div class="guide-col-head">
+          <i class="fa-solid fa-circle-info text-primary"></i>
+          <span>What is a Trading Firm?</span>
+        </div>
+        <p class="guide-text">
+          In this Mandi ERP, a <strong>Trading Firm (Client Firm)</strong> represents your official registered business entity, proprietorship, or partnership trading firm (e.g., <em>Desert Fresh Traders</em>, <em>Rajasthan Agro</em>). If you operate multiple trading entities under one brokerage or family group, each entity is managed as a distinct Firm.
+        </p>
+      </div>
+
+      <!-- 2. What is its use -->
+      <div class="guide-col">
+        <div class="guide-col-head">
+          <i class="fa-solid fa-briefcase text-success"></i>
+          <span>Core Purpose &amp; Usage in ERP</span>
+        </div>
+        <ul class="guide-points">
+          <li>
+            <i class="fa-solid fa-handshake point-icon text-primary"></i>
+            <span><strong>Trade Bookings:</strong> Every Purchase &amp; Sale Sauda is executed on behalf of a specific Firm.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-boxes-stacked point-icon text-amber"></i>
+            <span><strong>Inventory Segregation:</strong> Godown stock and warehouse lots belong to specific Firms.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-file-invoice-dollar point-icon text-success"></i>
+            <span><strong>Independent Accounts &amp; Ledger:</strong> Separate GST invoicing, receivables, and payables for each firm.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-comments point-icon text-cyan"></i>
+            <span><strong>Automated Dispatch:</strong> Official invoices and receipts are dispatched via the Firm's registered WhatsApp &amp; Email.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  }
 
   <!-- Filter Bar -->
   <div class="erp-card filter-card mb-4">

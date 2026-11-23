@@ -50,6 +50,7 @@ export class FirmManagementComponent implements OnInit {
 
   isFormOpen = false;
   isEditMode = false;
+  showGuide = true;
   selectedFirm: FirmRecord | null = null;
   firmForm!: FormGroup;
   formError = '';
