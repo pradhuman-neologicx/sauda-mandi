@@ -864,7 +864,7 @@
     <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
       <div class="modal-header-erp">
         <div>
-          <h3 class="modal-title-erp">Add Seller / Buyer Party</h3>
+          <h3 class="modal-title-erp">Add New Party</h3>
           <p class="modal-sub-erp">
             New parties become available in Sauda Management &amp; Party Ledger
           </p>
@@ -880,20 +880,6 @@
         }
 
         <div class="form-grid-2">
-          <div class="field-group">
-            <label>Party Role <span class="req">*</span></label>
-            <select class="erp-input" name="role" [(ngModel)]="newPartyForm.role">
-              <option value="Seller">Seller (Supplier)</option>
-              <option value="Buyer">Buyer (Customer)</option>
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Default Credit Days</label>
-            <input type="number" min="0" class="erp-input" name="defaultCreditDays"
-              [(ngModel)]="newPartyForm.defaultCreditDays" placeholder="e.g. 15" />
-          </div>
-
           <div class="field-group ledger-span-2">
             <label>Party Name <span class="req">*</span></label>
             <input type="text" class="erp-input" name="name" [(ngModel)]="newPartyForm.name"
@@ -910,6 +896,12 @@
             <label>Email Address</label>
             <input type="email" class="erp-input" name="email" [(ngModel)]="newPartyForm.email"
               placeholder="e.g. contact@party.com" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Default Credit Days</label>
+            <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+              [(ngModel)]="newPartyForm.defaultCreditDays" placeholder="e.g. 15" />
           </div>
         </div>
 
@@ -949,17 +941,6 @@
         }
 
         <div class="form-grid-2">
-          <div class="field-group">
-            <label>Party Role</label>
-            <input type="text" class="erp-input" [value]="editPartyForm.role" disabled />
-          </div>
-
-          <div class="field-group">
-            <label>Default Credit Days</label>
-            <input type="number" min="0" class="erp-input" name="editDefaultCreditDays"
-              [(ngModel)]="editPartyForm.defaultCreditDays" placeholder="e.g. 15" />
-          </div>
-
           <div class="field-group ledger-span-2">
             <label>Party Name <span class="req">*</span></label>
             <input type="text" class="erp-input" name="editName" [(ngModel)]="editPartyForm.name"
@@ -976,6 +957,12 @@
             <label>Email Address</label>
             <input type="email" class="erp-input" name="editEmail" [(ngModel)]="editPartyForm.email"
               placeholder="e.g. contact@party.com" />
+          </div>
+
+          <div class="field-group ledger-span-2">
+            <label>Default Credit Days</label>
+            <input type="number" min="0" class="erp-input" name="editDefaultCreditDays"
+              [(ngModel)]="editPartyForm.defaultCreditDays" placeholder="e.g. 15" />
           </div>
         </div>
 

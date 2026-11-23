@@ -234,13 +234,11 @@ export class PartyLedgerComponent implements OnInit {
   showAddPartyModal = false;
   partyError = '';
   newPartyForm: {
-    role: 'Seller' | 'Buyer';
     name: string;
     phone: string;
     email: string;
     defaultCreditDays: number | null;
   } = {
-    role: 'Seller',
     name: '',
     phone: '',
     email: '',
@@ -1374,7 +1372,6 @@ export class PartyLedgerComponent implements OnInit {
   openAddPartyModal(): void {
     this.partyError = '';
     this.newPartyForm = {
-      role: 'Seller',
       name: '',
       phone: '',
       email: '',
@@ -1398,18 +1395,16 @@ export class PartyLedgerComponent implements OnInit {
     const phone = (this.newPartyForm.phone || '').trim();
     const email = (this.newPartyForm.email || '').trim();
     const creditDays = this.newPartyForm.defaultCreditDays;
-    const res =
-      this.newPartyForm.role === 'Seller'
-        ? this.erp.createSeller(name, phone, email, creditDays)
-        : this.erp.createBuyer(name, phone, email, creditDays);
+    const resSeller = this.erp.createSeller(name, phone, email, creditDays);
+    const resBuyer = this.erp.createBuyer(name, phone, email, creditDays);
 
-    if (!res.ok) {
-      this.partyError = res.message;
+    if (!resSeller.ok && !resBuyer.ok) {
+      this.partyError = resSeller.message || resBuyer.message;
       return;
     }
 
     this.closeAddPartyModal();
-    this.notify.show(res.message, 'success', 3000);
+    this.notify.show(`Party "${name}" added successfully.`, 'success', 3000);
   }
 
   // ── Edit Party Modal ──

@@ -124,13 +124,11 @@ export class SaudaManagementComponent implements OnInit {
   showAddPartyModal = false;
   partyError = '';
   newPartyForm: {
-    role: 'Seller' | 'Buyer';
     name: string;
     phone: string;
     email: string;
     defaultCreditDays: number | null;
   } = {
-    role: 'Seller',
     name: '',
     phone: '',
     email: '',
@@ -949,10 +947,9 @@ export class SaudaManagementComponent implements OnInit {
 
   // ── Add Party Modal (UC-FIN-03 & Sauda Quick Party Creation) ──
 
-  openAddPartyModal(defaultRole?: 'Seller' | 'Buyer'): void {
+  openAddPartyModal(): void {
     this.partyError = '';
     this.newPartyForm = {
-      role: defaultRole || 'Seller',
       name: '',
       phone: '',
       email: '',
@@ -976,19 +973,18 @@ export class SaudaManagementComponent implements OnInit {
     const phone = (this.newPartyForm.phone || '').trim();
     const email = (this.newPartyForm.email || '').trim();
     const creditDays = this.newPartyForm.defaultCreditDays;
-    const res =
-      this.newPartyForm.role === 'Seller'
-        ? this.erpService.createSeller(name, phone, email, creditDays)
-        : this.erpService.createBuyer(name, phone, email, creditDays);
+    const resSeller = this.erpService.createSeller(name, phone, email, creditDays);
+    const resBuyer = this.erpService.createBuyer(name, phone, email, creditDays);
 
-    if (!res.ok) {
-      this.partyError = res.message;
+    if (!resSeller.ok && !resBuyer.ok) {
+      this.partyError = resSeller.message || resBuyer.message;
       return;
     }
 
     // Auto-select party in form if Sauda Create/Edit form is currently open
     if (this.viewMode === 'form' && this.saudaForm) {
-      if (this.newPartyForm.role === 'Seller') {
+      const currentType = this.saudaForm.get('saudaType')?.value;
+      if (currentType === 'Purchase') {
         this.saudaForm.patchValue({ sellerName: name });
         this.onSellerSelected();
       } else {
@@ -998,7 +994,7 @@ export class SaudaManagementComponent implements OnInit {
     }
 
     this.closeAddPartyModal();
-    this.notificationService.show(res.message, 'success', 3000);
+    this.notificationService.show(`Party "${name}" added successfully.`, 'success', 3000);
   }
 
   getRecordBadgeClass(status: string): string {
