@@ -53,7 +53,6 @@ export class ProductMasterComponent implements OnInit {
     'Sack',
     'Loose',
   ];
-  readonly weightUoms: WeightUom[] = ['KG', 'Quintal', 'MT'];
 
   // Search (on Search button click)
   searchTerm = '';
@@ -83,7 +82,6 @@ export class ProductMasterComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       subCategoryId: ['', Validators.required],
       packagingUom: ['Bag', Validators.required],
-      weightUom: ['KG', Validators.required],
     });
 
     combineLatest([
@@ -177,7 +175,6 @@ export class ProductMasterComponent implements OnInit {
       name: '',
       subCategoryId: this.activeSubCategories[0]?.id || '',
       packagingUom: this.dynamicPackagingUoms[0]?.name || 'Bag',
-      weightUom: 'KG',
     });
     this.isFormOpen = true;
   }
@@ -190,7 +187,6 @@ export class ProductMasterComponent implements OnInit {
       name: prod.name,
       subCategoryId: prod.subCategoryId,
       packagingUom: prod.packagingUom,
-      weightUom: prod.weightUom,
     });
     this.isFormOpen = true;
   }
@@ -219,7 +215,7 @@ export class ProductMasterComponent implements OnInit {
       name: v.name,
       subCategoryId: v.subCategoryId,
       packagingUom: v.packagingUom,
-      weightUom: v.weightUom,
+      weightUom: (this.selectedProduct?.weightUom || 'KG') as WeightUom,
       minStock: 0,
     };
 

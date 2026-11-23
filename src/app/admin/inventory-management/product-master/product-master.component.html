@@ -171,24 +171,13 @@
         </select>
       </div>
 
-      <div class="form-grid-2 mt-3">
-        <div class="field-group">
-          <label>Packaging UOM <span class="req">*</span></label>
-          <select formControlName="packagingUom" class="erp-input">
-            @for (u of dynamicPackagingUoms; track u.id) {
-            <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)</option>
-            }
-          </select>
-        </div>
-
-        <div class="field-group">
-          <label>Weight UOM <span class="req">*</span></label>
-          <select formControlName="weightUom" class="erp-input">
-            @for (w of weightUoms; track w) {
-            <option [value]="w">{{ w }}</option>
-            }
-          </select>
-        </div>
+      <div class="field-group mt-3">
+        <label>Packaging UOM <span class="req">*</span></label>
+        <select formControlName="packagingUom" class="erp-input">
+          @for (u of dynamicPackagingUoms; track u.id) {
+          <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)</option>
+          }
+        </select>
       </div>
 
       <div class="modal-footer-erp">
