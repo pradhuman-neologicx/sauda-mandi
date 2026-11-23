@@ -1100,7 +1100,7 @@
             </table>
           </div>
           <small class="text-muted mt-1 d-block">
-            * Only fully delivered / fulfilled Saudas are eligible per BR-IN-03. Selected: {{
+            * Only fully delivered / fulfilled Saudas are eligible. Selected: {{
             createInvoiceForm.selectedSaudaIds.length }} Sauda(s).
           </small>
           }
@@ -1109,7 +1109,7 @@
         <div class="invoice-calc-box p-3 bg-light rounded-3 mb-3 border">
           <div class="row align-items-center">
             <div class="col-md-6">
-              <div class="text-muted small">Original Calculated Total (BR-IN-05):</div>
+              <div class="text-muted small">Original Calculated Total:</div>
               <div class="fs-4 fw-bold text-dark">
                 {{ originalCalculatedInvoiceTotal | currency: 'INR' : 'symbol' : '1.0-0' }}
               </div>
@@ -1128,7 +1128,7 @@
               <i class="fa-solid fa-triangle-exclamation"></i> Amount differs from calculated total by
               {{ (createInvoiceForm.finalAmount - originalCalculatedInvoiceTotal) | currency: 'INR' : 'symbol' : '1.0-0'
               }}.
-              Adjustment reason is mandatory (BR-IN-05).
+              Adjustment reason is mandatory.
             </div>
             <label class="small fw-semibold">Adjustment Reason <span class="req">* Mandatory</span></label>
             <input type="text" class="erp-input" name="adjustmentReason"
@@ -1477,7 +1477,8 @@
                 </div>
                 <div class="channel-details small mt-2">
                   <div class="text-muted text-xs">Firm Sender WhatsApp:</div>
-                  <div class="fw-semibold text-truncate text-dark" [title]="selectedSenderFirm?.whatsappNumber || 'N/A'">
+                  <div class="fw-semibold text-truncate text-dark"
+                    [title]="selectedSenderFirm?.whatsappNumber || 'N/A'">
                     {{ selectedSenderFirm?.whatsappNumber || 'N/A' }}
                   </div>
                 </div>
@@ -1493,11 +1494,12 @@
             </label>
             <div class="input-with-icon">
               <i class="fa-solid fa-at input-icon"></i>
-              <input type="email" class="erp-input" [(ngModel)]="sendInvoiceForm.recipientEmail"
-                name="recipientEmail" placeholder="e.g. accounts@party.com" required>
+              <input type="email" class="erp-input" [(ngModel)]="sendInvoiceForm.recipientEmail" name="recipientEmail"
+                placeholder="e.g. accounts@party.com" required>
             </div>
             <small class="text-muted mt-1 d-block">
-              <i class="fa-solid fa-circle-info me-1"></i>Settled invoice receipt PDF will be sent to this email address.
+              <i class="fa-solid fa-circle-info me-1"></i>Settled invoice receipt PDF will be sent to this email
+              address.
             </small>
           </div>
           } @else {
@@ -1511,7 +1513,8 @@
                 name="recipientWhatsapp" placeholder="e.g. 9829012345" required>
             </div>
             <small class="text-muted mt-1 d-block">
-              <i class="fa-solid fa-circle-info me-1"></i>Invoice details &amp; receipt link will be dispatched to this WhatsApp number.
+              <i class="fa-solid fa-circle-info me-1"></i>Invoice details &amp; receipt link will be dispatched to this
+              WhatsApp number.
             </small>
           </div>
           }

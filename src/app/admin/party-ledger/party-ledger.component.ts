@@ -2,6 +2,7 @@ import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { combineLatest } from 'rxjs';
 import {
@@ -88,6 +89,7 @@ export interface AllTransactionRow {
 export class PartyLedgerComponent implements OnInit {
   private readonly erp = inject(SaudaErpMockService);
   private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   saudas: SaudaRecord[] = [];
@@ -283,6 +285,18 @@ export class PartyLedgerComponent implements OnInit {
         this.invoices = invoices;
         this.applyInvoiceFilters();
         this.rebuildLedgerData();
+      });
+
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (params['action'] === 'create-invoice') {
+          this.viewTab = 'invoices';
+          this.openCreateInvoiceModal();
+        } else if (params['action'] === 'record-payment') {
+          this.viewTab = 'parties';
+          this.openPaymentModal();
+        }
       });
   }
 

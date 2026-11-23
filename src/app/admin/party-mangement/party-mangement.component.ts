@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
 import { NgxPaginationModule } from 'ngx-pagination';
@@ -42,6 +42,7 @@ export class PartyMangementComponent implements OnInit {
   private erpService = inject(SaudaErpMockService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
 
   // Master lists
@@ -129,6 +130,14 @@ export class PartyMangementComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([sellers, buyers]) => {
         this.processParties(sellers, buyers);
+      });
+
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (params['action'] === 'add') {
+          this.openAddModal();
+        }
       });
   }
 
