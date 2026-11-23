@@ -5,7 +5,7 @@
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
       <h1 class="erp-title">User Management</h1>
       <p class="erp-subtitle">
-        Manage authorized system users, primary firm assignments, user types and account security
+        Manage authorized system users, assigned firms, user types and account security
       </p>
     </div>
 
@@ -122,7 +122,7 @@
             <th style="width: 60px">S.No.</th>
             <th>User & Contact</th>
             <th>Role / User Type</th>
-            <th>Primary Firm</th>
+            <th style="min-width: 200px">Assigned Firms</th>
             <th class="text-center" style="width: 140px">Password Setup</th>
             <th class="text-center" style="width: 120px">Account Status</th>
             <th class="text-center" style="width: 150px">Actions</th>
@@ -271,7 +271,7 @@
           {{ isEditMode ? 'Edit User Details' : 'Create New User' }}
         </h3>
         <p class="modal-sub-erp">
-          {{ isEditMode ? 'Update user contact details, role type and primary firm assignment' : 'Register a new
+          {{ isEditMode ? 'Update user contact details, role type and assigned firms' : 'Register a new
           authorized user and send password setup invitation' }}
         </p>
       </div>
@@ -326,7 +326,7 @@
           <label>User Type (Role Access) <span class="req">*</span></label>
           <select formControlName="userType" class="erp-select">
             <option value="Business Owner / Admin">Business Owner / Admin (Full Access Across All Firms)</option>
-            <option value="Operations Executive">Operations Executive (Restricted to Primary Firm)</option>
+            <option value="Operations Executive">Operations Executive (Restricted to Assigned Firms)</option>
           </select>
           <div class="role-help-text">
             @if (userForm.get('userType')?.value === 'Business Owner / Admin') {
@@ -334,16 +334,16 @@
             <span>Admin has administrative & operational access across all configured firms.</span>
             } @else {
             <i class="fa-solid fa-info-circle me-1 text-blue"></i>
-            <span>Operations Executive is strictly limited to their assigned primary firm.</span>
+            <span>Operations Executive is strictly limited to their assigned firms.</span>
             }
           </div>
         </div>
 
-        <!-- Primary Firm -->
+        <!-- Assigned Firms -->
         <div class="field-group">
-          <label>Primary Firm Assignment <span class="req">*</span></label>
+          <label>Assigned Firms <span class="req">*</span></label>
           <ng-select [items]="firmsList" bindLabel="name" bindValue="name" [multiple]="true" [closeOnSelect]="false"
-            [clearable]="true" [searchable]="true" placeholder="Select Primary Firm(s)" formControlName="primaryFirm"
+            [clearable]="true" [searchable]="true" placeholder="Select Firm(s)" formControlName="primaryFirm"
             class="erp-ng-select">
             <ng-template ng-header-tmp>
               <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom bg-light">
@@ -369,7 +369,7 @@
             Select one or more firms this user is authorized to operate under.
           </div>
           @if (userForm.get('primaryFirm')?.touched && userForm.get('primaryFirm')?.invalid) {
-          <span class="field-error">Please select at least one primary firm.</span>
+          <span class="field-error">Please select at least one firm.</span>
           }
         </div>
 
@@ -451,7 +451,7 @@
         </div>
 
         <div class="detail-item">
-          <span class="detail-label">Primary Assigned Firm(s)</span>
+          <span class="detail-label">Assigned Firms</span>
           <div class="firm-tag-list mt-1">
             @for (firm of getFirmList(viewingUser.primaryFirm); track firm) {
             <span class="firm-tag-pill">
@@ -558,7 +558,7 @@
           Activate this user account?
         </p>
         <p class="small text-muted mb-0">
-          The user will immediately regain access to the system based on their assigned role and primary firm.
+          The user will immediately regain access to the system based on their assigned role and firms.
         </p>
         }
       </div>

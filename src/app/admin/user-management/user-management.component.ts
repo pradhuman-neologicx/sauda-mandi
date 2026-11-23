@@ -211,13 +211,12 @@ export class UserManagementComponent implements OnInit {
     this.selectedUserId = null;
     this.formError = '';
 
-    const defaultFirms = this.firmsList.length ? [this.firmsList[0].name] : [];
     this.userForm.reset({
       name: '',
       email: '',
       mobile: '',
       userType: 'Operations Executive',
-      primaryFirm: defaultFirms,
+      primaryFirm: [],
     });
 
     this.isFormModalOpen = true;
@@ -297,7 +296,7 @@ export class UserManagementComponent implements OnInit {
     }
 
     if (!firmStr) {
-      this.formError = 'Please select at least one primary firm.';
+      this.formError = 'Please select at least one firm.';
       return;
     }
 
