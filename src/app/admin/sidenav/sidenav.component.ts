@@ -74,12 +74,24 @@ export class SidenavComponent implements OnInit {
           },
           {
             index: 24,
+            icon: 'category',
+            label: 'Categories',
+            route: '/admin/inventory-management/categories',
+          },
+          {
+            index: 25,
+            icon: 'inventory',
+            label: 'Product Master',
+            route: '/admin/inventory-management/product-master',
+          },
+          {
+            index: 26,
             icon: 'straighten',
             label: 'UOM Master',
             route: '/admin/masters/uom',
           },
           {
-            index: 25,
+            index: 27,
             icon: 'warehouse',
             label: 'Warehouse Master',
             route: '/admin/masters/warehouse',
@@ -90,27 +102,7 @@ export class SidenavComponent implements OnInit {
         index: 3,
         icon: 'inventory_2',
         label: 'Inventory Management',
-        route: '/admin/inventory-management',
-        subItems: [
-          {
-            index: 31,
-            icon: 'category',
-            label: 'Categories',
-            route: '/admin/inventory-management/categories',
-          },
-          {
-            index: 32,
-            icon: 'inventory',
-            label: 'Product Master',
-            route: '/admin/inventory-management/product-master',
-          },
-          {
-            index: 33,
-            icon: 'warehouse',
-            label: 'Inventory Stock',
-            route: '/admin/inventory-management/inventory',
-          },
-        ],
+        route: '/admin/inventory-management/inventory',
       },
       {
         index: 4,
