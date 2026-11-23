@@ -190,7 +190,6 @@
             <th>Packaging UOM</th>
             <th class="text-end">Available Quantity</th>
             <th class="text-end">Total Weight (MT)</th>
-            <th class="text-end">Avg Weight (KG)</th>
             <th>Stock Status</th>
             <th class="text-center">Action</th>
           </tr>
@@ -236,9 +235,6 @@
                 {{ item.availableWeightMt | number: '1.2-3' }} MT
               </span>
             </td>
-            <td class="text-end text-muted">
-              {{ item.averageWeightKg | number: '1.1-2' }} kg
-            </td>
             <td>
               @if (item.availableUnits > 0 && item.availableWeightMt > 0) {
               <span class="badge-erp badge-green">
@@ -260,7 +256,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="10" class="erp-table-empty">
+            <td colspan="9" class="erp-table-empty">
               <i class="fa-solid fa-boxes-stacked"></i>
               <p>No inventory balance records match your filter criteria.</p>
               @if (showStockReset) {
@@ -389,7 +385,6 @@
             <th>Type</th>
             <th class="text-end">Quantity</th>
             <th class="text-end">Total Weight</th>
-            <th class="text-end">Avg Weight</th>
             <th>Maker</th>
             <th>Status</th>
             <th class="text-center">Action</th>
@@ -440,9 +435,6 @@
                 {{ adj.adjustmentType === 'Increase' ? '+' : '-' }}{{ adj.totalWeightMt | number: '1.2-3' }} MT
               </span>
             </td>
-            <td class="text-end text-muted">
-              {{ adj.averageWeightKg | number: '1.1-2' }} kg
-            </td>
             <td>
               <div class="text-xs fw-semibold text-dark">{{ adj.makerName }}</div>
               <div class="text-xxs text-muted">{{ adj.makerRole }}</div>
@@ -480,7 +472,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="11" class="erp-table-empty">
+            <td colspan="10" class="erp-table-empty">
               <i class="fa-solid fa-sliders"></i>
               <p>
                 No {{ adjSubView === 'pending' ? 'Pending Approval' : 'historical' }} stock adjustments found.
@@ -652,7 +644,6 @@
             <th>Commodity</th>
             <th class="text-end">Quantity &amp; UOM</th>
             <th class="text-end">Total Weight</th>
-            <th class="text-end">Avg Weight</th>
             <th>Source / Truck Ref</th>
             <th>Recorded By</th>
             <th class="text-end">Balance After</th>
@@ -704,9 +695,6 @@
                 {{ m.movementDirection === 'Stock In' ? '+' : '-' }}{{ m.totalWeightMt | number: '1.2-3' }} MT
               </span>
             </td>
-            <td class="text-end text-muted">
-              {{ m.averageWeightKg | number: '1.1-2' }} kg
-            </td>
             <td>
               <div class="fw-medium text-dark">{{ m.sourceRef }}</div>
               @if (m.truckNo) {
@@ -726,7 +714,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="11" class="erp-table-empty">
+            <td colspan="10" class="erp-table-empty">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <p>No completed stock movements match your filter criteria.</p>
             </td>
@@ -784,7 +772,8 @@
             @if (isMaker) {
             <input type="text" class="erp-input bg-light" [value]="assignedPrimaryFirm" disabled />
             } @else {
-            <select class="erp-input" [(ngModel)]="createAdjForm.clientFirm" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
+            <select class="erp-input" [(ngModel)]="createAdjForm.clientFirm"
+              (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (f of firms; track f.id) {
               <option [value]="f.name">{{ f.name }}</option>
               }
@@ -795,7 +784,8 @@
           <!-- Warehouse -->
           <div class="field-group">
             <label class="erp-label">Warehouse *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
+            <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId"
+              (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (wh of warehouses; track wh.id) {
               <option [value]="wh.id">
                 {{ wh.name }}{{ wh.isActive ? '' : ' (Inactive)' }}
@@ -807,7 +797,8 @@
           <!-- Commodity -->
           <div class="field-group">
             <label class="erp-label">Commodity *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.commodity" (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
+            <select class="erp-input" [(ngModel)]="createAdjForm.commodity"
+              (ngModelChange)="createAdjError = ''; updateAdjCalculations()">
               @for (c of commodities; track c.id) {
               <option [value]="c.name">{{ c.name }}</option>
               }
@@ -828,8 +819,6 @@
               <div class="callout-val text-dark">
                 <strong>{{ liveSelectedStock.availableUnits | number }} {{ liveSelectedStock.packagingUom }}s</strong>
                 &bull; {{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT
-                <span class="text-muted ms-2">(Avg {{ liveSelectedStock.averageWeightKg | number: '1.1-2' }}
-                  kg/unit)</span>
               </div>
               } @else {
               <div class="callout-val text-muted">
@@ -866,7 +855,8 @@
           <!-- Packaging UOM -->
           <div class="field-group">
             <label class="erp-label">Packaging UOM *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom" (ngModelChange)="onAdjPackagingOrQuantityChange(true)">
+            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom"
+              (ngModelChange)="onAdjPackagingOrQuantityChange(true)">
               @for (u of packagingUomRecords; track u.id) {
               <option [value]="u.name">
                 {{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)
@@ -878,23 +868,15 @@
           <!-- Quantity (Units) -->
           <div class="field-group">
             <label class="erp-label">Quantity (Units / Bags) *</label>
-            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" (ngModelChange)="onAdjPackagingOrQuantityChange(true)" placeholder="e.g. 50" />
+            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity"
+              (ngModelChange)="onAdjPackagingOrQuantityChange(true)" placeholder="e.g. 50" />
           </div>
 
           <!-- Total Weight (MT) -->
-          <div class="field-group">
+          <div class="field-group span-2">
             <label class="erp-label">Total Weight (MT) *</label>
-            <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt" (ngModelChange)="updateAdjCalculations()"
-              placeholder="e.g. 2.500" />
-          </div>
-
-          <!-- Average Weight (Calculated) -->
-          <div class="field-group">
-            <label class="erp-label">Calculated Avg Weight</label>
-            <div class="erp-input bg-light d-flex align-items-center">
-              <span class="fw-bold">{{ computedAverageWeightKg | number: '1.1-2' }}</span>
-              <span class="text-muted ms-1">kg / unit</span>
-            </div>
+            <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt"
+              (ngModelChange)="updateAdjCalculations()" placeholder="e.g. 2.500" />
           </div>
 
           <!-- Mandatory Reason -->
@@ -1018,10 +1000,6 @@
             <span class="val fw-bold text-dark">{{ selectedAdj.totalWeightMt | number: '1.2-3' }} MT</span>
           </div>
 
-          <div class="review-item">
-            <span class="label">Average Weight:</span>
-            <span class="val text-muted">{{ selectedAdj.averageWeightKg | number: '1.1-2' }} kg / unit</span>
-          </div>
           <div class="review-item">
             <span class="label">Adjustment Date:</span>
             <span class="val">{{ selectedAdj.adjustmentDate }}</span>
