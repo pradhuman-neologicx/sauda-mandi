@@ -283,7 +283,7 @@ export interface InvProductRecord {
   subCategoryId: string;
   packagingUom: PackagingUom;
   weightUom: WeightUom;
-  minStock: number;
+  minStock?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -292,6 +292,8 @@ export interface InvProductRecord {
 export interface PackagingUomRecord {
   id: string;
   name: string;
+  bagQuantity: number;
+  unit?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -2155,12 +2157,12 @@ export class SaudaErpMockService {
   ];
 
   private readonly initialPackagingUoms: PackagingUomRecord[] = [
-    { id: 'PUOM-001', name: 'Bag', isActive: true, createdAt: '2026-11-01 09:00', updatedAt: '2026-11-01 09:00' },
-    { id: 'PUOM-002', name: 'Crate', isActive: true, createdAt: '2026-11-01 09:05', updatedAt: '2026-11-01 09:05' },
-    { id: 'PUOM-003', name: 'Box', isActive: true, createdAt: '2026-11-01 09:10', updatedAt: '2026-11-01 09:10' },
-    { id: 'PUOM-004', name: 'Carton', isActive: true, createdAt: '2026-11-01 09:15', updatedAt: '2026-11-01 09:15' },
-    { id: 'PUOM-005', name: 'Sack', isActive: true, createdAt: '2026-11-01 09:20', updatedAt: '2026-11-01 09:20' },
-    { id: 'PUOM-006', name: 'Loose', isActive: true, createdAt: '2026-11-01 09:25', updatedAt: '2026-11-01 09:25' },
+    { id: 'PUOM-001', name: 'Bag', bagQuantity: 50, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:00', updatedAt: '2026-11-01 09:00' },
+    { id: 'PUOM-002', name: 'Crate', bagQuantity: 20, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:05', updatedAt: '2026-11-01 09:05' },
+    { id: 'PUOM-003', name: 'Box', bagQuantity: 25, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:10', updatedAt: '2026-11-01 09:10' },
+    { id: 'PUOM-004', name: 'Carton', bagQuantity: 30, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:15', updatedAt: '2026-11-01 09:15' },
+    { id: 'PUOM-005', name: 'Sack', bagQuantity: 100, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:20', updatedAt: '2026-11-01 09:20' },
+    { id: 'PUOM-006', name: 'Loose', bagQuantity: 1, unit: 'Kg', isActive: true, createdAt: '2026-11-01 09:25', updatedAt: '2026-11-01 09:25' },
   ];
 
   private readonly initialWeightUoms: WeightUomRecord[] = [
@@ -4909,7 +4911,7 @@ export class SaudaErpMockService {
     subCategoryId: string;
     packagingUom: PackagingUom;
     weightUom: WeightUom;
-    minStock: number;
+    minStock?: number;
   }): ActionResult {
     const trimmed = (payload.name || '').trim();
     if (trimmed.length < 2 || !payload.subCategoryId) {
@@ -4918,7 +4920,7 @@ export class SaudaErpMockService {
         message: 'Product name and Sub Category are required.',
       };
     }
-    if (Number(payload.minStock) < 0) {
+    if (payload.minStock !== undefined && Number(payload.minStock) < 0) {
       return { ok: false, message: 'Min stock cannot be negative.' };
     }
     if (
@@ -4936,7 +4938,7 @@ export class SaudaErpMockService {
       subCategoryId: payload.subCategoryId,
       packagingUom: payload.packagingUom,
       weightUom: payload.weightUom,
-      minStock: Number(payload.minStock),
+      minStock: payload.minStock !== undefined ? Number(payload.minStock) : 0,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -4952,7 +4954,7 @@ export class SaudaErpMockService {
       subCategoryId: string;
       packagingUom: PackagingUom;
       weightUom: WeightUom;
-      minStock: number;
+      minStock?: number;
     },
   ): ActionResult {
     const existing = this.invProductsSubject.value.find((p) => p.id === id);
@@ -4964,7 +4966,7 @@ export class SaudaErpMockService {
         message: 'Product name and Sub Category are required.',
       };
     }
-    if (Number(payload.minStock) < 0) {
+    if (payload.minStock !== undefined && Number(payload.minStock) < 0) {
       return { ok: false, message: 'Min stock cannot be negative.' };
     }
     if (
@@ -4984,7 +4986,7 @@ export class SaudaErpMockService {
               subCategoryId: payload.subCategoryId,
               packagingUom: payload.packagingUom,
               weightUom: payload.weightUom,
-              minStock: Number(payload.minStock),
+              minStock: payload.minStock !== undefined ? Number(payload.minStock) : (p.minStock ?? 0),
               updatedAt: now,
             }
           : p,
@@ -5365,7 +5367,7 @@ export class SaudaErpMockService {
 
   // ── Packaging UOM Operations ──
 
-  createPackagingUom(name: string): ActionResult {
+  createPackagingUom(name: string, bagQuantity: number = 50, unit: string = 'Kg'): ActionResult {
     const trimmed = (name || '').trim();
     if (trimmed.length < 2) {
       return { ok: false, message: 'Packaging UOM name must be at least 2 characters.' };
@@ -5382,6 +5384,8 @@ export class SaudaErpMockService {
     const record: PackagingUomRecord = {
       id: `PUOM-${String(nextNum).padStart(3, '0')}`,
       name: trimmed,
+      bagQuantity: Number(bagQuantity) || 50,
+      unit: unit || 'Kg',
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -5390,7 +5394,7 @@ export class SaudaErpMockService {
     return { ok: true, message: `Packaging UOM "${trimmed}" created successfully.` };
   }
 
-  updatePackagingUom(id: string, name: string): ActionResult {
+  updatePackagingUom(id: string, name: string, bagQuantity?: number, unit: string = 'Kg'): ActionResult {
     const existing = this.packagingUomsSubject.value.find((u) => u.id === id);
     if (!existing) return { ok: false, message: 'Packaging UOM not found.' };
     const trimmed = (name || '').trim();
@@ -5407,7 +5411,15 @@ export class SaudaErpMockService {
     const now = this.formatTimestamp();
     this.packagingUomsSubject.next(
       this.packagingUomsSubject.value.map((u) =>
-        u.id === id ? { ...u, name: trimmed, updatedAt: now } : u,
+        u.id === id
+          ? {
+              ...u,
+              name: trimmed,
+              bagQuantity: bagQuantity !== undefined ? Number(bagQuantity) : (u.bagQuantity ?? 50),
+              unit: unit || u.unit || 'Kg',
+              updatedAt: now,
+            }
+          : u,
       ),
     );
     return { ok: true, message: `Packaging UOM "${trimmed}" updated successfully.` };

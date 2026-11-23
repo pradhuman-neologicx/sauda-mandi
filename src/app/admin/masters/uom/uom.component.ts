@@ -8,12 +8,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   PackagingUomRecord,
   SaudaErpMockService,
-  WeightUomRecord,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
@@ -30,13 +28,8 @@ export class UomComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
-  activeTab: 'Packaging UOM' | 'Weight UOM' = 'Packaging UOM';
-
   packagingUoms: PackagingUomRecord[] = [];
-  weightUoms: WeightUomRecord[] = [];
-
   filteredPackagingUoms: PackagingUomRecord[] = [];
-  filteredWeightUoms: WeightUomRecord[] = [];
 
   // Search (on Search button click)
   searchTerm = '';
@@ -58,34 +51,20 @@ export class UomComponent implements OnInit {
   selectedPkgUom: PackagingUomRecord | null = null;
   pkgForm!: FormGroup;
 
-  // Weight UOM Modal
-  isWtModalOpen = false;
-  isWtEdit = false;
-  selectedWtUom: WeightUomRecord | null = null;
-  wtForm!: FormGroup;
-
   formError = '';
 
   ngOnInit(): void {
     this.pkgForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
-    });
-    this.wtForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(1)]],
+      bagQuantity: [50, [Validators.required, Validators.min(0.1)]],
     });
 
-    combineLatest([this.erpService.packagingUoms$, this.erpService.weightUoms$])
+    this.erpService.packagingUoms$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([pkgList, wtList]) => {
+      .subscribe((pkgList) => {
         this.packagingUoms = pkgList;
-        this.weightUoms = wtList;
         this.applyFilters();
       });
-  }
-
-  setActiveTab(tab: 'Packaging UOM' | 'Weight UOM'): void {
-    this.activeTab = tab;
-    this.resetFilters();
   }
 
   onSearch(): void {
@@ -105,23 +84,14 @@ export class UomComponent implements OnInit {
 
   applyFilters(): void {
     const q = this.appliedSearchTerm.toLowerCase();
-    if (this.activeTab === 'Packaging UOM') {
-      this.filteredPackagingUoms = this.packagingUoms.filter((u) =>
-        !q ? true : u.name.toLowerCase().includes(q),
-      );
-    } else {
-      this.filteredWeightUoms = this.weightUoms.filter((u) =>
-        !q ? true : u.name.toLowerCase().includes(q),
-      );
-    }
+    this.filteredPackagingUoms = this.packagingUoms.filter((u) =>
+      !q ? true : u.name.toLowerCase().includes(q),
+    );
     this.updatePaginationCounters();
   }
 
   updatePaginationCounters(): void {
-    const currentLength =
-      this.activeTab === 'Packaging UOM'
-        ? this.filteredPackagingUoms.length
-        : this.filteredWeightUoms.length;
+    const currentLength = this.filteredPackagingUoms.length;
     this.itemsPerPageCount =
       this.tableSize === 'all' ? Math.max(1, currentLength) : Number(this.tableSize);
     if (currentLength === 0) {
@@ -149,7 +119,7 @@ export class UomComponent implements OnInit {
     this.isPkgEdit = false;
     this.selectedPkgUom = null;
     this.formError = '';
-    this.pkgForm.reset({ name: '' });
+    this.pkgForm.reset({ name: '', bagQuantity: 50 });
     this.isPkgModalOpen = true;
   }
 
@@ -157,7 +127,7 @@ export class UomComponent implements OnInit {
     this.isPkgEdit = true;
     this.selectedPkgUom = uom;
     this.formError = '';
-    this.pkgForm.reset({ name: uom.name });
+    this.pkgForm.reset({ name: uom.name, bagQuantity: uom.bagQuantity ?? 50 });
     this.isPkgModalOpen = true;
   }
 
@@ -170,14 +140,14 @@ export class UomComponent implements OnInit {
     this.formError = '';
     if (this.pkgForm.invalid) {
       this.pkgForm.markAllAsTouched();
-      this.formError = 'Please enter a valid Packaging UOM name (min 2 characters).';
+      this.formError = 'Please enter a valid Packaging UOM name and bag quantity (min 0.1 Kg).';
       return;
     }
-    const name = this.pkgForm.value.name;
+    const { name, bagQuantity } = this.pkgForm.value;
     const res =
       this.isPkgEdit && this.selectedPkgUom
-        ? this.erpService.updatePackagingUom(this.selectedPkgUom.id, name)
-        : this.erpService.createPackagingUom(name);
+        ? this.erpService.updatePackagingUom(this.selectedPkgUom.id, name, Number(bagQuantity))
+        : this.erpService.createPackagingUom(name, Number(bagQuantity));
 
     if (!res.ok) {
       this.formError = res.message;
@@ -193,56 +163,4 @@ export class UomComponent implements OnInit {
       this.notificationService.show(res.message, 'success', 2500);
     }
   }
-
-  // ── Weight UOM Modal Handlers ──
-
-  openAddWeightModal(): void {
-    this.isWtEdit = false;
-    this.selectedWtUom = null;
-    this.formError = '';
-    this.wtForm.reset({ name: '' });
-    this.isWtModalOpen = true;
-  }
-
-  openEditWeightModal(uom: WeightUomRecord): void {
-    this.isWtEdit = true;
-    this.selectedWtUom = uom;
-    this.formError = '';
-    this.wtForm.reset({ name: uom.name });
-    this.isWtModalOpen = true;
-  }
-
-  closeWtModal(): void {
-    this.isWtModalOpen = false;
-    this.formError = '';
-  }
-
-  submitWeightUom(): void {
-    this.formError = '';
-    if (this.wtForm.invalid) {
-      this.wtForm.markAllAsTouched();
-      this.formError = 'Please enter a valid Weight UOM name.';
-      return;
-    }
-    const name = this.wtForm.value.name;
-    const res =
-      this.isWtEdit && this.selectedWtUom
-        ? this.erpService.updateWeightUom(this.selectedWtUom.id, name)
-        : this.erpService.createWeightUom(name);
-
-    if (!res.ok) {
-      this.formError = res.message;
-      return;
-    }
-    this.notificationService.show(res.message, 'success', 2500);
-    this.closeWtModal();
-  }
-
-  toggleWtStatus(uom: WeightUomRecord): void {
-    const res = this.erpService.toggleWeightUomStatus(uom.id);
-    if (res.ok) {
-      this.notificationService.show(res.message, 'success', 2500);
-    }
-  }
 }
-

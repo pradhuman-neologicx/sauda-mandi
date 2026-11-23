@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
@@ -15,6 +15,7 @@ import {
   InvProductRecord,
   InvSubCategoryRecord,
   PackagingUom,
+  PackagingUomRecord,
   SaudaErpMockService,
   WeightUom,
 } from 'src/app/core/services/sauda-erp-mock.service';
@@ -27,7 +28,6 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    DecimalPipe,
     NgxPaginationModule,
   ],
   templateUrl: './product-master.component.html',
@@ -43,6 +43,7 @@ export class ProductMasterComponent implements OnInit {
   filteredProducts: InvProductRecord[] = [];
   categories: InvCategoryRecord[] = [];
   subCategories: InvSubCategoryRecord[] = [];
+  dynamicPackagingUoms: PackagingUomRecord[] = [];
 
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
@@ -83,19 +84,20 @@ export class ProductMasterComponent implements OnInit {
       subCategoryId: ['', Validators.required],
       packagingUom: ['Bag', Validators.required],
       weightUom: ['KG', Validators.required],
-      minStock: [50, [Validators.required, Validators.min(0)]],
     });
 
     combineLatest([
       this.erpService.invProducts$,
       this.erpService.invCategories$,
       this.erpService.invSubCategories$,
+      this.erpService.packagingUoms$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([products, cats, subs]) => {
+      .subscribe(([products, cats, subs, pkgs]) => {
         this.products = products;
         this.categories = cats;
         this.subCategories = subs;
+        this.dynamicPackagingUoms = pkgs.filter((p) => p.isActive);
         this.activeSubCategories = this.subCategories.filter((sc) => sc.isActive);
         this.applyFilters();
       });
@@ -174,9 +176,8 @@ export class ProductMasterComponent implements OnInit {
     this.productForm.reset({
       name: '',
       subCategoryId: this.activeSubCategories[0]?.id || '',
-      packagingUom: 'Bag',
+      packagingUom: this.dynamicPackagingUoms[0]?.name || 'Bag',
       weightUom: 'KG',
-      minStock: 50,
     });
     this.isFormOpen = true;
   }
@@ -190,7 +191,6 @@ export class ProductMasterComponent implements OnInit {
       subCategoryId: prod.subCategoryId,
       packagingUom: prod.packagingUom,
       weightUom: prod.weightUom,
-      minStock: prod.minStock,
     });
     this.isFormOpen = true;
   }
@@ -220,7 +220,7 @@ export class ProductMasterComponent implements OnInit {
       subCategoryId: v.subCategoryId,
       packagingUom: v.packagingUom,
       weightUom: v.weightUom,
-      minStock: Number(v.minStock),
+      minStock: 0,
     };
 
     const result =

@@ -11,6 +11,7 @@ import {
   InvSubCategoryRecord,
   InventoryRecord,
   PackagingUom,
+  PackagingUomRecord,
   SaudaErpMockService,
   StockAdjustmentRecord,
   StockMovementRecord,
@@ -59,6 +60,14 @@ export class InventoryComponent implements OnInit {
   products: InvProductRecord[] = [];
   categories: InvCategoryRecord[] = [];
   subCategories: InvSubCategoryRecord[] = [];
+  packagingUomRecords: PackagingUomRecord[] = [
+    { id: 'PUOM-001', name: 'Bag', bagQuantity: 50, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+    { id: 'PUOM-002', name: 'Crate', bagQuantity: 20, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+    { id: 'PUOM-003', name: 'Box', bagQuantity: 25, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+    { id: 'PUOM-004', name: 'Carton', bagQuantity: 30, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+    { id: 'PUOM-005', name: 'Sack', bagQuantity: 100, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+    { id: 'PUOM-006', name: 'Loose', bagQuantity: 1, unit: 'Kg', isActive: true, createdAt: '', updatedAt: '' },
+  ];
 
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
@@ -91,6 +100,30 @@ export class InventoryComponent implements OnInit {
   showAdjReset = false;
   adjPage = 1;
   adjTableSize: number | 'all' = 10;
+
+  getPackagingDisplay(name: string): string {
+    const pkg = this.packagingUomRecords.find(
+      (p) => p.name.toLowerCase() === (name || '').toLowerCase(),
+    );
+    if (pkg && pkg.bagQuantity) {
+      return `${pkg.name} (${pkg.bagQuantity} ${pkg.unit || 'Kg'})`;
+    }
+    return name;
+  }
+
+  onAdjPackagingOrQuantityChange(recomputeWeight: boolean = false): void {
+    const pkg = this.packagingUomRecords.find(
+      (p) => p.name.toLowerCase() === this.createAdjForm.packagingUom.toLowerCase(),
+    );
+    const qty = Number(this.createAdjForm.quantity);
+    const bagQty = pkg?.bagQuantity || 50;
+    if (recomputeWeight && qty > 0) {
+      this.createAdjForm.totalWeightMt = Number(((qty * bagQty) / 1000).toFixed(3));
+    } else if (qty > 0 && !this.createAdjForm.totalWeightMt) {
+      this.createAdjForm.totalWeightMt = Number(((qty * bagQty) / 1000).toFixed(3));
+    }
+    this.updateAdjCalculations();
+  }
 
   // Create Adjustment Modal (UC-INV-04)
   showCreateAdjModal = false;
@@ -193,6 +226,12 @@ export class InventoryComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((list) => {
         this.subCategories = list;
+      });
+
+    this.erp.packagingUoms$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((list) => {
+        this.packagingUomRecords = list.filter((u) => u.isActive);
       });
   }
 

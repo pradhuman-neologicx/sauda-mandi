@@ -222,7 +222,7 @@
               }
             </td>
             <td>
-              <span class="badge-uom">{{ item.packagingUom }}</span>
+              <span class="badge-uom">{{ getPackagingDisplay(item.packagingUom) }}</span>
             </td>
             <td class="text-end">
               <span class="fw-bold" [class.text-muted]="item.availableUnits === 0"
@@ -415,7 +415,7 @@
             </td>
             <td>
               <div class="fw-semibold text-dark">{{ adj.commodity }}</div>
-              <span class="badge-uom">{{ adj.packagingUom }}</span>
+              <span class="badge-uom">{{ getPackagingDisplay(adj.packagingUom) }}</span>
             </td>
             <td>
               @if (adj.adjustmentType === 'Increase') {
@@ -866,17 +866,19 @@
           <!-- Packaging UOM -->
           <div class="field-group">
             <label class="erp-label">Packaging UOM *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom">
-              @for (u of packagingUoms; track u) {
-              <option [value]="u">{{ u }}</option>
+            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom" (ngModelChange)="onAdjPackagingOrQuantityChange(true)">
+              @for (u of packagingUomRecords; track u.id) {
+              <option [value]="u.name">
+                {{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)
+              </option>
               }
             </select>
           </div>
 
           <!-- Quantity (Units) -->
           <div class="field-group">
-            <label class="erp-label">Quantity (Units) *</label>
-            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" (ngModelChange)="updateAdjCalculations()" placeholder="e.g. 50" />
+            <label class="erp-label">Quantity (Units / Bags) *</label>
+            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity" (ngModelChange)="onAdjPackagingOrQuantityChange(true)" placeholder="e.g. 50" />
           </div>
 
           <!-- Total Weight (MT) -->
