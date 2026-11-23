@@ -177,9 +177,12 @@
               }
             </td>
             <td>
-              <div class="firm-cell">
-                <i class="fa-solid fa-building text-secondary me-1"></i>
-                <span class="fw-medium text-dark">{{ u.primaryFirm }}</span>
+              <div class="firm-tag-list">
+                @for (firm of getFirmList(u.primaryFirm); track firm) {
+                <span class="firm-tag-pill">
+                  <i class="fa-solid fa-building me-1"></i>{{ firm }}
+                </span>
+                }
               </div>
             </td>
             <td class="text-center">
@@ -339,17 +342,34 @@
         <!-- Primary Firm -->
         <div class="field-group">
           <label>Primary Firm Assignment <span class="req">*</span></label>
-          <select formControlName="primaryFirm" class="erp-select">
-            <option value="" disabled>Select Primary Firm</option>
-            @for (firm of firmsList; track firm.id) {
-            <option [value]="firm.name">{{ firm.name }}</option>
-            }
-          </select>
+          <ng-select [items]="firmsList" bindLabel="name" bindValue="name" [multiple]="true" [closeOnSelect]="false"
+            [clearable]="true" [searchable]="true" placeholder="Select Primary Firm(s)" formControlName="primaryFirm"
+            class="erp-ng-select">
+            <ng-template ng-header-tmp>
+              <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom bg-light">
+                <small class="text-muted fw-semibold">Select Firm(s)</small>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold"
+                    style="font-size: 11px;" (click)="selectAllFirms()">Select All</button>
+                  <span class="text-muted" style="font-size: 11px;">|</span>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-secondary fw-semibold"
+                    style="font-size: 11px;" (click)="clearAllFirms()">Clear</button>
+                </div>
+              </div>
+            </ng-template>
+            <ng-template ng-option-tmp let-item="item" let-item$="item$">
+              <div class="d-flex align-items-center gap-2">
+                <input type="checkbox" [checked]="item$.selected" class="form-check-input m-0 cursor-pointer"
+                  tabindex="-1" />
+                <span>{{ item.name }}</span>
+              </div>
+            </ng-template>
+          </ng-select>
           <div class="field-note">
-            Every user must have exactly one primary firm assigned at creation.
+            Select one or more firms this user is authorized to operate under.
           </div>
           @if (userForm.get('primaryFirm')?.touched && userForm.get('primaryFirm')?.invalid) {
-          <span class="field-error">Please select a primary firm.</span>
+          <span class="field-error">Please select at least one primary firm.</span>
           }
         </div>
 
@@ -431,10 +451,14 @@
         </div>
 
         <div class="detail-item">
-          <span class="detail-label">Primary Assigned Firm</span>
-          <span class="detail-val fw-semibold text-dark">
-            <i class="fa-solid fa-building text-secondary me-1"></i>{{ viewingUser.primaryFirm }}
-          </span>
+          <span class="detail-label">Primary Assigned Firm(s)</span>
+          <div class="firm-tag-list mt-1">
+            @for (firm of getFirmList(viewingUser.primaryFirm); track firm) {
+            <span class="firm-tag-pill">
+              <i class="fa-solid fa-building me-1"></i>{{ firm }}
+            </span>
+            }
+          </div>
         </div>
 
         <div class="detail-item">

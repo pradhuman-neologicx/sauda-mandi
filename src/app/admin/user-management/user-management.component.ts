@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FirmRecord,
@@ -20,7 +21,13 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxPaginationModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NgxPaginationModule,
+    NgSelectModule,
+  ],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss',
 })
@@ -105,7 +112,7 @@ export class UserManagementComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       userType: ['Operations Executive', [Validators.required]],
-      primaryFirm: ['', [Validators.required]],
+      primaryFirm: [[], [Validators.required]],
     });
   }
 
@@ -140,7 +147,11 @@ export class UserManagementComponent implements OnInit {
 
       // Firm Filter
       const matchesFirm =
-        this.selectedFirm === 'All' || u.primaryFirm === this.selectedFirm;
+        this.selectedFirm === 'All' ||
+        u.primaryFirm
+          .split(',')
+          .map((f) => f.trim())
+          .includes(this.selectedFirm);
 
       return matchesSearch && matchesRole && matchesFirm;
     });
@@ -200,13 +211,13 @@ export class UserManagementComponent implements OnInit {
     this.selectedUserId = null;
     this.formError = '';
 
-    const defaultFirm = this.firmsList[0]?.name || '';
+    const defaultFirms = this.firmsList.length ? [this.firmsList[0].name] : [];
     this.userForm.reset({
       name: '',
       email: '',
       mobile: '',
       userType: 'Operations Executive',
-      primaryFirm: defaultFirm,
+      primaryFirm: defaultFirms,
     });
 
     this.isFormModalOpen = true;
@@ -226,12 +237,22 @@ export class UserManagementComponent implements OnInit {
     this.selectedUserId = user.id;
     this.formError = '';
 
+    let initialFirms: string[] = [];
+    if (Array.isArray(user.primaryFirm)) {
+      initialFirms = user.primaryFirm;
+    } else if (typeof user.primaryFirm === 'string' && user.primaryFirm.trim()) {
+      initialFirms = user.primaryFirm
+        .split(',')
+        .map((f) => f.trim())
+        .filter(Boolean);
+    }
+
     this.userForm.reset({
       name: user.name,
       email: user.email,
       mobile: user.mobile,
       userType: user.userType,
-      primaryFirm: user.primaryFirm,
+      primaryFirm: initialFirms,
     });
 
     this.isFormModalOpen = true;
@@ -242,6 +263,23 @@ export class UserManagementComponent implements OnInit {
     this.formError = '';
   }
 
+  selectAllFirms(): void {
+    const allNames = this.firmsList.map((f) => f.name);
+    this.userForm.patchValue({ primaryFirm: allNames });
+  }
+
+  clearAllFirms(): void {
+    this.userForm.patchValue({ primaryFirm: [] });
+  }
+
+  getFirmList(firmStr: string | null | undefined): string[] {
+    if (!firmStr) return [];
+    return firmStr
+      .split(',')
+      .map((f) => f.trim())
+      .filter(Boolean);
+  }
+
   submitUserForm(): void {
     if (this.userForm.invalid) {
       this.userForm.markAllAsTouched();
@@ -249,7 +287,24 @@ export class UserManagementComponent implements OnInit {
       return;
     }
 
-    const payload = this.userForm.value;
+    const formVal = this.userForm.value;
+    const rawFirms = formVal.primaryFirm;
+    let firmStr = '';
+    if (Array.isArray(rawFirms)) {
+      firmStr = rawFirms.join(', ');
+    } else if (typeof rawFirms === 'string') {
+      firmStr = rawFirms.trim();
+    }
+
+    if (!firmStr) {
+      this.formError = 'Please select at least one primary firm.';
+      return;
+    }
+
+    const payload = {
+      ...formVal,
+      primaryFirm: firmStr,
+    };
 
     if (this.isEditMode && this.selectedUserId) {
       const res = this.erpService.updateUser(this.selectedUserId, payload, 'Rajesh Sharma');

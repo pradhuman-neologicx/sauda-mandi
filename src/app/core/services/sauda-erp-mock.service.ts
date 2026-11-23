@@ -5799,7 +5799,7 @@ export class SaudaErpMockService {
       return { ok: false, message: 'Please select a User Type (Role).' };
     }
     if (!primaryFirm) {
-      return { ok: false, message: 'Please select exactly one Primary Firm.' };
+      return { ok: false, message: 'Please select at least one Primary Firm.' };
     }
 
     const currentUsers = this.usersSubject.value;
@@ -5892,7 +5892,7 @@ export class SaudaErpMockService {
       return { ok: false, message: 'Please select a User Type (Role).' };
     }
     if (!primaryFirm) {
-      return { ok: false, message: 'Please select exactly one Primary Firm.' };
+      return { ok: false, message: 'Please select at least one Primary Firm.' };
     }
 
     // Uniqueness checks excluding current user
