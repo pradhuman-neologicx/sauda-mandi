@@ -589,9 +589,13 @@ export class PartyMangementComponent implements OnInit {
     }
   }
 
-  viewPartyStatement(party: UnifiedParty): void {
-    this.router.navigate(['/admin/party-ledger'], {
-      queryParams: { party: party.name },
-    });
+  viewPartyStatement(party?: UnifiedParty | null): void {
+    const target = party || this.selectedParty;
+    this.closeViewModal();
+    if (target) {
+      this.router.navigate(['/admin/party-ledger'], {
+        queryParams: { party: target.name },
+      });
+    }
   }
 }

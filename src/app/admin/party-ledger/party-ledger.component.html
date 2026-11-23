@@ -180,15 +180,6 @@
           </div>
 
           <div class="filter-field">
-            <label>Party Role</label>
-            <select class="erp-input" name="roleFilter" [(ngModel)]="roleFilter" (ngModelChange)="onSearch()">
-              <option value="All">All Parties</option>
-              <option value="Seller">Sellers (Payable)</option>
-              <option value="Buyer">Buyers (Receivable)</option>
-            </select>
-          </div>
-
-          <div class="filter-field">
             <label>Balance Status</label>
             <select class="erp-input" name="balanceFilter" [(ngModel)]="balanceFilter" (ngModelChange)="onSearch()">
               <option value="All">All Balances</option>
@@ -232,7 +223,7 @@
               <th style="width: 50px;">S.No.</th>
               <th>Invoice No &amp; Date</th>
               <th>Client Firm</th>
-              <th>Party Name &amp; Role</th>
+              <th>Party Name</th>
               <th>Consolidated Saudas</th>
               <th class="text-end">Original Total</th>
               <th class="text-end">Final Invoiced (₹)</th>
@@ -254,9 +245,6 @@
               </td>
               <td>
                 <div class="fw-semibold">{{ inv.partyName }}</div>
-                <span class="role-badge" [ngClass]="inv.partyRole === 'Seller' ? 'role-seller' : 'role-buyer'">
-                  {{ inv.partyRole }}
-                </span>
               </td>
               <td>
                 <div class="fw-semibold">{{ inv.linkedSaudas.length }} Sauda(s)</div>
@@ -340,7 +328,6 @@
           <thead>
             <tr>
               <th>Party Name</th>
-              <th>Role</th>
               <th class="text-end">Total Payable / Paid</th>
               <th class="text-end">Payable Pending</th>
               <th class="text-end">Total Receivable / Recd</th>
@@ -377,17 +364,6 @@
                   &bull; {{ party.defaultCreditDays }}d credit
                   }
                 </div>
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="
-                        party.partyRole === 'Seller'
-                          ? 'badge-blue'
-                          : party.partyRole === 'Buyer'
-                            ? 'badge-green'
-                            : 'badge-amber'
-                      ">
-                  {{ party.partyRole }}
-                </span>
               </td>
               <td class="text-end num">
                 <div>{{ party.totalPayableInr | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
@@ -456,7 +432,7 @@
             </tr>
             } @empty {
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="7" class="empty-state">
                 <i class="fa-solid fa-book-open mb-2"></i>
                 <div>No party ledger records match your filters.</div>
               </td>
@@ -506,7 +482,6 @@
               <td class="fw-semibold text-dark">{{ txn.referenceNo }}</td>
               <td>
                 <span class="fw-semibold">{{ txn.partyName }}</span>
-                <div class="sub-cell">{{ txn.partyRole }}</div>
               </td>
               <td>{{ txn.clientFirm }}</td>
               <td>{{ txn.entryType }}</td>
@@ -559,15 +534,14 @@
         </button>
         <h1 class="erp-title">{{ selectedStatementParty.partyName }}</h1>
         <p class="erp-subtitle">
-          Role: {{ selectedStatementParty.partyRole }}
           @if (selectedStatementParty.phone) {
-          &bull; {{ selectedStatementParty.phone }}
+          <span><i class="fa-solid fa-phone me-1"></i>{{ selectedStatementParty.phone }}</span>
           }
           @if (selectedStatementParty.email) {
-          &bull; {{ selectedStatementParty.email }}
+          &bull; <span><i class="fa-solid fa-envelope me-1"></i>{{ selectedStatementParty.email }}</span>
           }
           @if (selectedStatementParty.defaultCreditDays !== null) {
-          &bull; Default Credit: {{ selectedStatementParty.defaultCreditDays }} Days
+          &bull; <span>Default Credit: {{ selectedStatementParty.defaultCreditDays }} Days</span>
           }
         </p>
       </div>
@@ -780,7 +754,7 @@
               (ngModelChange)="paymentForm.partyName = $event; onPaymentPartyChange($event)">
               <option value="">Select Party</option>
               @for (opt of partyDropdownOptions; track opt.name) {
-              <option [value]="opt.name">{{ opt.name }} ({{ opt.role }})</option>
+              <option [value]="opt.name">{{ opt.name }}</option>
               }
             </select>
           </div>
@@ -1001,7 +975,7 @@
         <div class="alert-erp alert-danger-erp mb-3">{{ createInvoiceError }}</div>
         }
 
-        <div class="form-grid-3 mb-3">
+        <div class="form-grid-2 mb-3">
           <div class="field-group">
             <label>Client Firm <span class="req">*</span></label>
             <select class="erp-input" name="invClientFirm" [(ngModel)]="createInvoiceForm.clientFirm"
@@ -1017,17 +991,8 @@
             <select class="erp-input" name="invPartyName" [(ngModel)]="createInvoiceForm.partyName"
               (ngModelChange)="onInvoiceFirmOrPartyChange()">
               @for (p of partyDropdownOptions; track p.name) {
-              <option [value]="p.name">{{ p.name }} ({{ p.role }})</option>
+              <option [value]="p.name">{{ p.name }}</option>
               }
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Party Role</label>
-            <select class="erp-input" name="invPartyRole" [(ngModel)]="createInvoiceForm.partyRole"
-              (ngModelChange)="refreshEligibleSaudas()">
-              <option value="Seller">Seller (Supplier / Payables)</option>
-              <option value="Buyer">Buyer (Customer / Receivables)</option>
             </select>
           </div>
         </div>
@@ -1167,8 +1132,7 @@
             <span class="status-badge badge-amber"><i class="fa-solid fa-clock"></i> Issued</span>
           </div>
           <div class="small text-muted mb-2">
-            {{ paymentInvoice.clientFirm }} &bull; Party: <strong>{{ paymentInvoice.partyName }}</strong> ({{
-            paymentInvoice.partyRole }})
+            {{ paymentInvoice.clientFirm }} &bull; Party: <strong>{{ paymentInvoice.partyName }}</strong>
           </div>
           <div class="d-flex justify-content-between align-items-baseline pt-2 border-top">
             <span class="small fw-semibold text-secondary">Final Approved Invoice Amount:</span>
@@ -1260,7 +1224,7 @@
           <div>
             <div class="fw-bold fs-5 text-dark">{{ viewingInvoice.clientFirm }}</div>
             <div class="text-secondary small">
-              Party: <strong>{{ viewingInvoice.partyName }}</strong> ({{ viewingInvoice.partyRole }})
+              Party: <strong>{{ viewingInvoice.partyName }}</strong>
             </div>
           </div>
           <div class="text-end">
@@ -1387,7 +1351,7 @@
             <i class="fa-solid fa-paper-plane text-primary me-2"></i>Send Invoice — {{ sendingInvoice.invoiceNo }}
           </h3>
           <p class="modal-sub-erp">
-            Dispatch settled invoice to {{ sendingInvoice.partyName }} ({{ sendingInvoice.partyRole }})
+            Dispatch settled invoice to {{ sendingInvoice.partyName }}
           </p>
         </div>
         <button type="button" class="close-btn" (click)="closeSendInvoiceModal()">

@@ -5118,7 +5118,7 @@ export class SaudaErpMockService {
   createInvoice(payload: {
     clientFirm: string;
     partyName: string;
-    partyRole: 'Seller' | 'Buyer';
+    partyRole?: 'Seller' | 'Buyer';
     saudaIds: string[];
     finalAmount?: number;
     adjustmentReason?: string;
@@ -5210,7 +5210,11 @@ export class SaudaErpMockService {
       invoiceDate: today,
       clientFirm: payload.clientFirm,
       partyName: payload.partyName,
-      partyRole: payload.partyRole,
+      partyRole:
+        payload.partyRole ||
+        (selectedSaudas.every((s) => s.saudaType === 'Sales')
+          ? 'Buyer'
+          : 'Seller'),
       linkedSaudas,
       originalCalculatedAmount: originalSum,
       finalAmount,

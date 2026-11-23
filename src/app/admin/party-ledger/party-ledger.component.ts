@@ -145,14 +145,13 @@ export class PartyLedgerComponent implements OnInit {
   createInvoiceForm: {
     clientFirm: string;
     partyName: string;
-    partyRole: 'Seller' | 'Buyer';
+    partyRole?: 'Seller' | 'Buyer';
     selectedSaudaIds: string[];
     finalAmount: number | null;
     adjustmentReason: string;
   } = {
     clientFirm: '',
     partyName: '',
-    partyRole: 'Seller',
     selectedSaudaIds: [],
     finalAmount: null,
     adjustmentReason: '',
@@ -294,8 +293,32 @@ export class PartyLedgerComponent implements OnInit {
         } else if (params['action'] === 'record-payment') {
           this.viewTab = 'parties';
           this.openPaymentModal();
+        } else if (params['party']) {
+          this.pendingPartyQuery = params['party'];
+          this.checkPartyQueryParam(params['party']);
         }
       });
+  }
+
+  pendingPartyQuery = '';
+
+  checkPartyQueryParam(partyName?: string): void {
+    const targetName = (partyName || this.pendingPartyQuery || '').trim();
+    if (!targetName) return;
+    this.viewTab = 'parties';
+    const match = this.allPartySummaries.find(
+      (p) =>
+        p.partyName.toLowerCase() === targetName.toLowerCase() ||
+        p.partyKey === targetName.toLowerCase(),
+    );
+    if (match) {
+      this.openStatement(match);
+      this.pendingPartyQuery = '';
+    } else {
+      this.searchTerm = targetName;
+      this.appliedSearchTerm = targetName;
+      this.applyFilters();
+    }
   }
 
   // ── KPI Totals & Precomputed Properties ──
@@ -360,26 +383,19 @@ export class PartyLedgerComponent implements OnInit {
   }
 
   updatePartyDropdownOptions(): void {
-    const map = new Map<string, { name: string; role: 'Seller' | 'Buyer' }>();
+    const names = new Set<string>();
     for (const s of this.sellers) {
-      if (s.isActive) {
-        map.set(s.name.toLowerCase(), { name: s.name, role: 'Seller' });
-      }
+      if (s.isActive && s.name?.trim()) names.add(s.name.trim());
     }
     for (const b of this.buyers) {
-      if (b.isActive && !map.has(b.name.toLowerCase())) {
-        map.set(b.name.toLowerCase(), { name: b.name, role: 'Buyer' });
-      }
+      if (b.isActive && b.name?.trim()) names.add(b.name.trim());
     }
     for (const p of this.allPartySummaries) {
-      if (!map.has(p.partyKey)) {
-        map.set(p.partyKey, {
-          name: p.partyName,
-          role: p.partyRole === 'Buyer' ? 'Buyer' : 'Seller',
-        });
-      }
+      if (p.partyName?.trim()) names.add(p.partyName.trim());
     }
-    this.partyDropdownOptions = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    this.partyDropdownOptions = Array.from(names)
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => ({ name, role: 'Seller' as const }));
   }
 
   updateSaudaOptionsForPayment(): void {
@@ -749,6 +765,10 @@ export class PartyLedgerComponent implements OnInit {
 
     this.applyFilters();
 
+    if (this.pendingPartyQuery) {
+      this.checkPartyQueryParam();
+    }
+
     if (this.selectedStatementParty) {
       this.selectedStatementParty =
         summaries.find(
@@ -856,13 +876,10 @@ export class PartyLedgerComponent implements OnInit {
     const defaultFirm = this.firms[0]?.name || 'Desert Fresh Traders';
     const defaultParty =
       this.partyDropdownOptions[0]?.name || 'Jal Kisan Suppliers';
-    const defaultPartyRole =
-      this.partyDropdownOptions[0]?.role || 'Seller';
 
     this.createInvoiceForm = {
       clientFirm: defaultFirm,
       partyName: defaultParty,
-      partyRole: defaultPartyRole,
       selectedSaudaIds: [],
       finalAmount: null,
       adjustmentReason: '',
@@ -882,16 +899,6 @@ export class PartyLedgerComponent implements OnInit {
     this.createInvoiceForm.finalAmount = null;
     this.createInvoiceForm.adjustmentReason = '';
     this.createInvoiceError = '';
-
-    const found = this.partyDropdownOptions.find(
-      (p) =>
-        p.name.toLowerCase() ===
-        (this.createInvoiceForm.partyName || '').toLowerCase(),
-    );
-    if (found) {
-      this.createInvoiceForm.partyRole = found.role;
-    }
-
     this.refreshEligibleSaudas();
     this.updateCalculatedInvoiceTotal();
   }
