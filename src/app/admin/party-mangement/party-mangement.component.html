@@ -5,8 +5,9 @@
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
       <h1 class="erp-title">Party Management</h1>
       <div class="erp-header-desc">
-        <p class="desc-main">External trading counterparties categorized as Sellers (Suppliers/Stockists) and Buyers (Customers/Millers).</p>
-        <p class="desc-sub">Mapped to Purchase and Sales Saudas to automate credit periods, outstanding ledger balances, and payment tracking.</p>
+        <p class="desc-main">External trading counterparties registered for commercial transactions.</p>
+        <p class="desc-sub">Mapped to Purchase and Sales Saudas to automate credit periods, outstanding ledger balances,
+          and payment tracking.</p>
       </div>
     </div>
 
@@ -23,19 +24,19 @@
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Total Parties</div>
       <div class="sauda-kpi-val text-primary">{{ totalPartiesCount }}</div>
-      <div class="kpi-sub">Sellers + Buyers registered</div>
+      <div class="kpi-sub">Registered trading entities</div>
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Active Sellers</div>
-      <div class="sauda-kpi-val text-success">{{ activeSellersCount }}</div>
-      <div class="kpi-sub">Available for Purchase Saudas</div>
+      <div class="sauda-kpi-label">Active Parties</div>
+      <div class="sauda-kpi-val text-success">{{ activePartiesCount }}</div>
+      <div class="kpi-sub">Available for Sauda transactions</div>
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Active Buyers</div>
-      <div class="sauda-kpi-val text-indigo">{{ activeBuyersCount }}</div>
-      <div class="kpi-sub">Available for Sales Saudas</div>
+      <div class="sauda-kpi-label">Credit Active</div>
+      <div class="sauda-kpi-val text-indigo">{{ creditPartiesCount }}</div>
+      <div class="kpi-sub">Custom credit days configured</div>
     </div>
 
     <div class="sauda-kpi-card">
@@ -45,7 +46,7 @@
     </div>
   </div>
 
-  <!-- Filter Toolbar (Role Dropdown to Left of Search) -->
+  <!-- Filter Toolbar -->
   <div class="erp-card filter-card mb-4">
     <div class="filter-toolbar">
       <div class="table-size-selector">
@@ -59,15 +60,6 @@
       </div>
 
       <form (ngSubmit)="onSearch()" class="filter-form-right">
-        <!-- Role Filter Dropdown to the left of Search -->
-        <select class="filter-select" name="roleFilter" [ngModel]="roleFilter" (ngModelChange)="setRoleFilter($event)">
-          <option value="All">All Roles </option>
-          <option value="Seller">Sellers (Suppliers)</option>
-          <option value="Buyer">Buyers (Customers)</option>
-        </select>
-
-
-
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
@@ -96,7 +88,6 @@
           <tr>
             <th class="w-sno">S.No.</th>
             <th>Party Name</th>
-            <th>Role</th>
             <th>Contact Details</th>
             <th>Default Credit</th>
             <th>Status</th>
@@ -120,18 +111,6 @@
                 {{ party.name }}
               </div>
 
-            </td>
-
-            <td>
-              @if (party.role === 'Seller') {
-              <span class="badge-erp badge-green">
-                <i class="fa-solid fa-truck-ramp-box me-1"></i> Seller
-              </span>
-              } @else {
-              <span class="badge-erp badge-blue">
-                <i class="fa-solid fa-cart-shopping me-1"></i> Buyer
-              </span>
-              }
             </td>
 
             <td>
@@ -197,7 +176,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="7" class="erp-table-empty">
+            <td colspan="6" class="erp-table-empty">
               <i class="fa-solid fa-users-slash"></i>
               <p>No parties found matching your search or filter criteria.</p>
               @if (showReset) {
@@ -234,7 +213,7 @@
   <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
     <div class="modal-header-erp">
       <div>
-        <h3 class="modal-title-erp">Add Seller / Buyer Party</h3>
+        <h3 class="modal-title-erp">Add New Party</h3>
         <p class="modal-sub-erp">
           New parties are immediately available across Sauda Management &amp; Ledger
         </p>
@@ -252,20 +231,6 @@
       }
 
       <div class="form-grid-2">
-        <div class="field-group">
-          <label>Party Role <span class="req">*</span></label>
-          <select class="erp-input" name="role" [(ngModel)]="partyForm.role">
-            <option value="Seller">Seller (Supplier)</option>
-            <option value="Buyer">Buyer (Customer)</option>
-          </select>
-        </div>
-
-        <div class="field-group">
-          <label>Default Credit Days</label>
-          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
-            [(ngModel)]="partyForm.defaultCreditDays" placeholder="e.g. 15" />
-        </div>
-
         <div class="field-group ledger-span-2">
           <label>Party Name <span class="req">*</span></label>
           <input type="text" class="erp-input" name="name" [(ngModel)]="partyForm.name"
@@ -282,6 +247,12 @@
           <label>Email Address</label>
           <input type="email" class="erp-input" name="email" [(ngModel)]="partyForm.email"
             placeholder="e.g. contact@party.com" />
+        </div>
+
+        <div class="field-group ledger-span-2">
+          <label>Default Credit Days</label>
+          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+            [(ngModel)]="partyForm.defaultCreditDays" placeholder="e.g. 15" />
         </div>
       </div>
 
@@ -325,18 +296,6 @@
       }
 
       <div class="form-grid-2">
-        <div class="field-group">
-          <label>Party Role</label>
-          <input type="text" class="erp-input bg-light"
-            [value]="editForm.role === 'Seller' ? 'Seller (Supplier)' : 'Buyer (Customer)'" disabled />
-        </div>
-
-        <div class="field-group">
-          <label>Default Credit Days</label>
-          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
-            [(ngModel)]="editForm.defaultCreditDays" placeholder="e.g. 15" />
-        </div>
-
         <div class="field-group ledger-span-2">
           <label>Party Name <span class="req">*</span></label>
           <input type="text" class="erp-input" name="name" [(ngModel)]="editForm.name"
@@ -353,6 +312,12 @@
           <label>Email Address</label>
           <input type="email" class="erp-input" name="email" [(ngModel)]="editForm.email"
             placeholder="e.g. contact@party.com" />
+        </div>
+
+        <div class="field-group ledger-span-2">
+          <label>Default Credit Days</label>
+          <input type="number" min="0" class="erp-input" name="defaultCreditDays"
+            [(ngModel)]="editForm.defaultCreditDays" placeholder="e.g. 15" />
         </div>
       </div>
 
@@ -390,23 +355,20 @@
       <div class="view-detail-card mb-3">
         <div class="view-grid">
           <div class="view-item">
-            <span class="view-label">Role</span>
-            <span class="view-val">
-              @if (selectedParty.role === 'Seller') {
-              <span class="badge-erp badge-green">Seller (Supplier)</span>
-              } @else {
-              <span class="badge-erp badge-blue">Buyer (Customer)</span>
-              }
-            </span>
-          </div>
-
-          <div class="view-item">
             <span class="view-label">Status</span>
             <span class="view-val">
               <span class="badge-erp" [class.badge-green]="selectedParty.isActive"
                 [class.badge-gray]="!selectedParty.isActive">
                 {{ selectedParty.isActive ? 'Active' : 'Inactive' }}
               </span>
+            </span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Default Credit Terms</span>
+            <span class="view-val fw-bold text-primary">
+              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days
+              (Immediate)' }}
             </span>
           </div>
 
@@ -420,15 +382,7 @@
             <span class="view-val">{{ selectedParty.email || 'Not Provided' }}</span>
           </div>
 
-          <div class="view-item">
-            <span class="view-label">Default Credit Terms</span>
-            <span class="view-val fw-bold text-primary">
-              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days
-              (Immediate)' }}
-            </span>
-          </div>
-
-          <div class="view-item">
+          <div class="view-item ledger-span-2">
             <span class="view-label">System Party ID</span>
             <span class="view-val font-monospace text-xs">{{ selectedParty.id }}</span>
           </div>
