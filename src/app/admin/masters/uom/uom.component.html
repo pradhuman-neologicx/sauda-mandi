@@ -5,7 +5,7 @@
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Masters</div>
       <h1 class="erp-title">Packaging UOM Master</h1>
       <p class="erp-subtitle">
-        Manage packaging units of measurement and standard bag capacities
+        Manage packaging units of measurement and standard unit capacities
       </p>
     </div>
 
@@ -138,7 +138,7 @@
         <h3 class="modal-title-erp">
           {{ isPkgEdit ? 'Edit Packaging UOM' : 'Add Packaging UOM' }}
         </h3>
-        <p class="modal-sub-erp">Packaging unit of measurement and bag capacity specification</p>
+        <p class="modal-sub-erp">Packaging unit of measurement and unit capacity specification</p>
       </div>
       <button type="button" class="close-btn" (click)="closePkgModal()">
         <i class="fa-solid fa-xmark"></i>
@@ -154,15 +154,15 @@
         <div class="field-group mb-3">
           <label>Packaging UOM Name <span class="req">*</span></label>
           <input type="text" formControlName="name" class="erp-input"
-            placeholder="e.g. 50 Kg Bag, PP Bori, Jute Sack, Crate" />
+            placeholder="e.g. 50 Kg bag, PP Bori, Jute Sack, Crate" />
         </div>
 
         <div class="field-group">
-          <label>Quantity in 1 Bag / Capacity (Kg) <span class="req">*</span></label>
+          <label>Quantity in 1 Unit / Capacity (Kg) <span class="req">*</span></label>
           <input type="number" min="0.1" step="0.1" formControlName="bagQuantity" class="erp-input"
             placeholder="e.g. 50" />
           <div class="form-hint text-muted mt-1" style="font-size: 12px;">
-            Standard quantity or weight capacity contained in 1 bag/package (in Kg)
+            Standard quantity or weight capacity contained in 1 unit/package (in Kg)
           </div>
         </div>
       </div>
