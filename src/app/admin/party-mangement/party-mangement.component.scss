@@ -363,6 +363,11 @@
     background: #f1f5f9;
     color: #64748b;
   }
+
+  &.badge-red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
 }
 
 .status-toggle-btn {
@@ -585,6 +590,12 @@
   }
   &.modal-md {
     max-width: 580px;
+  }
+  &.modal-lg {
+    max-width: 860px;
+  }
+  &.modal-xl {
+    max-width: 1100px;
   }
 }
 

@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="erp-header">
     <div>
-      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Master Setup</div>
+      <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Party</div>
       <h1 class="erp-title">Party Management</h1>
       <div class="erp-header-desc">
         <p class="desc-main">External trading counterparties registered for commercial transactions.</p>
@@ -336,15 +336,23 @@
 }
 
 <!-- ==================================================================== -->
-<!-- MODAL 3: View Party Details Modal                                    -->
+<!-- MODAL 3: View Party & Full Ledger Details Modal                      -->
 <!-- ==================================================================== -->
 @if (showViewModal && selectedParty) {
 <div class="modal-backdrop-erp" (click)="closeViewModal()">
-  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+  <div class="modal-panel modal-xl" (click)="$event.stopPropagation()">
     <div class="modal-header-erp">
       <div>
-        <h3 class="modal-title-erp">{{ selectedParty.name }}</h3>
-        <p class="modal-sub-erp">Party Profile &amp; Configuration</p>
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="modal-title-erp mb-0">{{ selectedParty.name }}</h3>
+          <span class="badge-erp ms-2" [class.badge-green]="selectedParty.isActive"
+            [class.badge-gray]="!selectedParty.isActive">
+            {{ selectedParty.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="modal-sub-erp">
+          Party Profile, Master Details &amp; Full Ledger Account Statement
+        </p>
       </div>
       <button type="button" class="close-btn" (click)="closeViewModal()">
         <i class="fa-solid fa-xmark"></i>
@@ -352,50 +360,178 @@
     </div>
 
     <div class="modal-body-erp">
+      <!-- 1. Party Profile Card -->
       <div class="view-detail-card mb-3">
         <div class="view-grid">
           <div class="view-item">
-            <span class="view-label">Status</span>
+            <span class="view-label">Contact Phone</span>
+            <span class="view-val fw-bold">
+              @if (selectedParty.phone) {
+              <a [href]="'tel:' + selectedParty.phone" class="text-decoration-none text-dark">
+                <i class="fa-solid fa-phone text-primary me-1"></i>+91 {{ selectedParty.phone }}
+              </a>
+              } @else {
+              <span class="text-muted">Not Provided</span>
+              }
+            </span>
+          </div>
+
+          <div class="view-item">
+            <span class="view-label">Email Address</span>
             <span class="view-val">
-              <span class="badge-erp" [class.badge-green]="selectedParty.isActive"
-                [class.badge-gray]="!selectedParty.isActive">
-                {{ selectedParty.isActive ? 'Active' : 'Inactive' }}
-              </span>
+              @if (selectedParty.email) {
+              <a [href]="'mailto:' + selectedParty.email" class="text-decoration-none text-dark">
+                <i class="fa-solid fa-envelope text-primary me-1"></i>{{ selectedParty.email }}
+              </a>
+              } @else {
+              <span class="text-muted">Not Provided</span>
+              }
             </span>
           </div>
 
           <div class="view-item">
             <span class="view-label">Default Credit Terms</span>
             <span class="view-val fw-bold text-primary">
-              {{ selectedParty.defaultCreditDays !== null ? selectedParty.defaultCreditDays + ' Days' : '0 Days
-              (Immediate)' }}
+              {{ selectedParty.defaultCreditDays !== null && selectedParty.defaultCreditDays > 0 ? selectedParty.defaultCreditDays + ' Days' : '0 Days (Immediate)' }}
             </span>
           </div>
 
           <div class="view-item">
-            <span class="view-label">Phone</span>
-            <span class="view-val fw-bold">{{ selectedParty.phone || 'Not Provided' }}</span>
-          </div>
-
-          <div class="view-item">
-            <span class="view-label">Email</span>
-            <span class="view-val">{{ selectedParty.email || 'Not Provided' }}</span>
-          </div>
-
-          <div class="view-item ledger-span-2">
             <span class="view-label">System Party ID</span>
-            <span class="view-val font-monospace text-xs">{{ selectedParty.id }}</span>
+            <span class="view-val font-monospace text-xs text-muted">{{ selectedParty.id }}</span>
           </div>
         </div>
       </div>
+
+      <!-- 2. Ledger Financial Summary KPIs -->
+      @if (partyLedger) {
+      <div class="sauda-kpi-grid mb-3">
+        <div class="sauda-kpi-card">
+          <div class="sauda-kpi-label">Purchases (Payable)</div>
+          <div class="sauda-kpi-val text-dark">
+            {{ partyLedger.totalPurchases | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </div>
+          <div class="kpi-sub d-flex justify-content-between">
+            <span>Paid: {{ partyLedger.totalPaid | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+            <span class="text-danger fw-semibold">Pending: {{ partyLedger.pendingPayable | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="sauda-kpi-card">
+          <div class="sauda-kpi-label">Sales (Receivable)</div>
+          <div class="sauda-kpi-val text-dark">
+            {{ partyLedger.totalSales | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </div>
+          <div class="kpi-sub d-flex justify-content-between">
+            <span>Recv: {{ partyLedger.totalReceived | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+            <span class="text-success fw-semibold">Pending: {{ partyLedger.pendingReceivable | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="sauda-kpi-card">
+          <div class="sauda-kpi-label">Net Closing Position</div>
+          <div class="sauda-kpi-val"
+            [class.text-success]="partyLedger.netClosingBalance > 0"
+            [class.text-danger]="partyLedger.netClosingBalance < 0"
+            [class.text-muted]="partyLedger.netClosingBalance === 0">
+            {{ abs(partyLedger.netClosingBalance) | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </div>
+          <div class="kpi-sub">
+            @if (partyLedger.netClosingBalance > 0) {
+            <span class="badge-erp badge-green">Net Receivable (To Receive)</span>
+            } @else if (partyLedger.netClosingBalance < 0) {
+            <span class="badge-erp badge-red">Net Payable (To Pay)</span>
+            } @else {
+            <span class="badge-erp badge-gray">Settled (All Clear)</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Full Ledger Statement Table -->
+      <div class="erp-card mb-2">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+          <div>
+            <h4 class="mb-0 fw-bold fs-6 text-dark">
+              <i class="fa-solid fa-receipt me-2 text-primary"></i>
+              Ledger Account Statement ({{ partyLedger.statement.length }} Transactions)
+            </h4>
+          </div>
+          <button type="button" class="btn-erp-outline btn-sm py-1 px-3" (click)="closeViewModal(); viewPartyStatement(selectedParty)">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open in Party Ledger Module
+          </button>
+        </div>
+
+        <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+          <table class="erp-table mb-0">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Date</th>
+                <th>Reference #</th>
+                <th>Client Firm</th>
+                <th>Entry Type &amp; Details</th>
+                <th class="text-end">Payable (+)</th>
+                <th class="text-end">Paid (-)</th>
+                <th class="text-end">Receivable (+)</th>
+                <th class="text-end">Received (-)</th>
+                <th class="text-end" style="width: 140px;">Running Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of partyLedger.statement; track row.id) {
+              <tr>
+                <td class="text-muted small">{{ row.date }}</td>
+                <td class="fw-semibold text-dark">{{ row.referenceNo }}</td>
+                <td class="small">{{ row.clientFirm }}</td>
+                <td>
+                  <div class="fw-semibold text-dark small">{{ row.entryType }}</div>
+                  @if (row.remarks) {
+                  <div class="text-muted text-xs">{{ row.remarks }}</div>
+                  }
+                </td>
+                <td class="text-end text-dark">
+                  {{ row.payableAmount > 0 ? (row.payableAmount | currency: 'INR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="text-end text-success">
+                  {{ row.paidAmount > 0 ? (row.paidAmount | currency: 'INR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="text-end text-dark">
+                  {{ row.receivableAmount > 0 ? (row.receivableAmount | currency: 'INR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="text-end text-primary">
+                  {{ row.receivedAmount > 0 ? (row.receivedAmount | currency: 'INR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="text-end fw-bold"
+                  [class.text-success]="row.runningBalance > 0"
+                  [class.text-danger]="row.runningBalance < 0"
+                  [class.text-muted]="row.runningBalance === 0">
+                  {{ abs(row.runningBalance) | currency: 'INR' : 'symbol' : '1.0-0' }}
+                  <span class="text-xs fw-normal">
+                    {{ row.runningBalance > 0 ? 'Dr' : (row.runningBalance < 0 ? 'Cr' : '') }}
+                  </span>
+                </td>
+              </tr>
+              } @empty {
+              <tr>
+                <td colspan="9" class="erp-table-empty py-4 text-center text-muted">
+                  <i class="fa-solid fa-file-invoice mb-1 fs-4 text-secondary"></i>
+                  <p class="mb-0">No ledger transactions recorded for this party yet.</p>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
 
       <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
         <button type="button" class="btn-erp-outline" (click)="closeViewModal(); openEditModal(selectedParty)">
           <i class="fa-solid fa-pen-to-square me-1"></i> Edit Party
         </button>
 
-        <button type="button" class="btn-erp-primary" (click)="closeViewModal(); viewPartyStatement(selectedParty)">
-          <i class="fa-solid fa-receipt me-1"></i> View Ledger Statement
+        <button type="button" class="btn-erp-ghost" (click)="closeViewModal()">
+          Close
         </button>
       </div>
     </div>

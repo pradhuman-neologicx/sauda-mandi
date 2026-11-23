@@ -61,12 +61,6 @@ export class SidenavComponent implements OnInit {
             route: '/admin/firm-management',
           },
           {
-            index: 22,
-            icon: 'groups',
-            label: 'Party Management',
-            route: '/admin/party-management',
-          },
-          {
             index: 23,
             icon: 'manage_accounts',
             label: 'User Management',
@@ -118,9 +112,23 @@ export class SidenavComponent implements OnInit {
       },
       {
         index: 6,
-        icon: 'account_balance_wallet',
-        label: 'Party Ledger',
-        route: '/admin/party-ledger',
+        icon: 'groups',
+        label: 'Party',
+        route: '/admin/party-group',
+        subItems: [
+          {
+            index: 61,
+            icon: 'contact_page',
+            label: 'Party Management',
+            route: '/admin/party-management',
+          },
+          {
+            index: 62,
+            icon: 'account_balance_wallet',
+            label: 'Party Ledger',
+            route: '/admin/party-ledger',
+          },
+        ],
       },
     ];
 

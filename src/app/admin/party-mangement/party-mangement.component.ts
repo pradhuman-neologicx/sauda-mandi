@@ -15,6 +15,8 @@ import {
   SaudaErpMockService,
   SellerRecord,
   BuyerRecord,
+  SaudaRecord,
+  LedgerSettlementRecord,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
@@ -28,6 +30,34 @@ export interface UnifiedParty {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PartyStatementRow {
+  id: string;
+  date: string;
+  referenceNo: string;
+  clientFirm: string;
+  entryType: string;
+  paymentModeOrTerms: string;
+  dueDate: string;
+  isOverdue: boolean;
+  payableAmount: number;
+  paidAmount: number;
+  receivableAmount: number;
+  receivedAmount: number;
+  runningBalance: number;
+  remarks: string;
+}
+
+export interface PartyLedgerOverview {
+  totalPurchases: number;
+  totalPaid: number;
+  pendingPayable: number;
+  totalSales: number;
+  totalReceived: number;
+  pendingReceivable: number;
+  netClosingBalance: number;
+  statement: PartyStatementRow[];
 }
 
 @Component({
@@ -48,6 +78,9 @@ export class PartyMangementComponent implements OnInit {
   // Master lists
   allParties: UnifiedParty[] = [];
   filteredParties: UnifiedParty[] = [];
+  saudas: SaudaRecord[] = [];
+  settlements: LedgerSettlementRecord[] = [];
+  partyLedger: PartyLedgerOverview | null = null;
 
   // Filter States
   statusFilter: 'All' | 'Active' | 'Inactive' = 'All';
@@ -121,10 +154,20 @@ export class PartyMangementComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    combineLatest([this.erpService.sellers$, this.erpService.buyers$])
+    combineLatest([
+      this.erpService.sellers$,
+      this.erpService.buyers$,
+      this.erpService.saudas$,
+      this.erpService.ledgerSettlements$,
+    ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([sellers, buyers]) => {
+      .subscribe(([sellers, buyers, saudas, settlements]) => {
+        this.saudas = saudas;
+        this.settlements = settlements;
         this.processParties(sellers, buyers);
+        if (this.selectedParty) {
+          this.buildPartyLedger(this.selectedParty);
+        }
       });
 
     this.route.queryParams
@@ -333,13 +376,173 @@ export class PartyMangementComponent implements OnInit {
     );
   }
 
+  buildPartyLedger(party: UnifiedParty): void {
+    const today = new Date().toISOString().slice(0, 10);
+    const pName = party.name.trim().toLowerCase();
+
+    let totalPurchases = 0;
+    let totalPaid = 0;
+    let totalSales = 0;
+    let totalReceived = 0;
+
+    const rawEntries: Array<{
+      sortDate: string;
+      id: string;
+      date: string;
+      referenceNo: string;
+      clientFirm: string;
+      entryType: string;
+      paymentModeOrTerms: string;
+      dueDate: string;
+      isOverdue: boolean;
+      payableAmount: number;
+      paidAmount: number;
+      receivableAmount: number;
+      receivedAmount: number;
+      remarks: string;
+    }> = [];
+
+    // 1) Active Sauda contracts
+    for (const sauda of this.saudas) {
+      if (sauda.status === 'Voided') continue;
+
+      if (sauda.saudaType === 'Purchase' && sauda.sellerName?.trim().toLowerCase() === pName) {
+        totalPurchases += Number(sauda.totalAmountInr || 0);
+        const isOverdue = Boolean(sauda.sellerDueDate && sauda.sellerDueDate < today);
+        rawEntries.push({
+          sortDate: `${sauda.saudaDate}-1`,
+          id: sauda.id,
+          date: sauda.saudaDate,
+          referenceNo: sauda.saudaNo,
+          clientFirm: sauda.clientFirm,
+          entryType: 'Purchase Sauda',
+          paymentModeOrTerms: sauda.sellerCreditPeriodDays ? `Credit ${sauda.sellerCreditPeriodDays}d` : 'Sauda Bill',
+          dueDate: sauda.sellerDueDate || '—',
+          isOverdue,
+          payableAmount: Number(sauda.totalAmountInr || 0),
+          paidAmount: 0,
+          receivableAmount: 0,
+          receivedAmount: 0,
+          remarks: `${sauda.commodity} (${sauda.quantityMt} MT)`,
+        });
+      } else if (sauda.saudaType === 'Sales' && sauda.buyerName?.trim().toLowerCase() === pName) {
+        totalSales += Number(sauda.totalAmountInr || 0);
+        const isOverdue = Boolean(sauda.buyerDueDate && sauda.buyerDueDate < today);
+        rawEntries.push({
+          sortDate: `${sauda.saudaDate}-1`,
+          id: sauda.id,
+          date: sauda.saudaDate,
+          referenceNo: sauda.saudaNo,
+          clientFirm: sauda.clientFirm,
+          entryType: 'Sales Sauda',
+          paymentModeOrTerms: sauda.buyerCreditPeriodDays ? `Credit ${sauda.buyerCreditPeriodDays}d` : 'Sauda Bill',
+          dueDate: sauda.buyerDueDate || '—',
+          isOverdue,
+          payableAmount: 0,
+          paidAmount: 0,
+          receivableAmount: Number(sauda.totalAmountInr || 0),
+          receivedAmount: 0,
+          remarks: `${sauda.commodity} (${sauda.quantityMt} MT)`,
+        });
+      }
+    }
+
+    // 2) Ledger Settlements
+    for (const st of this.settlements) {
+      if (st.partyName?.trim().toLowerCase() !== pName) continue;
+
+      if (st.ledgerSide === 'Payable') {
+        totalPaid += Number(st.amountInr || 0);
+        rawEntries.push({
+          sortDate: `${st.date}-2`,
+          id: st.id,
+          date: st.date,
+          referenceNo: st.referenceNo,
+          clientFirm: st.clientFirm,
+          entryType: st.entryKind || 'Payment',
+          paymentModeOrTerms: st.paymentMode,
+          dueDate: st.saudaNo || '—',
+          isOverdue: false,
+          payableAmount: 0,
+          paidAmount: Number(st.amountInr || 0),
+          receivableAmount: 0,
+          receivedAmount: 0,
+          remarks: st.remarks || 'Payment to Seller',
+        });
+      } else {
+        totalReceived += Number(st.amountInr || 0);
+        rawEntries.push({
+          sortDate: `${st.date}-2`,
+          id: st.id,
+          date: st.date,
+          referenceNo: st.referenceNo,
+          clientFirm: st.clientFirm,
+          entryType: st.entryKind || 'Receipt',
+          paymentModeOrTerms: st.paymentMode,
+          dueDate: st.saudaNo || '—',
+          isOverdue: false,
+          payableAmount: 0,
+          paidAmount: 0,
+          receivableAmount: 0,
+          receivedAmount: Number(st.amountInr || 0),
+          remarks: st.remarks || 'Receipt from Buyer',
+        });
+      }
+    }
+
+    // Sort chronologically ascending to calculate running balance
+    rawEntries.sort((a, b) => a.sortDate.localeCompare(b.sortDate));
+
+    let running = 0;
+    const statementAsc: PartyStatementRow[] = rawEntries.map((e) => {
+      running += (e.receivableAmount - e.receivedAmount) - (e.payableAmount - e.paidAmount);
+      return {
+        id: e.id,
+        date: e.date,
+        referenceNo: e.referenceNo,
+        clientFirm: e.clientFirm,
+        entryType: e.entryType,
+        paymentModeOrTerms: e.paymentModeOrTerms,
+        dueDate: e.dueDate,
+        isOverdue: e.isOverdue,
+        payableAmount: e.payableAmount,
+        paidAmount: e.paidAmount,
+        receivableAmount: e.receivableAmount,
+        receivedAmount: e.receivedAmount,
+        runningBalance: running,
+        remarks: e.remarks,
+      };
+    });
+
+    const pendingPayable = Math.max(0, totalPurchases - totalPaid);
+    const pendingReceivable = Math.max(0, totalSales - totalReceived);
+    const netClosingBalance = pendingReceivable - pendingPayable;
+
+    this.partyLedger = {
+      totalPurchases,
+      totalPaid,
+      pendingPayable,
+      totalSales,
+      totalReceived,
+      pendingReceivable,
+      netClosingBalance,
+      statement: statementAsc.reverse(),
+    };
+  }
+
+  abs(val: number): number {
+    return Math.abs(val || 0);
+  }
+
   openViewModal(party: UnifiedParty): void {
     this.selectedParty = party;
+    this.buildPartyLedger(party);
     this.showViewModal = true;
   }
 
   closeViewModal(): void {
     this.selectedParty = null;
+    this.partyLedger = null;
     this.showViewModal = false;
   }
 
