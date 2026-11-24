@@ -51,7 +51,7 @@ export class SidenavComponent implements OnInit {
       {
         index: 2,
         icon: 'tune',
-        label: 'Masters',
+        label: 'Configuration',
         route: '/admin/masters',
         subItems: [
           {
