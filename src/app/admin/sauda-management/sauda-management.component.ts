@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   FormArray,
   FormBuilder,
@@ -8,14 +8,17 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  BrokerageBillingMode,
   BuyerRecord,
+  ChamberConfig,
   CommodityLineItem,
   FirmRecord,
+  GodownRecord,
   InvCategoryRecord,
   InvProductRecord,
   InvSubCategoryRecord,
@@ -25,6 +28,7 @@ import {
   SaudaType,
   SellerRecord,
   TruckEntryRecord,
+  WarehouseRecord,
   WeightUom,
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
@@ -43,8 +47,6 @@ export interface InventoryCommodityOption {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    CurrencyPipe,
-    DecimalPipe,
     NgxPaginationModule,
   ],
   selector: 'app-sauda-management',
@@ -56,6 +58,7 @@ export class SaudaManagementComponent implements OnInit {
   public erpService = inject(SaudaErpMockService);
   private notificationService = inject(NotificationService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
   viewMode: 'listing' | 'form' = 'listing';
@@ -84,7 +87,12 @@ export class SaudaManagementComponent implements OnInit {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
-  readonly saudaTypes: SaudaType[] = ['Purchase', 'Sales', 'Direct Sale'];
+  readonly saudaTypes: SaudaType[] = ['Brokerage', 'Purchase', 'Sales'];
+  readonly billingModes: BrokerageBillingMode[] = [
+    'PS-1: Split',
+    'PS-2: Buyer pays all',
+    'PS-3: Everything together',
+  ];
   commodities: string[] = [];
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
@@ -96,6 +104,14 @@ export class SaudaManagementComponent implements OnInit {
   ];
   readonly weightUoms: WeightUom[] = ['KG', 'Quintal', 'MT'];
 
+  warehouses: WarehouseRecord[] = [];
+  godowns: GodownRecord[] = [];
+  filteredGodowns: GodownRecord[] = [];
+  availableChambers: ChamberConfig[] = [];
+  availableStacks: string[] = [];
+
+  allPartyOptions: string[] = [];
+  heldPurchaseSaudas: SaudaRecord[] = [];
   sellerOptions: string[] = [];
   buyerOptions: string[] = [];
 
@@ -167,6 +183,8 @@ export class SaudaManagementComponent implements OnInit {
       this.erpService.invProducts$,
       this.erpService.invSubCategories$,
       this.erpService.invCategories$,
+      this.erpService.warehouses$,
+      this.erpService.godowns$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
@@ -178,14 +196,26 @@ export class SaudaManagementComponent implements OnInit {
           invProducts,
           invSubCategories,
           invCategories,
+          warehouses,
+          godowns,
         ]) => {
           this.allSaudas = saudas;
           this.activeFirms = firms.filter((f) => f.isActive);
           this.activeSellers = sellers.filter((s) => s.isActive);
           this.activeBuyers = buyers.filter((b) => b.isActive);
+          this.warehouses = warehouses.filter((w) => w.isActive);
+          this.godowns = godowns.filter((g) => g.isActive);
 
-          this.sellerOptions = this.activeSellers.map((s) => s.name);
-          this.buyerOptions = this.activeBuyers.map((b) => b.name);
+          const partySet = new Set<string>();
+          this.activeSellers.forEach((s) => partySet.add(s.name));
+          this.activeBuyers.forEach((b) => partySet.add(b.name));
+          this.allPartyOptions = Array.from(partySet).sort();
+          this.sellerOptions = this.allPartyOptions;
+          this.buyerOptions = this.allPartyOptions;
+
+          this.heldPurchaseSaudas = saudas.filter(
+            (s) => s.saudaType === 'Purchase' && s.status === 'On Hold',
+          );
 
           this.buildInventoryCommodityOptions(
             invProducts,
@@ -218,11 +248,19 @@ export class SaudaManagementComponent implements OnInit {
   private initForms(): void {
     const today = new Date().toISOString().slice(0, 10);
     this.saudaForm = this.fb.group({
-      saudaType: ['Purchase', Validators.required],
+      saudaType: ['Brokerage', Validators.required],
       saudaDate: [today, Validators.required],
       clientFirm: ['', Validators.required],
+      warehouseId: ['', Validators.required],
+      warehouseName: [''],
+      godownName: [''],
+      chamberName: [''],
+      stackNumber: [''],
+      brokerageBillingMode: ['PS-1: Split', Validators.required],
+      linkedPurchaseSaudaId: [''],
+      linkedPurchaseSaudaNo: [''],
       sellerName: ['', Validators.required],
-      buyerName: [''],
+      buyerName: ['', Validators.required],
       expectedDeliveryDate: [''],
       commodityItems: this.fb.array([this.createCommodityRow()]),
       totalAmountInr: [null, [Validators.required, Validators.min(1)]],
@@ -249,6 +287,11 @@ export class SaudaManagementComponent implements OnInit {
       });
 
     this.saudaForm
+      .get('brokerageBillingMode')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recomputeBrokerageAmounts());
+
+    this.saudaForm
       .get('buyerBrokerageAmount')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeBrokerageAmounts());
@@ -257,6 +300,33 @@ export class SaudaManagementComponent implements OnInit {
       .get('sellerBrokerageAmount')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.recomputeBrokerageAmounts());
+
+    this.saudaForm
+      .get('warehouseId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((whId: string) => {
+        if (!whId) {
+          this.filteredGodowns = [];
+          this.availableChambers = [];
+          this.availableStacks = [];
+          return;
+        }
+        const wh = this.warehouses.find((w) => w.id === whId);
+        this.saudaForm.patchValue(
+          { warehouseName: wh?.name || '' },
+          { emitEvent: false },
+        );
+        this.filteredGodowns = this.godowns.filter((g) => g.warehouseId === whId);
+      });
+
+    this.saudaForm
+      .get('linkedPurchaseSaudaId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((pId: string) => {
+        if (pId) {
+          this.onLinkedPurchaseSaudaSelected(pId);
+        }
+      });
 
     // Auto-calculate Seller & Buyer Due Dates using calendar days
     this.saudaForm
@@ -335,8 +405,6 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   private recomputeTotalAmountFromLines(): void {
-    const type = this.saudaForm.get('saudaType')?.value;
-    if (type === 'Brokerage' || type === 'Direct Sale') return;
     let sum = 0;
     for (const ctrl of this.commodityRows.controls) {
       const lineTotal = Number(ctrl.get('lineTotal')?.value) || 0;
@@ -348,12 +416,107 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   private recomputeBrokerageAmounts(): void {
+    const mode = this.saudaForm.get('brokerageBillingMode')?.value as BrokerageBillingMode;
     const b = Number(this.saudaForm.get('buyerBrokerageAmount')?.value) || 0;
     const s = Number(this.saudaForm.get('sellerBrokerageAmount')?.value) || 0;
-    const total = b + s;
+    let total = 0;
+    if (mode === 'PS-2: Buyer pays all') {
+      total = b;
+    } else {
+      total = b + s;
+    }
     this.saudaForm
       .get('totalBrokerageAmount')
       ?.setValue(total > 0 ? total : null, { emitEvent: false });
+  }
+
+  onWarehouseSelected(): void {
+    const whId = this.saudaForm.get('warehouseId')?.value;
+    const wh = this.warehouses.find((w) => w.id === whId);
+    this.saudaForm.patchValue({
+      warehouseName: wh?.name || '',
+      godownName: '',
+      chamberName: '',
+      stackNumber: '',
+    });
+    this.filteredGodowns = this.godowns.filter((g) => g.warehouseId === whId);
+    this.availableChambers = [];
+    this.availableStacks = [];
+  }
+
+  onGodownSelected(): void {
+    const gName = this.saudaForm.get('godownName')?.value;
+    const gd = this.filteredGodowns.find((g) => g.name === gName);
+    this.availableChambers = gd?.chambers || [];
+    this.availableStacks = [];
+    this.saudaForm.patchValue({
+      chamberName: '',
+      stackNumber: '',
+    });
+  }
+
+  onChamberSelected(): void {
+    const chName = this.saudaForm.get('chamberName')?.value;
+    const ch = this.availableChambers.find((c) => c.name === chName);
+    this.availableStacks = ch?.stackNumbers || [];
+    this.saudaForm.patchValue({
+      stackNumber: '',
+    });
+  }
+
+  onLinkedPurchaseSaudaSelected(purchaseSaudaId?: string): void {
+    const id =
+      purchaseSaudaId ||
+      this.saudaForm.get('linkedPurchaseSaudaId')?.value;
+    if (!id) return;
+    const purchaseSauda = this.allSaudas.find((s) => s.id === id);
+    if (!purchaseSauda) return;
+
+    this.saudaForm.patchValue({
+      linkedPurchaseSaudaId: purchaseSauda.id,
+      linkedPurchaseSaudaNo: purchaseSauda.saudaNo,
+      sellerName:
+        purchaseSauda.sellerName ||
+        purchaseSauda.partyName.replace(' (Held)', ''),
+      warehouseId: purchaseSauda.warehouseId || this.warehouses[0]?.id || '',
+      warehouseName: purchaseSauda.warehouseName || this.warehouses[0]?.name || '',
+      godownName: purchaseSauda.godownName || '',
+      chamberName: purchaseSauda.chamberName || '',
+      stackNumber: purchaseSauda.stackNumber || '',
+    });
+
+    if (purchaseSauda.warehouseId) {
+      this.filteredGodowns = this.godowns.filter(
+        (g) => g.warehouseId === purchaseSauda.warehouseId,
+      );
+      if (purchaseSauda.godownName) {
+        const gd = this.filteredGodowns.find(
+          (g) => g.name === purchaseSauda.godownName,
+        );
+        this.availableChambers = gd?.chambers || [];
+        if (purchaseSauda.chamberName) {
+          const ch = this.availableChambers.find(
+            (c) => c.name === purchaseSauda.chamberName,
+          );
+          this.availableStacks = ch?.stackNumbers || [];
+        }
+      }
+    }
+
+    if (
+      purchaseSauda.commodityItems &&
+      purchaseSauda.commodityItems.length > 0
+    ) {
+      this.commodityRows.clear();
+      for (const item of purchaseSauda.commodityItems) {
+        this.commodityRows.push(this.createCommodityRow(item));
+      }
+    }
+  }
+
+  getLinkedPurchaseSauda(id?: string): SaudaRecord | undefined {
+    if (!id) return undefined;
+    return this.allSaudas.find((s) => s.id === id);
   }
 
   onSellerSelected(): void {
@@ -485,20 +648,50 @@ export class SaudaManagementComponent implements OnInit {
   private updatePartyValidators(type: SaudaType): void {
     const sellerCtrl = this.saudaForm.get('sellerName');
     const buyerCtrl = this.saudaForm.get('buyerName');
-    if (!sellerCtrl || !buyerCtrl) return;
+    const remarksCtrl = this.saudaForm.get('remarks');
+    const totalAmountCtrl = this.saudaForm.get('totalAmountInr');
+    const linkedSaudaCtrl = this.saudaForm.get('linkedPurchaseSaudaId');
+    const billingModeCtrl = this.saudaForm.get('brokerageBillingMode');
 
     if (type === 'Purchase') {
-      sellerCtrl.setValidators([Validators.required]);
-      buyerCtrl.clearValidators();
+      // BR-SA-04, BR-SA-16, BR-SA-23
+      sellerCtrl?.setValidators([Validators.required]);
+      buyerCtrl?.clearValidators();
+      buyerCtrl?.setValue('', { emitEvent: false });
+      remarksCtrl?.setValidators([Validators.required]);
+      totalAmountCtrl?.clearValidators();
+      linkedSaudaCtrl?.clearValidators();
+      billingModeCtrl?.clearValidators();
     } else if (type === 'Sales') {
-      sellerCtrl.clearValidators();
-      buyerCtrl.setValidators([Validators.required]);
+      // BR-SA-05, EX-09, EX-11
+      buyerCtrl?.setValidators([Validators.required]);
+      sellerCtrl?.clearValidators();
+      remarksCtrl?.clearValidators();
+      totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      linkedSaudaCtrl?.setValidators([Validators.required]);
+      billingModeCtrl?.setValidators([Validators.required]);
     } else {
-      sellerCtrl.setValidators([Validators.required]);
-      buyerCtrl.setValidators([Validators.required]);
+      // Brokerage: BR-SA-03, BR-SA-10
+      sellerCtrl?.setValidators([Validators.required]);
+      buyerCtrl?.setValidators([Validators.required]);
+      remarksCtrl?.clearValidators();
+      totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      linkedSaudaCtrl?.clearValidators();
+      billingModeCtrl?.setValidators([Validators.required]);
     }
-    sellerCtrl.updateValueAndValidity({ emitEvent: false });
-    buyerCtrl.updateValueAndValidity({ emitEvent: false });
+    sellerCtrl?.updateValueAndValidity({ emitEvent: false });
+    buyerCtrl?.updateValueAndValidity({ emitEvent: false });
+    remarksCtrl?.updateValueAndValidity({ emitEvent: false });
+    totalAmountCtrl?.updateValueAndValidity({ emitEvent: false });
+    linkedSaudaCtrl?.updateValueAndValidity({ emitEvent: false });
+    billingModeCtrl?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  addTruckEntryForSauda(sauda: SaudaRecord): void {
+    this.closeAllModals();
+    this.router.navigate(['/admin/truck-management'], {
+      queryParams: { action: 'create', saudaId: sauda.id },
+    });
   }
 
   private recomputeDueDate(side: 'seller' | 'buyer'): void {
@@ -638,10 +831,20 @@ export class SaudaManagementComponent implements OnInit {
     this.commodityRows.clear();
     this.commodityRows.push(this.createCommodityRow());
 
+    const defaultWh = this.warehouses[0];
+
     this.saudaForm.reset({
-      saudaType: 'Purchase',
+      saudaType: 'Brokerage',
       saudaDate: today,
       clientFirm: this.activeFirms[0]?.name || '',
+      warehouseId: defaultWh?.id || '',
+      warehouseName: defaultWh?.name || '',
+      godownName: '',
+      chamberName: '',
+      stackNumber: '',
+      brokerageBillingMode: 'PS-1: Split',
+      linkedPurchaseSaudaId: '',
+      linkedPurchaseSaudaNo: '',
       sellerName: '',
       buyerName: '',
       expectedDeliveryDate: '',
@@ -659,7 +862,17 @@ export class SaudaManagementComponent implements OnInit {
       revisionReason: '',
     });
 
-    this.updatePartyValidators('Purchase');
+    if (defaultWh) {
+      this.filteredGodowns = this.godowns.filter(
+        (g) => g.warehouseId === defaultWh.id,
+      );
+    } else {
+      this.filteredGodowns = [];
+    }
+    this.availableChambers = [];
+    this.availableStacks = [];
+
+    this.updatePartyValidators('Brokerage');
     this.saudaForm.get('revisionReason')?.clearValidators();
     this.saudaForm.get('revisionReason')?.updateValueAndValidity();
     this.viewMode = 'form';
@@ -698,10 +911,21 @@ export class SaudaManagementComponent implements OnInit {
       this.commodityRows.push(this.createCommodityRow());
     }
 
+    const initialType =
+      sauda.saudaType === 'Direct Sale' ? 'Brokerage' : sauda.saudaType;
+
     this.saudaForm.patchValue({
-      saudaType: sauda.saudaType,
+      saudaType: initialType,
       saudaDate: sauda.saudaDate,
       clientFirm: sauda.clientFirm,
+      warehouseId: sauda.warehouseId || this.warehouses[0]?.id || '',
+      warehouseName: sauda.warehouseName || this.warehouses[0]?.name || '',
+      godownName: sauda.godownName || '',
+      chamberName: sauda.chamberName || '',
+      stackNumber: sauda.stackNumber || '',
+      brokerageBillingMode: sauda.brokerageBillingMode || 'PS-1: Split',
+      linkedPurchaseSaudaId: sauda.linkedPurchaseSaudaId || '',
+      linkedPurchaseSaudaNo: sauda.linkedPurchaseSaudaNo || '',
       sellerName: sauda.sellerName,
       buyerName: sauda.buyerName,
       expectedDeliveryDate: sauda.expectedDeliveryDate || '',
@@ -718,8 +942,24 @@ export class SaudaManagementComponent implements OnInit {
       revisionReason: '',
     });
 
+    if (sauda.warehouseId) {
+      this.filteredGodowns = this.godowns.filter(
+        (g) => g.warehouseId === sauda.warehouseId,
+      );
+      if (sauda.godownName) {
+        const gd = this.filteredGodowns.find((g) => g.name === sauda.godownName);
+        this.availableChambers = gd?.chambers || [];
+        if (sauda.chamberName) {
+          const ch = this.availableChambers.find(
+            (c) => c.name === sauda.chamberName,
+          );
+          this.availableStacks = ch?.stackNumbers || [];
+        }
+      }
+    }
+
     this.recomputeBrokerageAmounts();
-    this.updatePartyValidators(sauda.saudaType);
+    this.updatePartyValidators(initialType);
     this.saudaForm
       .get('revisionReason')
       ?.setValidators([Validators.required, Validators.minLength(5)]);
@@ -741,10 +981,39 @@ export class SaudaManagementComponent implements OnInit {
     }
 
     const v = this.saudaForm.getRawValue();
+
+    // Check party duplication: same party cannot be both Seller and Buyer in one deal
+    if (
+      v.sellerName &&
+      v.buyerName &&
+      v.sellerName.trim().toLowerCase() === v.buyerName.trim().toLowerCase()
+    ) {
+      this.formError =
+        'The same party cannot be both Seller and Buyer in one deal.';
+      this.notificationService.show(this.formError, 'error', 3500);
+      return;
+    }
+
+    if (!v.warehouseId) {
+      this.formError = 'Storage Warehouse is required for all Saudas.';
+      this.notificationService.show(this.formError, 'error', 3500);
+      return;
+    }
+
+    const selectedWh = this.warehouses.find((w) => w.id === v.warehouseId);
+
     const payload = {
       saudaType: v.saudaType as SaudaType,
       saudaDate: v.saudaDate,
       clientFirm: v.clientFirm,
+      warehouseId: v.warehouseId,
+      warehouseName: selectedWh?.name || v.warehouseName || '',
+      godownName: v.godownName || undefined,
+      chamberName: v.chamberName || undefined,
+      stackNumber: v.stackNumber || undefined,
+      brokerageBillingMode: v.brokerageBillingMode || undefined,
+      linkedPurchaseSaudaId: v.linkedPurchaseSaudaId || undefined,
+      linkedPurchaseSaudaNo: v.linkedPurchaseSaudaNo || undefined,
       sellerName: (v.sellerName || '').trim(),
       buyerName: (v.buyerName || '').trim(),
       expectedDeliveryDate: v.expectedDeliveryDate || '',
@@ -767,7 +1036,8 @@ export class SaudaManagementComponent implements OnInit {
           ? Number(v.sellerBrokerageAmount)
           : undefined,
       totalBrokerageAmount:
-        (Number(v.buyerBrokerageAmount) || 0) + (Number(v.sellerBrokerageAmount) || 0) || undefined,
+        (Number(v.buyerBrokerageAmount) || 0) +
+          (Number(v.sellerBrokerageAmount) || 0) || undefined,
       sellerCreditPeriodDays:
         v.sellerCreditPeriodDays !== null && v.sellerCreditPeriodDays !== ''
           ? Number(v.sellerCreditPeriodDays)
@@ -998,7 +1268,10 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   getRecordBadgeClass(status: string): string {
-    return status === 'Voided' ? 'badge-red' : 'badge-green';
+    if (status === 'Voided') return 'badge-red';
+    if (status === 'On Hold') return 'badge-amber';
+    if (status === 'Completed') return 'badge-green';
+    return 'badge-blue';
   }
 
   getAmendmentBadgeClass(status?: string): string {

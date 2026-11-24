@@ -1,8 +1,19 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-export type SaudaType = 'Purchase' | 'Sales' | 'Direct Sale' | 'Brokerage';
-export type SaudaStatus = 'Open' | 'Partial' | 'Completed' | 'Voided';
+export type SaudaType = 'Brokerage' | 'Purchase' | 'Sales' | 'Direct Sale';
+export type SaudaStatus =
+  | 'Open'
+  | 'Partial'
+  | 'Completed'
+  | 'Voided'
+  | 'On Hold'
+  | 'Partly Sold'
+  | 'Sold';
+export type BrokerageBillingMode =
+  | 'PS-1: Split'
+  | 'PS-2: Buyer pays all'
+  | 'PS-3: Everything together';
 export type TruckStatus =
   | 'Scheduled'
   | 'Loaded'
@@ -67,8 +78,19 @@ export interface SaudaRecord {
   commodityItems: CommodityLineItem[];
   commodity: string;
   quantityMt: number;
+  heldQuantityMt?: number;
+  soldQuantityMt?: number;
+  linkedSalesSaudaIds?: string[];
   totalAmountInr: number;
   expectedDeliveryDate?: string;
+  warehouseId?: string;
+  warehouseName?: string;
+  godownName?: string;
+  chamberName?: string;
+  stackNumber?: string;
+  brokerageBillingMode?: BrokerageBillingMode;
+  linkedPurchaseSaudaId?: string;
+  linkedPurchaseSaudaNo?: string;
   buyerBrokerageAmount?: number;
   sellerBrokerageAmount?: number;
   totalBrokerageAmount?: number;
@@ -414,6 +436,9 @@ export interface InvoiceLinkedSauda {
   saudaType: SaudaType;
   commodity: string;
   quantityMt: number;
+  heldQuantityMt?: number;
+  soldQuantityMt?: number;
+  linkedSalesSaudaIds?: string[];
   totalAmountInr: number;
 }
 
@@ -449,7 +474,12 @@ export class SaudaErpMockService {
       clientFirm: 'Desert Fresh Traders',
       sellerName: 'Sharma Grain Traders',
       buyerName: '',
-      partyName: 'Sharma Grain Traders',
+      partyName: 'Sharma Grain Traders (Held)',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
       commodityItems: [
         {
           commodity: 'Bajra',
@@ -472,6 +502,8 @@ export class SaudaErpMockService {
       ],
       commodity: 'Bajra, Jowar',
       quantityMt: 5,
+      heldQuantityMt: 5,
+      soldQuantityMt: 0,
       totalAmountInr: 150000,
       expectedDeliveryDate: '2026-11-12',
       sellerCreditPeriodDays: 15,
@@ -480,8 +512,8 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags',
-      status: 'Partial',
+      remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags (Held in Yard A)',
+      status: 'On Hold',
       currentVersion: 2,
       amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
@@ -529,9 +561,20 @@ export class SaudaErpMockService {
       saudaDate: '2026-11-05',
       saudaType: 'Sales',
       clientFirm: 'Desert Fresh Traders',
-      sellerName: '',
+      sellerName: 'Sharma Grain Traders',
       buyerName: 'City Wholesale Market',
       partyName: 'City Wholesale Market',
+      linkedPurchaseSaudaId: 'SAU-2026-0001',
+      linkedPurchaseSaudaNo: 'SAU-2026-0001',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
+      brokerageBillingMode: 'PS-1: Split',
+      buyerBrokerageAmount: 2500,
+      sellerBrokerageAmount: 2500,
+      totalBrokerageAmount: 5000,
       commodityItems: [
         {
           commodity: 'Wheat',
@@ -580,11 +623,17 @@ export class SaudaErpMockService {
       id: 'SAU-2026-0003',
       saudaNo: 'SAU-2026-0003',
       saudaDate: '2026-11-06',
-      saudaType: 'Direct Sale',
+      saudaType: 'Brokerage',
       clientFirm: 'Rajasthan Agro',
       sellerName: 'Jai Kisan Suppliers',
       buyerName: 'Fresh Mart',
       partyName: 'Jai Kisan Suppliers / Fresh Mart',
+      warehouseId: 'WH-002',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      godownName: 'Godown A',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 201',
+      brokerageBillingMode: 'PS-1: Split',
       commodityItems: [
         {
           commodity: 'Bajra',
@@ -2692,10 +2741,23 @@ export class SaudaErpMockService {
       }
     }
 
-    if (Number(payload.totalAmountInr) <= 0) {
+    if (payload.saudaType !== 'Purchase' && Number(payload.totalAmountInr) <= 0) {
       return {
         ok: false,
         message: 'Total Sauda Amount must be greater than zero.',
+      };
+    }
+
+    if (
+      payload.sellerName &&
+      payload.buyerName &&
+      payload.sellerName.trim().toLowerCase() ===
+        payload.buyerName.trim().toLowerCase()
+    ) {
+      return {
+        ok: false,
+        message:
+          'Seller and Buyer cannot be the same party in one deal (BR-SA-10, EX-02).',
       };
     }
 
@@ -2706,6 +2768,99 @@ export class SaudaErpMockService {
       payload.sellerName,
       payload.buyerName,
     );
+
+    // Business rules per Sauda Type (CTMS - Sauda Management Use Cases)
+    let status: SaudaStatus = 'Open';
+    let heldQuantityMt: number | undefined = undefined;
+    let soldQuantityMt: number | undefined = undefined;
+
+    if (payload.saudaType === 'Purchase') {
+      // BR-SA-23: Remarks are mandatory on Purchase Sauda
+      if (!payload.remarks || payload.remarks.trim().length === 0) {
+        return {
+          ok: false,
+          message:
+            'Remarks are mandatory on a Purchase Sauda to record agreed reference terms (BR-SA-23).',
+        };
+      }
+      status = 'On Hold';
+      heldQuantityMt = quantityMt;
+      soldQuantityMt = 0;
+    } else if (payload.saudaType === 'Sales') {
+      // BR-SA-05, EX-09: A Sales Sauda must be linked to at least one Purchase Sauda
+      if (!payload.linkedPurchaseSaudaId) {
+        return {
+          ok: false,
+          message:
+            'A Sales Sauda must be linked to a Purchase Sauda holding goods (BR-SA-05, EX-09).',
+        };
+      }
+      const linked = this.saudasSubject.value.find(
+        (s) => s.id === payload.linkedPurchaseSaudaId,
+      );
+      if (!linked) {
+        return { ok: false, message: 'Linked Purchase Sauda not found.' };
+      }
+      // AF-03 step 2: The Buyer cannot be the Seller of the linked Purchase Sauda
+      if (
+        payload.buyerName &&
+        linked.sellerName &&
+        payload.buyerName.trim().toLowerCase() ===
+          linked.sellerName.trim().toLowerCase()
+      ) {
+        return {
+          ok: false,
+          message:
+            'The Buyer cannot be the Seller of the linked Purchase Sauda (AF-03).',
+        };
+      }
+      // BR-SA-14, EX-08: Quantity sold must not exceed unsold held quantity of linked Purchase Sauda
+      const currentHeld =
+        linked.heldQuantityMt !== undefined
+          ? linked.heldQuantityMt
+          : linked.quantityMt;
+      if (quantityMt > currentHeld) {
+        return {
+          ok: false,
+          message: `Sales quantity (${quantityMt} MT) exceeds the unsold held quantity (${currentHeld} MT) of ${linked.saudaNo} (BR-SA-14, EX-08).`,
+        };
+      }
+      // EX-11: Payment scenario required
+      if (!payload.brokerageBillingMode) {
+        return {
+          ok: false,
+          message:
+            'A Payment Scenario (PS-1, PS-2, or PS-3) must be selected on a Sales Sauda (EX-11).',
+        };
+      }
+
+      // Update linked Purchase Sauda status and held quantity (BR-SA-15)
+      const remainingHeld = Math.max(
+        0,
+        Number((currentHeld - quantityMt).toFixed(3)),
+      );
+      const updatedSold = Number(
+        ((linked.soldQuantityMt || 0) + quantityMt).toFixed(3),
+      );
+      const updatedStatus: SaudaStatus =
+        remainingHeld === 0 ? 'Sold' : 'Partly Sold';
+
+      const updatedSaudas = this.saudasSubject.value.map((s) =>
+        s.id === linked.id
+          ? {
+              ...s,
+              heldQuantityMt: remainingHeld,
+              soldQuantityMt: updatedSold,
+              status: updatedStatus,
+            }
+          : s,
+      );
+      this.saudasSubject.next(updatedSaudas);
+      status = 'Open';
+    } else {
+      // Brokerage Sauda created with status Completed (AF-01 step 13)
+      status = 'Completed';
+    }
 
     const nextNum = this.saudasSubject.value.length + 1;
     const code = `SAU-2026-${String(nextNum).padStart(4, '0')}`;
@@ -2718,7 +2873,9 @@ export class SaudaErpMockService {
       partyName,
       commodity,
       quantityMt,
-      status: 'Open',
+      heldQuantityMt,
+      soldQuantityMt,
+      status,
       currentVersion: 1,
       amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
@@ -6079,6 +6236,15 @@ export class SaudaErpMockService {
     return { ok: true, message: `Godown "${existing.name}" deleted successfully.` };
   }
 
+  getHeldPurchaseSaudas(): SaudaRecord[] {
+    return this.saudasSubject.value.filter(
+      (s) =>
+        s.saudaType === 'Purchase' &&
+        (s.status === 'On Hold' || s.status === 'Partly Sold') &&
+        (s.heldQuantityMt === undefined || s.heldQuantityMt > 0),
+    );
+  }
+
   // ── Internal Helpers ──
 
   private recomputeAllSaudaStatuses(): void {
@@ -6086,6 +6252,30 @@ export class SaudaErpMockService {
     const updated = this.saudasSubject.value.map((sauda) => {
       if (sauda.status === 'Voided') {
         return sauda;
+      }
+      if (sauda.saudaType === 'Purchase') {
+        const currentHeld =
+          sauda.heldQuantityMt !== undefined
+            ? sauda.heldQuantityMt
+            : sauda.quantityMt;
+        let pStatus: SaudaStatus = 'On Hold';
+        if (currentHeld === 0) {
+          pStatus = 'Sold';
+        } else if (currentHeld < sauda.quantityMt) {
+          pStatus = 'Partly Sold';
+        }
+        return {
+          ...sauda,
+          heldQuantityMt: currentHeld,
+          soldQuantityMt:
+            sauda.soldQuantityMt !== undefined
+              ? sauda.soldQuantityMt
+              : sauda.quantityMt - currentHeld,
+          status: pStatus,
+        };
+      }
+      if (sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale') {
+        return { ...sauda, status: 'Completed' as SaudaStatus };
       }
       const dispatched = trucks
         .filter((t) => t.saudaId === sauda.id && t.status !== 'Removed')

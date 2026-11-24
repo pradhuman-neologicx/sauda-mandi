@@ -5,7 +5,7 @@
     <div>
       <h1 class="erp-title">Sauda Management</h1>
       <p class="erp-subtitle">
-        Manage purchase, sales and direct sale agreements
+        Manage brokerage deals, purchase (holding goods) and sales agreements
       </p>
     </div>
 
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <!-- 4 KPI Cards (matching prototype) -->
+  <!-- 4 KPI Cards (Broker model: Total, Brokerage, Purchase On Hold, Sales) -->
   <div class="sauda-kpi-grid">
     <div class="sauda-kpi-card">
       <div class="sauda-kpi-label">Total Saudas</div>
@@ -45,18 +45,18 @@
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Purchase</div>
+      <div class="sauda-kpi-label">Brokerage Deals</div>
+      <div class="sauda-kpi-val">{{ brokerageCount }}</div>
+    </div>
+
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">Purchase (On Hold)</div>
       <div class="sauda-kpi-val">{{ purchaseCount }}</div>
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Sales</div>
+      <div class="sauda-kpi-label">Sales (Held Goods)</div>
       <div class="sauda-kpi-val">{{ salesCount }}</div>
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Direct Sale</div>
-      <div class="sauda-kpi-val">{{ brokerageCount }}</div>
     </div>
   </div>
 
@@ -87,9 +87,9 @@
           <label>Sauda Type</label>
           <select name="typeFilter" [(ngModel)]="typeFilter" class="erp-input">
             <option value="All">All Types</option>
-            <option value="Purchase">Purchase</option>
+            <option value="Brokerage">Brokerage</option>
+            <option value="Purchase">Purchase (Holding)</option>
             <option value="Sales">Sales</option>
-            <option value="Direct Sale">Direct Sale</option>
           </select>
         </div>
 
@@ -134,18 +134,19 @@
             <th>Sauda Number</th>
             <th>Date</th>
             <th>Type</th>
+            <th>Storage Warehouse</th>
             <th>Client Firm</th>
             <th>Party</th>
             <th>Commodities</th>
-            <th class="text-end">Total Amount</th>
-            <th class="text-center">Record</th>
+            <th class="text-end">Total Deal Value</th>
+            <th class="text-center">Status</th>
             <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           @if (filteredSaudas.length === 0) {
           <tr>
-            <td colspan="9" class="empty-state">
+            <td colspan="10" class="empty-state">
               <i class="fa-solid fa-folder-open mb-2"></i>
               <div>No Sauda records match your search or filters.</div>
             </td>
@@ -169,7 +170,24 @@
               </button>
             </td>
             <td class="text-nowrap">{{ sauda.saudaDate }}</td>
-            <td>{{ sauda.saudaType }}</td>
+            <td>
+              <span class="fw-semibold" [ngClass]="{
+                'text-primary': sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale',
+                'text-warning': sauda.saudaType === 'Purchase',
+                'text-success': sauda.saudaType === 'Sales'
+              }">
+                {{ sauda.saudaType === 'Purchase' ? 'Purchase (Holding)' : (sauda.saudaType === 'Direct Sale' ? 'Brokerage' : sauda.saudaType) }}
+              </span>
+              @if (sauda.brokerageBillingMode) {
+              <div class="small text-muted">{{ sauda.brokerageBillingMode.split(':')[0] }}</div>
+              }
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ sauda.warehouseName || '—' }}</div>
+              @if (sauda.godownName) {
+              <div class="small text-muted">{{ sauda.godownName }}</div>
+              }
+            </td>
             <td>{{ sauda.clientFirm }}</td>
             <td class="fw-semibold text-dark">{{ sauda.partyName }}</td>
             <td>{{ sauda.commodity }}</td>
@@ -178,7 +196,13 @@
             </td>
             <td class="text-center">
               <span class="status-badge" [ngClass]="getRecordBadgeClass(sauda.status)">
-                {{ sauda.status === 'Voided' ? 'Voided' : 'Active' }}
+                @if (sauda.status === 'On Hold') {
+                <i class="fa-solid fa-lock me-1"></i>On Hold
+                } @else if (sauda.status === 'Voided') {
+                Voided
+                } @else {
+                {{ sauda.status }}
+                }
               </span>
               @if (sauda.amendmentStatus === 'Pending Approval') {
               <div class="mt-1">
@@ -220,7 +244,7 @@
   </div>
   } @else {
   <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Screen 2: Create / Edit Sauda Full View (matching screenshots)     -->
+  <!-- Screen 2: Create / Edit Sauda Full View (Broker Model)              -->
   <!-- ══════════════════════════════════════════════════════════════════ -->
   <div class="erp-header mb-2">
     <div>
@@ -228,7 +252,7 @@
         {{ isEditMode ? 'Edit Sauda — ' + selectedSauda?.saudaNo : 'Create Sauda' }}
       </h1>
       <p class="erp-subtitle">
-        Manage purchase, sales and direct sale agreements
+        Manage brokerage deals, purchase (holding goods) and sales agreements
       </p>
     </div>
 
@@ -252,8 +276,36 @@
 
   <form [formGroup]="saudaForm" (ngSubmit)="submitSaudaForm()" class="sauda-form-stack">
     @if (formError) {
-    <div class="alert-erp alert-danger-erp">
+    <div class="alert-erp alert-danger-erp mb-3">
       <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
+    </div>
+    }
+
+    <!-- Sauda Type Specific Context Banner -->
+    @if (saudaForm.get('saudaType')?.value === 'Purchase') {
+    <div class="alert-erp alert-warning-erp mb-3">
+      <div>
+        <strong><i class="fa-solid fa-warehouse me-2"></i>Purchase Sauda (Holding Mode — AF-02):</strong>
+        The firm only holds the seller's goods in a third-party warehouse. Ownership stays with the Seller and <strong>no money changes hands</strong>. The contract stays <strong>On Hold</strong> until the goods are sold. Agreed terms or valuation rates are recorded in remarks for reference only and are never billed (BR-SA-16).
+      </div>
+    </div>
+    }
+
+    @if (saudaForm.get('saudaType')?.value === 'Sales') {
+    <div class="alert-erp alert-info-erp mb-3">
+      <div>
+        <strong><i class="fa-solid fa-cart-shopping me-2"></i>Sales Sauda (Selling Held Goods — AF-03):</strong>
+        The firm sells goods held under prior Purchase Saudas to a buyer. A linked Purchase Sauda with available held quantity is required (BR-SA-05). Brokerage is earned from the Seller and Buyer under the selected Payment Scenario (PS-1, PS-2, PS-3).
+      </div>
+    </div>
+    }
+
+    @if (saudaForm.get('saudaType')?.value === 'Brokerage' || saudaForm.get('saudaType')?.value === 'Direct Sale') {
+    <div class="alert-erp alert-primary-erp mb-3">
+      <div>
+        <strong><i class="fa-solid fa-handshake me-2"></i>Brokerage Sauda (Direct Deal — AF-01):</strong>
+        Direct deal between one Buyer and one Seller. The firm only arranges the deal and earns brokerage. Goods are stored in a third-party warehouse the firm chooses.
+      </div>
     </div>
     }
 
@@ -263,13 +315,13 @@
         {{ isEditMode ? 'Sauda Agreement Details' : 'Create Sauda' }}
       </h2>
 
-      <div class="form-grid-2">
+      <div class="form-grid-3">
         <div class="field-group">
           <label>Sauda Type <span class="req">*</span></label>
           <select formControlName="saudaType" class="erp-input">
-            @for (type of saudaTypes; track type) {
-            <option [value]="type">{{ type }}</option>
-            }
+            <option value="Brokerage">Brokerage Deal (Buyer &amp; Seller)</option>
+            <option value="Purchase">Purchase (Holding Seller Goods)</option>
+            <option value="Sales">Sales (Sell Held Goods)</option>
           </select>
         </div>
 
@@ -277,9 +329,7 @@
           <label>Sauda Date <span class="req">*</span></label>
           <input type="date" formControlName="saudaDate" class="erp-input" />
         </div>
-      </div>
 
-      <div class="form-grid-3 mt-3">
         <div class="field-group">
           <label>Client Firm <span class="req">*</span></label>
           <select formControlName="clientFirm" class="erp-input">
@@ -292,43 +342,140 @@
           <span class="field-err">Client Firm is required.</span>
           }
         </div>
+      </div>
 
-        @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
-        saudaForm.get('saudaType')?.value === 'Brokerage') {
+      <!-- 4-Level Storage Location Box -->
+      <div class="storage-box p-3 mt-3 mb-2 rounded border bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold text-dark">
+            <i class="fa-solid fa-warehouse text-primary me-2"></i>Storage Location (4-Level Hierarchy — BR-SA-03, BR-TE-05)
+          </span>
+          <span class="text-muted small">Third-party warehouse chosen &amp; rented by the firm</span>
+        </div>
+        <div class="form-grid-4">
+          <div class="field-group">
+            <label>Warehouse <span class="req">*</span></label>
+            <select formControlName="warehouseId" class="erp-input" (change)="onWarehouseSelected()">
+              <option value="">Select Storage Warehouse</option>
+              @for (w of warehouses; track w.id) {
+              <option [value]="w.id">{{ w.name }} ({{ w.city }})</option>
+              }
+            </select>
+            @if (saudaForm.get('warehouseId')?.touched && saudaForm.get('warehouseId')?.invalid) {
+            <span class="field-err">Storage Warehouse is required.</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Godown <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="godownName" class="erp-input" (change)="onGodownSelected()">
+              <option value="">Select Godown</option>
+              @for (g of filteredGodowns; track g.id) {
+              <option [value]="g.name">{{ g.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Chamber <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="chamberName" class="erp-input" (change)="onChamberSelected()">
+              <option value="">Select Chamber</option>
+              @for (c of availableChambers; track c.id) {
+              <option [value]="c.name">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Stack Number <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="stackNumber" class="erp-input">
+              <option value="">Select Stack</option>
+              @for (s of availableStacks; track s) {
+              <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- If Sales: Linked Purchase Sauda Selector -->
+      @if (saudaForm.get('saudaType')?.value === 'Sales') {
+      <div class="linked-purchase-box p-3 mt-3 mb-2 rounded border border-primary bg-white">
         <div class="field-group">
-          <label>Seller <span class="req">*</span></label>
+          <label class="fw-semibold text-primary">
+            <i class="fa-solid fa-link me-1"></i>Linked Purchase Sauda (Held Goods) <span class="req">*</span>
+          </label>
+          <select formControlName="linkedPurchaseSaudaId" class="erp-input" (change)="onLinkedPurchaseSaudaSelected()">
+            <option value="">-- Select Unsold Held Stock from Prior Purchase Sauda --</option>
+            @for (ps of heldPurchaseSaudas; track ps.id) {
+            <option [value]="ps.id">
+              {{ ps.saudaNo }} &bull; {{ ps.sellerName }} &bull; {{ ps.commodity }} (Held: {{ (ps.heldQuantityMt !== undefined ? ps.heldQuantityMt : ps.quantityMt) | number: '1.0-2' }} MT) &bull; {{ ps.warehouseName }}
+            </option>
+            }
+          </select>
+          @if (saudaForm.get('linkedPurchaseSaudaId')?.touched && saudaForm.get('linkedPurchaseSaudaId')?.invalid) {
+          <span class="field-err">A linked Purchase Sauda with unsold held quantity is mandatory (BR-SA-05, EX-09).</span>
+          }
+          <div class="text-muted small mt-1">
+            Linking draws down the seller's held stock and auto-populates the storage warehouse and original seller.
+          </div>
+        </div>
+
+        @if (getLinkedPurchaseSauda(saudaForm.get('linkedPurchaseSaudaId')?.value); as linkedPs) {
+        <div class="p-2 mt-2 rounded bg-light border small text-dark d-flex gap-4">
+          <div><strong>Original Seller:</strong> {{ linkedPs.sellerName }}</div>
+          <div><strong>Commodities:</strong> {{ linkedPs.commodity }}</div>
+          <div><strong>Available Held Stock:</strong> <span class="badge badge-amber">{{ (linkedPs.heldQuantityMt !== undefined ? linkedPs.heldQuantityMt : linkedPs.quantityMt) | number: '1.0-2' }} MT</span></div>
+          <div><strong>Storage:</strong> {{ linkedPs.warehouseName }}</div>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Party Selection Grid -->
+      <div class="form-grid-2 mt-3">
+        <!-- Seller Field: shown for Brokerage and Purchase -->
+        @if (saudaForm.get('saudaType')?.value === 'Brokerage' || saudaForm.get('saudaType')?.value === 'Purchase') {
+        <div class="field-group">
+          <label>Seller (Supplier / Goods Owner) <span class="req">*</span></label>
           <select formControlName="sellerName" class="erp-input" (change)="onSellerSelected()">
-            <option value="">Select Seller</option>
-            @for (s of sellerOptions; track s) {
-            <option [value]="s">{{ s }}</option>
+            <option value="">Select Seller Party</option>
+            @for (p of allPartyOptions; track p) {
+            <option [value]="p">{{ p }}</option>
             }
           </select>
           @if (saudaForm.get('sellerName')?.touched && saudaForm.get('sellerName')?.invalid) {
-          <span class="field-err">Seller is required.</span>
+          <span class="field-err">Seller party is required.</span>
           }
         </div>
         }
 
-        @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
-        saudaForm.get('saudaType')?.value === 'Brokerage') {
+        <!-- Seller Field (Read-only display for Sales from linked purchase sauda) -->
+        @if (saudaForm.get('saudaType')?.value === 'Sales') {
         <div class="field-group">
-          <label>Buyer <span class="req">*</span></label>
+          <label>Seller (Held Stock Owner)</label>
+          <input type="text" formControlName="sellerName" class="erp-input readonly-input"
+            placeholder="Auto-populated from linked Purchase Sauda" readonly />
+        </div>
+        }
+
+        <!-- Buyer Field: shown for Brokerage and Sales -->
+        @if (saudaForm.get('saudaType')?.value === 'Brokerage' || saudaForm.get('saudaType')?.value === 'Sales') {
+        <div class="field-group">
+          <label>Buyer (Customer) <span class="req">*</span></label>
           <select formControlName="buyerName" class="erp-input" (change)="onBuyerSelected()">
-            <option value="">Select Buyer</option>
-            @for (b of buyerOptions; track b) {
-            <option [value]="b">{{ b }}</option>
+            <option value="">Select Buyer Party</option>
+            @for (p of allPartyOptions; track p) {
+            <option [value]="p">{{ p }}</option>
             }
           </select>
           @if (saudaForm.get('buyerName')?.touched && saudaForm.get('buyerName')?.invalid) {
-          <span class="field-err">Buyer is required.</span>
+          <span class="field-err">Buyer party is required.</span>
           }
-        </div>
-        }
-
-        @if (saudaForm.get('saudaType')?.value === 'Purchase') {
-        <div class="field-group">
-          <label>Expected Delivery Date <span class="text-muted small">(Optional)</span></label>
-          <input type="date" formControlName="expectedDeliveryDate" class="erp-input" />
+          @if (saudaForm.get('sellerName')?.value && saudaForm.get('buyerName')?.value &&
+          saudaForm.get('sellerName')?.value?.trim().toLowerCase() === saudaForm.get('buyerName')?.value?.trim().toLowerCase()) {
+          <span class="field-err text-danger">The same party cannot be both Seller and Buyer in one deal (BR-SA-10, EX-02).</span>
+          }
         </div>
         }
       </div>
@@ -337,13 +484,16 @@
     <!-- Section 2: Commodity Details -->
     <div class="erp-card section-card">
       <div class="section-head-row">
-        <h2 class="section-card-title mb-0">Commodity Details</h2>
+        <div>
+          <h2 class="section-card-title mb-0">Commodity Details</h2>
+          <span class="text-muted small">Quantities entered using unified UOM and displayed in Metric Tons (BR-SA-12, BR-SA-13)</span>
+        </div>
         <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addCommodityRow()">
           <i class="fa-solid fa-plus me-1"></i> Add Commodity
         </button>
       </div>
 
-      <div formArrayName="commodityItems" class="commodity-rows-stack">
+      <div formArrayName="commodityItems" class="commodity-rows-stack mt-3">
         @for (row of commodityRows.controls; track $index; let idx = $index) {
         <div [formGroupName]="idx" class="commodity-row-box">
           <div class="field-group">
@@ -385,22 +535,25 @@
           </div>
 
           <div class="field-group">
-            <label>Actual Weight <span class="req">*</span></label>
+            <label>Weight (MT / Qtl / Kg) <span class="req">*</span></label>
             <input type="number" step="0.01" min="0.01" formControlName="actualWeight" class="erp-input"
               placeholder="0.00" />
           </div>
 
+          <!-- Rate: Hidden on Purchase Saudas per BR-SA-16 -->
+          @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
           <div class="field-group">
-            <label>Rate (₹) <span class="req">*</span></label>
+            <label>Sale Rate (₹) <span class="req">*</span></label>
             <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input"
               placeholder="₹ / unit" />
           </div>
 
           <div class="field-group">
-            <label>Total (₹)</label>
+            <label>Total Value (₹)</label>
             <input type="text" formControlName="lineTotal" class="erp-input readonly-input" placeholder="₹ 0.00"
               readonly />
           </div>
+          }
 
           <div class="remove-btn-wrap">
             <button type="button" class="btn-remove-row" [disabled]="commodityRows.length <= 1"
@@ -412,39 +565,105 @@
         }
       </div>
 
-      <div class="helper-note-box mt-3">
-        Each commodity can appear once per Sauda. Rate and Total are calculated
-        per line item. Total Sauda amount is auto-calculated from totals.
-      </div>
-    </div>
-
-    <!-- Section 3: Financial Details -->
-    <div class="erp-card section-card">
-      <h2 class="section-card-title">Financial Details</h2>
-
-      @if (saudaForm.get('saudaType')?.value === 'Direct Sale' || saudaForm.get('saudaType')?.value === 'Brokerage') {
-      <div class="form-grid-3 mb-3">
-        <div class="field-group">
-          <label>Buyer Direct Sale Amount (₹)</label>
-          <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
-            placeholder="Lump-sum amount" />
-        </div>
-        <div class="field-group">
-          <label>Seller Direct Sale Amount (₹)</label>
-          <input type="number" min="0" formControlName="sellerBrokerageAmount" class="erp-input"
-            placeholder="Lump-sum amount" />
-        </div>
-        <div class="field-group">
-          <label>Total Direct Sale Amount (₹)</label>
-          <input type="text" formControlName="totalBrokerageAmount" class="erp-input readonly-input"
-            placeholder="Auto-calculated total" readonly />
-        </div>
+      @if (saudaForm.get('saudaType')?.value === 'Purchase') {
+      <div class="helper-note-box mt-3 text-muted">
+        <i class="fa-solid fa-info-circle me-1 text-primary"></i>
+        Per Rule BR-SA-16, a Purchase Sauda does not capture rate, amount, financial details, or credit terms.
+        Any agreed valuation rate is recorded in the mandatory remarks below and is never billed.
       </div>
       }
+    </div>
+
+    <!-- Section 3: Financial Details & Brokerage Invoicing (UC-SA-06) -->
+    @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
+    <div class="erp-card section-card">
+      <h2 class="section-card-title">Financial Details &amp; Brokerage Invoicing</h2>
+
+      <!-- The 3 Ways to Bill Brokerage (UC-SA-06) -->
+      <div class="p-3 mb-3 rounded bg-light border">
+        <div class="field-group mb-3">
+          <label class="fw-semibold text-dark">
+            <i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i>The 3 Ways to Bill Brokerage (Payment Scenario — UC-SA-06) <span class="req">*</span>
+          </label>
+          <select formControlName="brokerageBillingMode" class="erp-input">
+            <option value="PS-1: Split">PS-1: Split — Seller &amp; Buyer both pay brokerage; Buyer pays Seller for goods directly (2 invoices)</option>
+            <option value="PS-2: Buyer pays all">PS-2: Buyer pays all — Seller settles goods with Buyer directly; Buyer pays full brokerage (1 invoice)</option>
+            <option value="PS-3: Everything together">PS-3: Everything together — Broker collects goods value + brokerage from Buyer (1 invoice)</option>
+          </select>
+        </div>
+
+        @if (saudaForm.get('brokerageBillingMode')?.value === 'PS-1: Split') {
+        <div class="form-grid-3">
+          <div class="field-group">
+            <label>Buyer Brokerage Share (₹) <span class="req">*</span></label>
+            <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
+              placeholder="e.g. 1000" />
+          </div>
+          <div class="field-group">
+            <label>Seller Brokerage Share (₹) <span class="req">*</span></label>
+            <input type="number" min="0" formControlName="sellerBrokerageAmount" class="erp-input"
+              placeholder="e.g. 1000" />
+          </div>
+          <div class="field-group">
+            <label>Total Brokerage Earned (₹)</label>
+            <input type="text" formControlName="totalBrokerageAmount" class="erp-input readonly-input"
+              placeholder="Auto-calculated (Buyer + Seller)" readonly />
+          </div>
+        </div>
+        <div class="text-muted small mt-2">
+          <i class="fa-solid fa-circle-info text-primary me-1"></i>
+          Two invoices: ₹{{ saudaForm.get('sellerBrokerageAmount')?.value || 0 }} to Seller, and ₹{{ saudaForm.get('buyerBrokerageAmount')?.value || 0 }} to Buyer. Buyer settles goods value directly with Seller.
+        </div>
+        }
+
+        @if (saudaForm.get('brokerageBillingMode')?.value === 'PS-2: Buyer pays all') {
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>Full Brokerage Amount (payable by Buyer) (₹) <span class="req">*</span></label>
+            <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
+              placeholder="e.g. 2000" />
+          </div>
+          <div class="field-group">
+            <label>Total Brokerage Earned (₹)</label>
+            <input type="text" formControlName="totalBrokerageAmount" class="erp-input readonly-input"
+              placeholder="₹ 0.00" readonly />
+          </div>
+        </div>
+        <div class="text-muted small mt-2">
+          <i class="fa-solid fa-circle-info text-primary me-1"></i>
+          One invoice: ₹{{ saudaForm.get('buyerBrokerageAmount')?.value || 0 }} to Buyer. No invoice to Seller. Seller settles goods directly with Buyer.
+        </div>
+        }
+
+        @if (saudaForm.get('brokerageBillingMode')?.value === 'PS-3: Everything together') {
+        <div class="form-grid-3">
+          <div class="field-group">
+            <label>Goods Value (₹) <span class="req">*</span></label>
+            <input type="number" min="1" formControlName="totalAmountInr" class="erp-input"
+              placeholder="Goods value" />
+          </div>
+          <div class="field-group">
+            <label>Brokerage Fee (₹) <span class="req">*</span></label>
+            <input type="number" min="0" formControlName="buyerBrokerageAmount" class="erp-input"
+              placeholder="Brokerage" />
+          </div>
+          <div class="field-group">
+            <label>Total Collected by Broker (₹)</label>
+            <input type="text" class="erp-input readonly-input fw-bold text-primary"
+              [value]="((saudaForm.get('totalAmountInr')?.value || 0) + (saudaForm.get('buyerBrokerageAmount')?.value || 0)) | currency: 'INR' : 'symbol' : '1.0-0'"
+              readonly />
+          </div>
+        </div>
+        <div class="text-muted small mt-2">
+          <i class="fa-solid fa-circle-info text-primary me-1"></i>
+          One combined invoice of goods value + brokerage to Buyer. Broker handles full settlement.
+        </div>
+        }
+      </div>
 
       <div class="form-grid-3">
         <div class="field-group">
-          <label>Total Sauda Amount (₹) <span class="req">*</span></label>
+          <label>Total Deal Amount (₹) <span class="req">*</span></label>
           <input type="number" min="1" formControlName="totalAmountInr" class="erp-input"
             placeholder="Enter total deal amount" />
           @if (saudaForm.get('totalAmountInr')?.touched && saudaForm.get('totalAmountInr')?.invalid) {
@@ -453,13 +672,14 @@
         </div>
       </div>
     </div>
+    }
 
-    <!-- Section 4: Credit Terms -->
+    <!-- Section 4: Credit Terms (Only for Brokerage and Sales) -->
+    @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
     <div class="erp-card section-card">
       <h2 class="section-card-title">Credit Terms</h2>
 
-      @if (saudaForm.get('saudaType')?.value === 'Purchase' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
-      saudaForm.get('saudaType')?.value === 'Brokerage') {
+      @if (saudaForm.get('saudaType')?.value === 'Brokerage' || saudaForm.get('saudaType')?.value === 'Direct Sale') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Seller Credit Period (Days)</label>
@@ -480,8 +700,6 @@
       </div>
       }
 
-      @if (saudaForm.get('saudaType')?.value === 'Sales' || saudaForm.get('saudaType')?.value === 'Direct Sale' ||
-      saudaForm.get('saudaType')?.value === 'Brokerage') {
       <div class="form-grid-3 mb-3">
         <div class="field-group">
           <label>Buyer Credit Period (Days)</label>
@@ -500,19 +718,29 @@
             placeholder="Calculated from start date" readonly />
         </div>
       </div>
-      }
 
       <div class="helper-note-box">
-        Credit Start Date is user-selectable. Due date is calculated using calendar days. No
-        interest or charge is applied.
+        Credit Start Date is user-selectable. Due date is calculated using calendar days.
       </div>
     </div>
+    }
 
     <!-- Section 5: Remarks & Save -->
     <div class="erp-card section-card">
       <div class="field-group">
-        <label>Remarks</label>
-        <textarea rows="3" formControlName="remarks" class="erp-input" placeholder="Optional remarks"></textarea>
+        <label>
+          Remarks
+          @if (saudaForm.get('saudaType')?.value === 'Purchase') {
+          <span class="req">* (Mandatory: record terms agreed with Seller e.g. agreed rate ₹800/qtl per BR-SA-23)</span>
+          } @else {
+          <span class="text-muted small">(Optional)</span>
+          }
+        </label>
+        <textarea rows="3" formControlName="remarks" class="erp-input"
+          [placeholder]="saudaForm.get('saudaType')?.value === 'Purchase' ? 'Mandatory: Record agreed reference rate (e.g. ₹800/qtl), payment or storage terms agreed with Seller' : 'Optional deal remarks'"></textarea>
+        @if (saudaForm.get('remarks')?.touched && saudaForm.get('remarks')?.invalid) {
+        <span class="field-err">Remarks are mandatory on a Purchase Sauda (BR-SA-23).</span>
+        }
       </div>
 
       @if (isEditMode) {
@@ -549,7 +777,7 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════ -->
-<!-- Screen 3: Sauda Details Modal                                      -->
+<!-- Screen 3: Sauda Details Modal (UC-SA-02)                           -->
 <!-- ══════════════════════════════════════════════════════════════════ -->
 @if (isDetailsOpen && selectedSauda) {
 <div class="modal-backdrop-erp" (click)="closeAllModals()">
@@ -559,12 +787,16 @@
         <div class="d-flex align-items-center gap-2">
           <h3 class="modal-title-erp mb-0">{{ selectedSauda.saudaNo }}</h3>
           <span class="status-badge" [ngClass]="getRecordBadgeClass(selectedSauda.status)">
-            {{ selectedSauda.status === 'Voided' ? 'Voided' : 'Active' }}
+            @if (selectedSauda.status === 'On Hold') {
+            <i class="fa-solid fa-lock me-1"></i>On Hold
+            } @else {
+            {{ selectedSauda.status }}
+            }
           </span>
           <span class="rev-chip">v{{ selectedSauda.currentVersion }}</span>
         </div>
         <p class="modal-sub-erp">
-          {{ selectedSauda.saudaType }} Agreement &bull; Dated {{ selectedSauda.saudaDate }}
+          {{ selectedSauda.saudaType === 'Purchase' ? 'Purchase (Holding)' : (selectedSauda.saudaType === 'Direct Sale' ? 'Brokerage' : selectedSauda.saudaType) }} Agreement &bull; Dated {{ selectedSauda.saudaDate }}
         </p>
       </div>
       <button type="button" class="close-btn" (click)="closeAllModals()">
@@ -606,27 +838,78 @@
           <span class="detail-value">{{ selectedSauda.clientFirm }}</span>
         </div>
 
+        <div class="detail-item">
+          <span class="detail-label">Storage Warehouse</span>
+          <span class="detail-value fw-semibold text-dark">
+            {{ selectedSauda.warehouseName || '—' }}
+            @if (selectedSauda.godownName) {
+            <span class="text-muted fw-normal"> &bull; {{ selectedSauda.godownName }}</span>
+            }
+            @if (selectedSauda.chamberName) {
+            <span class="text-muted fw-normal"> &bull; {{ selectedSauda.chamberName }}</span>
+            }
+            @if (selectedSauda.stackNumber) {
+            <span class="text-muted fw-normal"> ({{ selectedSauda.stackNumber }})</span>
+            }
+          </span>
+        </div>
+
+        <!-- AF-02: Purchase Sauda Details -->
         @if (selectedSauda.saudaType === 'Purchase') {
         <div class="detail-item">
-          <span class="detail-label">Seller</span>
+          <span class="detail-label">Seller (Goods Owner)</span>
           <span class="detail-value">{{ selectedSauda.sellerName || '—' }}</span>
         </div>
-        @if (selectedSauda.expectedDeliveryDate) {
+
         <div class="detail-item">
-          <span class="detail-label">Expected Delivery Date</span>
-          <span class="detail-value">{{ selectedSauda.expectedDeliveryDate }}</span>
+          <span class="detail-label">Held Stock Status</span>
+          <span class="detail-value">
+            <span class="badge badge-amber me-1">{{ selectedSauda.status }}</span>
+            (Original: {{ selectedSauda.quantityMt | number: '1.0-2' }} MT &bull;
+            Held: {{ (selectedSauda.heldQuantityMt !== undefined ? selectedSauda.heldQuantityMt : selectedSauda.quantityMt) | number: '1.0-2' }} MT &bull;
+            Sold: {{ (selectedSauda.soldQuantityMt || 0) | number: '1.0-2' }} MT)
+          </span>
         </div>
         }
-        }
 
+        <!-- AF-03: Sales Sauda Details -->
         @if (selectedSauda.saudaType === 'Sales') {
         <div class="detail-item">
           <span class="detail-label">Buyer</span>
           <span class="detail-value">{{ selectedSauda.buyerName || '—' }}</span>
         </div>
+
+        @if (selectedSauda.linkedPurchaseSaudaNo || selectedSauda.linkedPurchaseSaudaId) {
+        <div class="detail-item">
+          <span class="detail-label">Linked Purchase Sauda (Held Goods)</span>
+          <span class="detail-value">
+            <span class="badge badge-primary me-1">
+              <i class="fa-solid fa-link me-1"></i>{{ selectedSauda.linkedPurchaseSaudaNo || selectedSauda.linkedPurchaseSaudaId }}
+            </span>
+            @if (selectedSauda.sellerName) {
+            <span class="text-muted">(Seller: {{ selectedSauda.sellerName }})</span>
+            }
+          </span>
+        </div>
         }
 
-        @if (selectedSauda.saudaType === 'Direct Sale' || selectedSauda.saudaType === 'Brokerage') {
+        <div class="detail-item">
+          <span class="detail-label">Total Goods Sale Value</span>
+          <span class="detail-value text-primary fw-bold">
+            {{ selectedSauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </span>
+        </div>
+
+        @if (selectedSauda.brokerageBillingMode) {
+        <div class="detail-item">
+          <span class="detail-label">Payment Scenario</span>
+          <span class="detail-value fw-semibold text-dark">{{ selectedSauda.brokerageBillingMode }}</span>
+        </div>
+        }
+        }
+
+        <!-- AF-01: Brokerage Sauda Details -->
+        @if (selectedSauda.saudaType === 'Brokerage' || selectedSauda.saudaType === 'Direct Sale') {
         <div class="detail-item">
           <span class="detail-label">Seller</span>
           <span class="detail-value">{{ selectedSauda.sellerName || '—' }}</span>
@@ -635,32 +918,38 @@
           <span class="detail-label">Buyer</span>
           <span class="detail-value">{{ selectedSauda.buyerName || '—' }}</span>
         </div>
-        @if (selectedSauda.buyerBrokerageAmount || selectedSauda.sellerBrokerageAmount) {
         <div class="detail-item">
-          <span class="detail-label">Buyer / Seller Direct Sale</span>
-          <span class="detail-value">
-            Buyer: ₹{{ selectedSauda.buyerBrokerageAmount || 0 }} &bull; Seller: ₹{{ selectedSauda.sellerBrokerageAmount
-            || 0 }}
-            (Total: ₹{{ selectedSauda.totalBrokerageAmount || 0 }})
-          </span>
-        </div>
-        }
-        }
-
-        <div class="detail-item">
-          <span class="detail-label">Total Sauda Amount</span>
+          <span class="detail-label">Deal Value</span>
           <span class="detail-value text-primary fw-bold">
             {{ selectedSauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
           </span>
         </div>
+        }
+
+        <!-- Brokerage Amounts (for Brokerage and Sales) -->
+        @if (selectedSauda.saudaType !== 'Purchase' && (selectedSauda.buyerBrokerageAmount || selectedSauda.sellerBrokerageAmount)) {
+        <div class="detail-item" style="grid-column: 1 / -1">
+          <span class="detail-label">Brokerage Receivable</span>
+          <span class="detail-value">
+            Buyer Share: ₹{{ selectedSauda.buyerBrokerageAmount || 0 }} &bull;
+            Seller Share: ₹{{ selectedSauda.sellerBrokerageAmount || 0 }} &bull;
+            <strong>Total Brokerage: ₹{{ selectedSauda.totalBrokerageAmount || ((selectedSauda.buyerBrokerageAmount || 0) + (selectedSauda.sellerBrokerageAmount || 0)) }}</strong>
+          </span>
+        </div>
+        }
+
+        <!-- Dispatched vs Total Weight -->
         <div class="detail-item">
-          <span class="detail-label">Weight Dispatched / Total</span>
+          <span class="detail-label">Truck Movement / Total</span>
           <span class="detail-value">
             {{ erpService.getDispatchedQtyMt(selectedSauda.id) | number: '1.0-2' }} MT /
             {{ selectedSauda.quantityMt | number: '1.0-2' }} MT
             (Pending: {{ erpService.getRemainingQtyMt(selectedSauda.id) | number: '1.0-2' }} MT)
           </span>
         </div>
+
+        <!-- Credit Terms (Only for non-Purchase per BR-SA-16) -->
+        @if (selectedSauda.saudaType !== 'Purchase') {
         @if (selectedSauda.sellerDueDate) {
         <div class="detail-item">
           <span class="detail-label">Seller Credit</span>
@@ -679,9 +968,16 @@
           </span>
         </div>
         }
+        }
+
         <div class="detail-item" style="grid-column: 1 / -1">
           <span class="detail-label">Remarks</span>
-          <span class="detail-value">{{ selectedSauda.remarks || '—' }}</span>
+          <span class="detail-value">
+            {{ selectedSauda.remarks || '—' }}
+            @if (selectedSauda.saudaType === 'Purchase') {
+            <span class="text-muted small ms-2">(Reference valuation / custody terms — not billed)</span>
+            }
+          </span>
         </div>
       </div>
 
@@ -696,9 +992,11 @@
                 <th>Packaging UOM</th>
                 <th class="text-end">Packaging Qty</th>
                 <th>Weight UOM</th>
-                <th class="text-end">Actual Weight</th>
-                <th class="text-end">Rate (₹)</th>
-                <th class="text-end">Total</th>
+                <th class="text-end">Weight (MT / Qtl)</th>
+                @if (selectedSauda.saudaType !== 'Purchase') {
+                <th class="text-end">Sale Rate (₹)</th>
+                <th class="text-end">Total (₹)</th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -709,10 +1007,12 @@
                 <td class="text-end num">{{ item.packagingQty | number }}</td>
                 <td>{{ item.weightUom }}</td>
                 <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+                @if (selectedSauda.saudaType !== 'Purchase') {
                 <td class="text-end num">₹{{ item.rate || 0 | number: '1.2-2' }}</td>
                 <td class="text-end num fw-semibold text-dark">
                   ₹{{ item.lineTotal || ((item.actualWeight || 0) * (item.rate || 0)) | number: '1.2-2' }}
                 </td>
+                }
               </tr>
               }
             </tbody>
@@ -720,19 +1020,27 @@
         </div>
       </div>
 
-      <!-- Linked Trucks -->
+      <!-- Linked Trucks (UC-SA-02 step 9) -->
       <div class="mt-4">
-        <h4 class="sub-section-title">Linked Truck Entries ({{ linkedTrucks.length }})</h4>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h4 class="sub-section-title mb-0">Linked Truck Entries ({{ linkedTrucks.length }})</h4>
+          @if (selectedSauda.status !== 'Voided' && selectedSauda.status !== 'Sold') {
+          <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addTruckEntryForSauda(selectedSauda)"
+            title="Open Truck Management with this Sauda selected (UC-SA-02 step 9)">
+            <i class="fa-solid fa-truck-moving me-1"></i> Add Truck Entry
+          </button>
+          }
+        </div>
         <div class="table-responsive border rounded-3">
           <table class="erp-table">
             <thead>
               <tr>
                 <th>Entry No.</th>
                 <th>Vehicle No.</th>
-                <th>Warehouse</th>
+                <th>Warehouse Location</th>
                 <th>Transporter</th>
                 <th class="text-end">Loaded Qty</th>
-                <th>Dispatch Date</th>
+                <th>Date</th>
                 <th class="text-center">Status</th>
               </tr>
             </thead>
@@ -740,7 +1048,7 @@
               @if (linkedTrucks.length === 0) {
               <tr>
                 <td colspan="7" class="text-center text-muted py-3">
-                  No truck entries linked to this Sauda yet.
+                  No truck entries recorded against this Sauda yet.
                 </td>
               </tr>
               } @else {
@@ -748,7 +1056,7 @@
               <tr>
                 <td class="fw-semibold">{{ t.entryNo }}</td>
                 <td>{{ t.vehicleNo }}</td>
-                <td>{{ t.warehouse || '—' }}</td>
+                <td>{{ t.warehouse || selectedSauda.warehouseName || '—' }}</td>
                 <td>{{ t.transporterName }}</td>
                 <td class="text-end num fw-semibold">{{ t.loadedQtyMt | number: '1.0-2' }} MT</td>
                 <td>{{ t.dispatchDate }}</td>
