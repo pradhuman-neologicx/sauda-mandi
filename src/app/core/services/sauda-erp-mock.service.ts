@@ -2766,10 +2766,10 @@ export class SaudaErpMockService {
       }
     }
 
-    if (payload.saudaType !== 'Purchase' && Number(payload.totalAmountInr) <= 0) {
+    if (payload.saudaType !== 'Purchase' && Number(payload.totalAmountInr) < 0) {
       return {
         ok: false,
-        message: 'Total Sauda Amount must be greater than zero.',
+        message: 'Total Sauda Amount cannot be negative.',
       };
     }
 
@@ -2987,10 +2987,10 @@ export class SaudaErpMockService {
       }
     }
 
-    if (Number(payload.totalAmountInr) <= 0) {
+    if (Number(payload.totalAmountInr) < 0) {
       return {
         ok: false,
-        message: 'Total Sauda Amount must be greater than zero.',
+        message: 'Total Sauda Amount cannot be negative.',
       };
     }
 
@@ -3132,10 +3132,10 @@ export class SaudaErpMockService {
       }
     }
 
-    if (Number(payload.totalAmountInr) <= 0) {
+    if (Number(payload.totalAmountInr) < 0) {
       return {
         ok: false,
-        message: 'Total Sauda Amount must be greater than zero.',
+        message: 'Total Sauda Amount cannot be negative.',
       };
     }
 

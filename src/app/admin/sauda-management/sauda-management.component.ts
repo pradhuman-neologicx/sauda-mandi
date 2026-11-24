@@ -286,7 +286,7 @@ export class SaudaManagementComponent implements OnInit {
       truckDriverName: [''],
       truckDriverPhone: ['', [Validators.pattern(/^([6-9]\d{9})?$/)]],
       truckExpectedArrivalDate: [''],
-      totalAmountInr: [null, [Validators.required, Validators.min(1)]],
+      totalAmountInr: [null],
       buyerBrokerageAmount: [null, Validators.min(0)],
       sellerBrokerageAmount: [null, Validators.min(0)],
       totalBrokerageAmount: [{ value: null, disabled: true }],
@@ -778,7 +778,7 @@ export class SaudaManagementComponent implements OnInit {
       buyerCtrl?.setValidators([Validators.required]);
       sellerCtrl?.clearValidators();
       remarksCtrl?.clearValidators();
-      totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      totalAmountCtrl?.clearValidators();
       linkedSaudaCtrl?.setValidators([Validators.required]);
       billingModeCtrl?.setValidators([Validators.required]);
 
@@ -793,7 +793,7 @@ export class SaudaManagementComponent implements OnInit {
       sellerCtrl?.setValidators([Validators.required]);
       buyerCtrl?.setValidators([Validators.required]);
       remarksCtrl?.clearValidators();
-      totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      totalAmountCtrl?.clearValidators();
       linkedSaudaCtrl?.clearValidators();
       billingModeCtrl?.setValidators([Validators.required]);
 
@@ -827,13 +827,9 @@ export class SaudaManagementComponent implements OnInit {
     if (this.commodityRows) {
       for (const ctrl of this.commodityRows.controls) {
         const rateCtrl = ctrl.get('rate');
-        if (type === 'Purchase') {
-          rateCtrl?.clearValidators();
-          rateCtrl?.setValue(null, { emitEvent: false });
-          ctrl.get('lineTotal')?.setValue(null, { emitEvent: false });
-        } else {
-          rateCtrl?.setValidators([Validators.required, Validators.min(0.01)]);
-        }
+        rateCtrl?.clearValidators();
+        rateCtrl?.setValue(null, { emitEvent: false });
+        ctrl.get('lineTotal')?.setValue(null, { emitEvent: false });
         rateCtrl?.updateValueAndValidity({ emitEvent: false });
       }
     }
@@ -1201,7 +1197,7 @@ export class SaudaManagementComponent implements OnInit {
             ? undefined
             : Number((Number(c.actualWeight) * (Number(c.rate) || 0)).toFixed(2)),
       })),
-      totalAmountInr: Number(v.totalAmountInr),
+      totalAmountInr: Number(v.totalAmountInr) || 0,
       buyerBrokerageAmount:
         v.buyerBrokerageAmount !== null && v.buyerBrokerageAmount !== ''
           ? Number(v.buyerBrokerageAmount)

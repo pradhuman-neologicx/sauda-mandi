@@ -513,25 +513,11 @@
           </div>
 
           <div class="field-group">
-            <label>Total Weight (MT) <span class="req">*</span></label>
+            <label>MT <span class="req">*</span></label>
             <input type="number" step="0.001" formControlName="actualWeight" class="erp-input readonly-input"
               placeholder="0.000 MT" readonly
               title="Auto-calculated from Packaging UOM capacity and quantity (BR-SA-12, BR-SA-13)" />
           </div>
-
-          <!-- Rate: Hidden on Purchase Saudas per BR-SA-16 -->
-          @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
-          <div class="field-group">
-            <label>Sale Rate (₹/MT) <span class="req">*</span></label>
-            <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input" placeholder="₹ / MT" />
-          </div>
-
-          <div class="field-group">
-            <label>Total Value (₹)</label>
-            <input type="text" formControlName="lineTotal" class="erp-input readonly-input" placeholder="₹ 0.00"
-              readonly />
-          </div>
-          }
 
           <div class="remove-btn-wrap">
             <button type="button" class="btn-remove-row" [disabled]="commodityRows.length <= 1"
@@ -578,7 +564,7 @@
           <div class="text-muted small mt-1">
             <i class="fa-solid fa-circle-info text-primary me-1"></i>
             {{ saudaForm.get('saudaType')?.value === 'Brokerage' ? 'Brokerage deals are direct buyer-seller fulfillment
-            without firm warehouse storage.' : 'Pre-filled from Storage Warehouse selected above (Read-only).' }}
+            without warehouse storage.' : 'Pre-filled from Storage Warehouse selected above (Read-only).' }}
           </div>
         </div>
 
