@@ -87,8 +87,7 @@
 
         <!-- Status Filter Dropdown -->
         <div class="filter-group">
-          <select class="filter-select" [(ngModel)]="statusFilter" name="statusFilter"
-            (ngModelChange)="onSearch()">
+          <select class="filter-select" [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="onSearch()">
             <option value="all">All Statuses</option>
             <option value="Active">Active Only</option>
             <option value="Inactive">Inactive Only</option>
@@ -231,8 +230,7 @@
             <!-- Status -->
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [class.is-active]="godown.isActive"
-                [class.is-inactive]="!godown.isActive" (click)="toggleStatus(godown)"
-                title="Click to toggle status">
+                [class.is-inactive]="!godown.isActive" (click)="toggleStatus(godown)" title="Click to toggle status">
                 <span class="dot"></span>
                 <span>{{ godown.isActive ? 'Active' : 'Inactive' }}</span>
               </button>
@@ -336,7 +334,8 @@
         <div class="warehouse-info-preview mt-2">
           <div class="d-flex align-items-center gap-2">
             <span class="city-pill"><i class="fa-solid fa-location-dot me-1"></i>{{ selectedWh.city }}</span>
-            <span class="firm-tag"><i class="fa-solid fa-briefcase me-1"></i>{{ selectedWh.clientFirm || 'Desert Fresh Traders' }}</span>
+            <span class="firm-tag"><i class="fa-solid fa-briefcase me-1"></i>{{ selectedWh.clientFirm || 'Desert Fresh
+              Traders' }}</span>
             <span class="text-muted small">&bull; {{ selectedWh.address }}</span>
           </div>
         </div>
@@ -413,13 +412,14 @@
               <div class="d-flex align-items-center gap-2 flex-grow-1">
                 <span class="chamber-order-chip">#{{ chIdx + 1 }}</span>
                 <input type="text" class="erp-input chamber-name-input" [(ngModel)]="chamber.name"
-                  [name]="'chamberName_' + chIdx" placeholder="Chamber Name (e.g. Chamber A, Chill Chamber 1)" required />
+                  [name]="'chamberName_' + chIdx" placeholder="Chamber Name (e.g. Chamber A, Chill Chamber 1)"
+                  required />
                 <input type="number" min="0" class="erp-input chamber-cap-input" [(ngModel)]="chamber.capacityMt"
                   [name]="'chamberCap_' + chIdx" placeholder="Cap (MT)" title="Capacity in MT" />
               </div>
 
-              <button type="button" class="btn-icon-danger" (click)="removeChamber(chIdx)"
-                title="Remove this chamber" [disabled]="formChambers.length <= 1">
+              <button type="button" class="btn-icon-danger" (click)="removeChamber(chIdx)" title="Remove this chamber"
+                [disabled]="formChambers.length <= 1">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -482,7 +482,8 @@
         <div class="d-flex align-items-center gap-2 mb-1">
           <h3 class="modal-title-erp mb-0">{{ viewingGodown.name }}</h3>
           <span class="wh-id-badge">{{ viewingGodown.id }}</span>
-          <span class="status-badge" [class.badge-green]="viewingGodown.isActive" [class.badge-red]="!viewingGodown.isActive">
+          <span class="status-badge" [class.badge-green]="viewingGodown.isActive"
+            [class.badge-red]="!viewingGodown.isActive">
             {{ viewingGodown.isActive ? 'Active' : 'Inactive' }}
           </span>
         </div>
@@ -496,46 +497,7 @@
     </div>
 
     <div class="modal-body-erp">
-      <!-- Clean Visual Pathway Banner -->
-      <div class="hierarchy-pathway-banner mb-4">
-        <div class="pathway-step level-1">
-          <div class="step-icon"><i class="fa-solid fa-building"></i></div>
-          <div class="step-content">
-            <span class="step-level">Warehouse</span>
-            <span class="step-val">{{ viewingGodown.warehouseName }}</span>
-          </div>
-        </div>
 
-        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-
-        <div class="pathway-step level-2">
-          <div class="step-icon"><i class="fa-solid fa-warehouse"></i></div>
-          <div class="step-content">
-            <span class="step-level">Godown</span>
-            <span class="step-val">{{ viewingGodown.name }}</span>
-          </div>
-        </div>
-
-        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-
-        <div class="pathway-step level-3">
-          <div class="step-icon"><i class="fa-solid fa-door-open"></i></div>
-          <div class="step-content">
-            <span class="step-level">Chambers</span>
-            <span class="step-val">{{ viewingGodown.chambers.length }} Chambers</span>
-          </div>
-        </div>
-
-        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-
-        <div class="pathway-step level-4">
-          <div class="step-icon"><i class="fa-solid fa-layer-group"></i></div>
-          <div class="step-content">
-            <span class="step-level">Stack Numbers</span>
-            <span class="step-val">{{ getStackCount(viewingGodown) }} Stacks</span>
-          </div>
-        </div>
-      </div>
 
       <!-- Master Profile Cards (Warehouse & Godown) -->
       <div class="detail-grid mb-4">
@@ -588,7 +550,8 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="mb-0 fw-bold fs-6 text-dark">
             <i class="fa-solid fa-door-open me-2 text-purple"></i>
-            Chambers ({{ viewingGodown.chambers.length }}) &amp; Assigned Stack Numbers ({{ getStackCount(viewingGodown) }})
+            Chambers ({{ viewingGodown.chambers.length }}) &amp; Assigned Stack Numbers ({{ getStackCount(viewingGodown)
+            }})
           </h4>
         </div>
 
@@ -668,11 +631,13 @@
 
     <div class="modal-body-erp">
       <p class="text-dark">
-        Are you sure you want to delete Godown <strong>{{ deletingGodown.name }}</strong> ({{ deletingGodown.warehouseName }})?
+        Are you sure you want to delete Godown <strong>{{ deletingGodown.name }}</strong> ({{
+        deletingGodown.warehouseName }})?
       </p>
       <div class="alert-erp alert-danger-erp small">
         <i class="fa-solid fa-circle-info me-1"></i>
-        This godown currently has {{ deletingGodown.chambers.length }} chamber(s) and {{ getStackCount(deletingGodown) }} stack number(s).
+        This godown currently has {{ deletingGodown.chambers.length }} chamber(s) and {{ getStackCount(deletingGodown)
+        }} stack number(s).
       </div>
     </div>
 
