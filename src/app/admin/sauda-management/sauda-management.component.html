@@ -50,12 +50,12 @@
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Purchase (On Hold)</div>
+      <div class="sauda-kpi-label">Purchase</div>
       <div class="sauda-kpi-val">{{ purchaseCount }}</div>
     </div>
 
     <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Sales (Held Goods)</div>
+      <div class="sauda-kpi-label">Sales</div>
       <div class="sauda-kpi-val">{{ salesCount }}</div>
     </div>
   </div>
@@ -88,13 +88,13 @@
           <select name="typeFilter" [(ngModel)]="typeFilter" class="erp-input">
             <option value="All">All Types</option>
             <option value="Brokerage">Brokerage</option>
-            <option value="Purchase">Purchase (Holding)</option>
+            <option value="Purchase">Purchase</option>
             <option value="Sales">Sales</option>
           </select>
         </div>
 
         <div class="filter-field">
-          <label>Client Firm</label>
+          <label>Firm</label>
           <select name="firmFilter" [(ngModel)]="firmFilter" class="erp-input">
             <option value="All">All Firms</option>
             @for (firmName of firmFilterOptions; track firmName) {
@@ -135,7 +135,7 @@
             <th>Date</th>
             <th>Type</th>
             <th>Storage Warehouse</th>
-            <th>Client Firm</th>
+            <th>Firm</th>
             <th>Party</th>
             <th>Commodities</th>
             <th class="text-end">Total Deal Value</th>
@@ -282,38 +282,6 @@
     </div>
     }
 
-    <!-- Sauda Type Specific Context Banner -->
-    @if (saudaForm.get('saudaType')?.value === 'Purchase') {
-    <div class="alert-erp alert-warning-erp mb-3">
-      <div>
-        <strong><i class="fa-solid fa-warehouse me-2"></i>Purchase Sauda (Holding Mode — AF-02):</strong>
-        The firm only holds the seller's goods in a third-party warehouse. Ownership stays with the Seller and
-        <strong>no money changes hands</strong>. The contract stays <strong>On Hold</strong> until the goods are sold.
-        Agreed terms or valuation rates are recorded in remarks for reference only and are never billed (BR-SA-16).
-      </div>
-    </div>
-    }
-
-    @if (saudaForm.get('saudaType')?.value === 'Sales') {
-    <div class="alert-erp alert-info-erp mb-3">
-      <div>
-        <strong><i class="fa-solid fa-cart-shopping me-2"></i>Sales Sauda (Selling Held Goods — AF-03):</strong>
-        The firm sells goods held under prior Purchase Saudas to a buyer. A linked Purchase Sauda with available held
-        quantity is required (BR-SA-05). Brokerage is earned from the Seller and Buyer under the selected Payment
-        Scenario (PS-1, PS-2, PS-3).
-      </div>
-    </div>
-    }
-
-    @if (saudaForm.get('saudaType')?.value === 'Brokerage' || saudaForm.get('saudaType')?.value === 'Direct Sale') {
-    <div class="alert-erp alert-primary-erp mb-3">
-      <div>
-        <strong><i class="fa-solid fa-handshake me-2"></i>Brokerage Sauda (Direct Deal — AF-01):</strong>
-        Direct deal between one Buyer and one Seller. The firm only arranges the deal and earns brokerage. Goods are
-        stored in a third-party warehouse the firm chooses.
-      </div>
-    </div>
-    }
 
     <!-- Section 1: Create Sauda Header Info -->
     <div class="erp-card section-card">
@@ -325,9 +293,9 @@
         <div class="field-group">
           <label>Sauda Type <span class="req">*</span></label>
           <select formControlName="saudaType" class="erp-input">
-            <option value="Brokerage">Brokerage Deal (Buyer &amp; Seller)</option>
-            <option value="Purchase">Purchase (Holding Seller Goods)</option>
-            <option value="Sales">Sales (Sell Held Goods)</option>
+            <option value="Brokerage">Brokerage Deal</option>
+            <option value="Purchase">Purchase</option>
+            <option value="Sales">Sales</option>
           </select>
         </div>
 
@@ -337,73 +305,20 @@
         </div>
 
         <div class="field-group">
-          <label>Client Firm <span class="req">*</span></label>
+          <label>Firm <span class="req">*</span></label>
           <select formControlName="clientFirm" class="erp-input">
-            <option value="">Select Client Firm</option>
+            <option value="">Select Firm</option>
             @for (firm of activeFirms; track firm.id) {
             <option [value]="firm.name">{{ firm.name }}</option>
             }
           </select>
           @if (saudaForm.get('clientFirm')?.touched && saudaForm.get('clientFirm')?.invalid) {
-          <span class="field-err">Client Firm is required.</span>
+          <span class="field-err">Firm is required.</span>
           }
         </div>
       </div>
 
-      <!-- 4-Level Storage Location Box -->
-      <div class="storage-box p-3 mt-3 mb-2 rounded border bg-light">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-semibold text-dark">
-            <i class="fa-solid fa-warehouse text-primary me-2"></i>Storage Location (4-Level Hierarchy — BR-SA-03,
-            BR-TE-05)
-          </span>
-          <span class="text-muted small">Third-party warehouse chosen &amp; rented by the firm</span>
-        </div>
-        <div class="form-grid-4">
-          <div class="field-group">
-            <label>Warehouse <span class="req">*</span></label>
-            <select formControlName="warehouseId" class="erp-input" (change)="onWarehouseSelected()">
-              <option value="">Select Storage Warehouse</option>
-              @for (w of warehouses; track w.id) {
-              <option [value]="w.id">{{ w.name }} ({{ w.city }})</option>
-              }
-            </select>
-            @if (saudaForm.get('warehouseId')?.touched && saudaForm.get('warehouseId')?.invalid) {
-            <span class="field-err">Storage Warehouse is required.</span>
-            }
-          </div>
 
-          <div class="field-group">
-            <label>Godown <span class="text-muted small">(Optional)</span></label>
-            <select formControlName="godownName" class="erp-input" (change)="onGodownSelected()">
-              <option value="">Select Godown</option>
-              @for (g of filteredGodowns; track g.id) {
-              <option [value]="g.name">{{ g.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Chamber <span class="text-muted small">(Optional)</span></label>
-            <select formControlName="chamberName" class="erp-input" (change)="onChamberSelected()">
-              <option value="">Select Chamber</option>
-              @for (c of availableChambers; track c.id) {
-              <option [value]="c.name">{{ c.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Stack Number <span class="text-muted small">(Optional)</span></label>
-            <select formControlName="stackNumber" class="erp-input">
-              <option value="">Select Stack</option>
-              @for (s of availableStacks; track s) {
-              <option [value]="s">{{ s }}</option>
-              }
-            </select>
-          </div>
-        </div>
-      </div>
 
       <!-- If Sales: Linked Purchase Sauda Selector -->
       @if (saudaForm.get('saudaType')?.value === 'Sales') {
@@ -491,6 +406,61 @@
         </div>
         }
       </div>
+
+      <!-- 4-Level Storage Location Box (Only for Purchase and Sales, hidden for Brokerage) -->
+      @if (saudaForm.get('saudaType')?.value !== 'Brokerage') {
+      <div class="storage-box p-3 mt-3 mb-2 rounded border bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold text-dark">
+            <i class="fa-solid fa-warehouse text-primary me-2"></i>Storage Location
+          </span>
+        </div>
+        <div class="form-grid-4">
+          <div class="field-group">
+            <label>Warehouse <span class="req">*</span></label>
+            <select formControlName="warehouseId" class="erp-input" (change)="onWarehouseSelected()">
+              <option value="">Select Storage Warehouse</option>
+              @for (w of warehouses; track w.id) {
+              <option [value]="w.id">{{ w.name }} ({{ w.city }})</option>
+              }
+            </select>
+            @if (saudaForm.get('warehouseId')?.touched && saudaForm.get('warehouseId')?.invalid) {
+            <span class="field-err">Storage Warehouse is required.</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Godown <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="godownName" class="erp-input" (change)="onGodownSelected()">
+              <option value="">Select Godown</option>
+              @for (g of filteredGodowns; track g.id) {
+              <option [value]="g.name">{{ g.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Chamber <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="chamberName" class="erp-input" (change)="onChamberSelected()">
+              <option value="">Select Chamber</option>
+              @for (c of availableChambers; track c.id) {
+              <option [value]="c.name">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Stack Number <span class="text-muted small">(Optional)</span></label>
+            <select formControlName="stackNumber" class="erp-input">
+              <option value="">Select Stack</option>
+              @for (s of availableStacks; track s) {
+              <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+      }
     </div>
 
     <!-- Section 2: Commodity Details -->
@@ -508,7 +478,8 @@
 
       <div formArrayName="commodityItems" class="commodity-rows-stack mt-3">
         @for (row of commodityRows.controls; track $index; let idx = $index) {
-        <div [formGroupName]="idx" class="commodity-row-box" [class.purchase-row-box]="saudaForm.get('saudaType')?.value === 'Purchase'">
+        <div [formGroupName]="idx" class="commodity-row-box"
+          [class.purchase-row-box]="saudaForm.get('saudaType')?.value === 'Purchase'">
           <div class="field-group">
             <label>Commodity <span class="req">*</span></label>
             <select formControlName="commodity" class="erp-input" (change)="onCommoditySelected(idx)">
@@ -544,15 +515,15 @@
           <div class="field-group">
             <label>Total Weight (MT) <span class="req">*</span></label>
             <input type="number" step="0.001" formControlName="actualWeight" class="erp-input readonly-input"
-              placeholder="0.000 MT" readonly title="Auto-calculated from Packaging UOM capacity and quantity (BR-SA-12, BR-SA-13)" />
+              placeholder="0.000 MT" readonly
+              title="Auto-calculated from Packaging UOM capacity and quantity (BR-SA-12, BR-SA-13)" />
           </div>
 
           <!-- Rate: Hidden on Purchase Saudas per BR-SA-16 -->
           @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
           <div class="field-group">
             <label>Sale Rate (₹/MT) <span class="req">*</span></label>
-            <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input"
-              placeholder="₹ / MT" />
+            <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input" placeholder="₹ / MT" />
           </div>
 
           <div class="field-group">
@@ -579,6 +550,98 @@
         Any agreed valuation rate is recorded in the mandatory remarks below and is never billed.
       </div>
       }
+    </div>
+
+    <!-- Section: Truck Details -->
+    <div class="erp-card section-card">
+      <div class="section-head-row mb-3">
+        <div>
+          <h2 class="section-card-title mb-0">
+            <i class="fa-solid fa-truck text-primary me-2"></i>Truck Details
+          </h2>
+          <span class="text-muted small">
+            Vehicle information and logistics for this Sauda deal
+          </span>
+        </div>
+      </div>
+
+      <!-- Row 1: Receiving Warehouse & Receipt Date -->
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>
+            {{ saudaForm.get('saudaType')?.value === 'Sales' ? 'Dispatching Warehouse' : 'Receiving Warehouse' }}
+            <span class="req">*</span>
+          </label>
+          <input type="text" class="erp-input readonly-input"
+            [value]="saudaForm.get('warehouseName')?.value || (saudaForm.get('saudaType')?.value === 'Brokerage' ? 'Direct Delivery (Third-Party / No Warehouse)' : 'Select Warehouse above in Storage Location')"
+            readonly />
+          <div class="text-muted small mt-1">
+            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+            {{ saudaForm.get('saudaType')?.value === 'Brokerage' ? 'Brokerage deals are direct buyer-seller fulfillment
+            without firm warehouse storage.' : 'Pre-filled from Storage Warehouse selected above (Read-only).' }}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>
+            {{ saudaForm.get('saudaType')?.value === 'Sales' ? 'Dispatch Date' : 'Receipt Date' }}
+            <span class="req">*</span>
+          </label>
+          <input type="date" formControlName="truckReceiptDate" class="erp-input" />
+          @if (saudaForm.get('truckReceiptDate')?.touched && saudaForm.get('truckReceiptDate')?.invalid) {
+          <span class="field-err">Receipt Date is required.</span>
+          }
+        </div>
+      </div>
+
+      <!-- Row 2: Truck Number, Transit Status, Transporter Name -->
+      <div class="form-grid-3 mt-3">
+        <div class="field-group">
+          <label>Truck Number <span class="req">*</span></label>
+          <input type="text" formControlName="truckVehicleNo" class="erp-input text-uppercase"
+            placeholder="e.g. RJ07-GA-1234" />
+          @if (saudaForm.get('truckVehicleNo')?.touched && saudaForm.get('truckVehicleNo')?.invalid) {
+          <span class="field-err">Valid vehicle format required (e.g. RJ07-GA-1234).</span>
+          }
+        </div>
+
+        <div class="field-group">
+          <label>Transit Status <span class="req">*</span></label>
+          <select formControlName="truckStatus" class="erp-input">
+            @for (st of activeTruckStatuses; track st) {
+            <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Transporter Name</label>
+          <input type="text" formControlName="truckTransporterName" class="erp-input"
+            placeholder="Optional transporter name" />
+        </div>
+      </div>
+
+      <!-- Row 3: Driver Name (optional), Driver Mobile (10-digit), Expected Arrival Date -->
+      <div class="form-grid-3 mt-3">
+        <div class="field-group">
+          <label>Driver Name (optional)</label>
+          <input type="text" formControlName="truckDriverName" class="erp-input" placeholder="Optional driver name" />
+        </div>
+
+        <div class="field-group">
+          <label>Driver Mobile (10-digit)</label>
+          <input type="text" maxlength="10" formControlName="truckDriverPhone" class="erp-input"
+            placeholder="Optional 10-digit mobile" />
+          @if (saudaForm.get('truckDriverPhone')?.touched && saudaForm.get('truckDriverPhone')?.invalid) {
+          <span class="field-err">Enter a valid 10-digit Indian mobile number.</span>
+          }
+        </div>
+
+        <div class="field-group">
+          <label>Expected Arrival Date</label>
+          <input type="date" formControlName="truckExpectedArrivalDate" class="erp-input" />
+        </div>
+      </div>
     </div>
 
     <!-- Section 3: Financial Details & Brokerage Invoicing (UC-SA-06) (Commented out in HTML as requested) -->
@@ -850,7 +913,7 @@
 
       <div class="detail-grid">
         <div class="detail-item">
-          <span class="detail-label">Client Firm</span>
+          <span class="detail-label">Firm</span>
           <span class="detail-value">{{ selectedSauda.clientFirm }}</span>
         </div>
 

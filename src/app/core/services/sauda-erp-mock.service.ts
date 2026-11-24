@@ -429,6 +429,7 @@ export interface LedgerSettlementRecord {
 export interface ActionResult {
   ok: boolean;
   message: string;
+  recordId?: string;
 }
 
 export type InvoiceStatus = 'Issued' | 'Paid';
@@ -2927,7 +2928,7 @@ export class SaudaErpMockService {
     };
 
     this.saudasSubject.next([newSauda, ...this.saudasSubject.value]);
-    return { ok: true, message: `Sauda ${code} created successfully.` };
+    return { ok: true, message: `Sauda ${code} created successfully.`, recordId: code };
   }
 
   updateSauda(

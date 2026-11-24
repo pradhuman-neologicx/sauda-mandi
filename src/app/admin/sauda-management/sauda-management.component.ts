@@ -30,6 +30,7 @@ import {
   SaudaType,
   SellerRecord,
   TruckEntryRecord,
+  TruckStatus,
   WarehouseRecord,
   WeightUom,
 } from 'src/app/core/services/sauda-erp-mock.service';
@@ -106,6 +107,12 @@ export class SaudaManagementComponent implements OnInit {
     'Loose',
   ];
   readonly weightUoms: WeightUom[] = ['KG', 'Quintal', 'MT'];
+  readonly activeTruckStatuses: TruckStatus[] = [
+    'Scheduled',
+    'Loaded',
+    'In Transit',
+    'Delivered',
+  ];
 
   warehouses: WarehouseRecord[] = [];
   godowns: GodownRecord[] = [];
@@ -257,7 +264,7 @@ export class SaudaManagementComponent implements OnInit {
       saudaType: ['Brokerage', Validators.required],
       saudaDate: [today, Validators.required],
       clientFirm: ['', Validators.required],
-      warehouseId: ['', Validators.required],
+      warehouseId: [''],
       warehouseName: [''],
       godownName: [''],
       chamberName: [''],
@@ -269,6 +276,16 @@ export class SaudaManagementComponent implements OnInit {
       buyerName: ['', Validators.required],
       expectedDeliveryDate: [''],
       commodityItems: this.fb.array([this.createCommodityRow()]),
+      truckReceiptDate: [today],
+      truckVehicleNo: [
+        '',
+        [Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/)],
+      ],
+      truckStatus: ['In Transit', Validators.required],
+      truckTransporterName: [''],
+      truckDriverName: [''],
+      truckDriverPhone: ['', [Validators.pattern(/^([6-9]\d{9})?$/)]],
+      truckExpectedArrivalDate: [''],
       totalAmountInr: [null, [Validators.required, Validators.min(1)]],
       buyerBrokerageAmount: [null, Validators.min(0)],
       sellerBrokerageAmount: [null, Validators.min(0)],
@@ -731,6 +748,9 @@ export class SaudaManagementComponent implements OnInit {
     const totalAmountCtrl = this.saudaForm.get('totalAmountInr');
     const linkedSaudaCtrl = this.saudaForm.get('linkedPurchaseSaudaId');
     const billingModeCtrl = this.saudaForm.get('brokerageBillingMode');
+    const whCtrl = this.saudaForm.get('warehouseId');
+    const truckVehicleCtrl = this.saudaForm.get('truckVehicleNo');
+    const truckDateCtrl = this.saudaForm.get('truckReceiptDate');
 
     if (type === 'Purchase') {
       // BR-SA-04, BR-SA-16, BR-SA-23
@@ -741,6 +761,18 @@ export class SaudaManagementComponent implements OnInit {
       totalAmountCtrl?.clearValidators();
       linkedSaudaCtrl?.clearValidators();
       billingModeCtrl?.clearValidators();
+
+      whCtrl?.setValidators([Validators.required]);
+      if (!whCtrl?.value && this.warehouses.length > 0) {
+        whCtrl?.setValue(this.warehouses[0].id, { emitEvent: false });
+        this.saudaForm.get('warehouseName')?.setValue(this.warehouses[0].name, { emitEvent: false });
+        this.filteredGodowns = this.godowns.filter((g) => g.warehouseId === this.warehouses[0].id);
+      }
+      truckVehicleCtrl?.setValidators([
+        Validators.required,
+        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
+      ]);
+      truckDateCtrl?.setValidators([Validators.required]);
     } else if (type === 'Sales') {
       // BR-SA-05, EX-09, EX-11
       buyerCtrl?.setValidators([Validators.required]);
@@ -749,6 +781,13 @@ export class SaudaManagementComponent implements OnInit {
       totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
       linkedSaudaCtrl?.setValidators([Validators.required]);
       billingModeCtrl?.setValidators([Validators.required]);
+
+      whCtrl?.setValidators([Validators.required]);
+      truckVehicleCtrl?.clearValidators();
+      truckVehicleCtrl?.setValidators([
+        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
+      ]);
+      truckDateCtrl?.clearValidators();
     } else {
       // Brokerage: BR-SA-03, BR-SA-10
       sellerCtrl?.setValidators([Validators.required]);
@@ -757,6 +796,23 @@ export class SaudaManagementComponent implements OnInit {
       totalAmountCtrl?.setValidators([Validators.required, Validators.min(1)]);
       linkedSaudaCtrl?.clearValidators();
       billingModeCtrl?.setValidators([Validators.required]);
+
+      // Storage location not required for Brokerage
+      whCtrl?.clearValidators();
+      whCtrl?.setValue('', { emitEvent: false });
+      this.saudaForm.get('warehouseName')?.setValue('', { emitEvent: false });
+      this.saudaForm.get('godownName')?.setValue('', { emitEvent: false });
+      this.saudaForm.get('chamberName')?.setValue('', { emitEvent: false });
+      this.saudaForm.get('stackNumber')?.setValue('', { emitEvent: false });
+      this.filteredGodowns = [];
+      this.availableChambers = [];
+      this.availableStacks = [];
+
+      truckVehicleCtrl?.clearValidators();
+      truckVehicleCtrl?.setValidators([
+        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
+      ]);
+      truckDateCtrl?.clearValidators();
     }
     sellerCtrl?.updateValueAndValidity({ emitEvent: false });
     buyerCtrl?.updateValueAndValidity({ emitEvent: false });
@@ -764,6 +820,9 @@ export class SaudaManagementComponent implements OnInit {
     totalAmountCtrl?.updateValueAndValidity({ emitEvent: false });
     linkedSaudaCtrl?.updateValueAndValidity({ emitEvent: false });
     billingModeCtrl?.updateValueAndValidity({ emitEvent: false });
+    whCtrl?.updateValueAndValidity({ emitEvent: false });
+    truckVehicleCtrl?.updateValueAndValidity({ emitEvent: false });
+    truckDateCtrl?.updateValueAndValidity({ emitEvent: false });
 
     if (this.commodityRows) {
       for (const ctrl of this.commodityRows.controls) {
@@ -930,8 +989,8 @@ export class SaudaManagementComponent implements OnInit {
       saudaType: 'Brokerage',
       saudaDate: today,
       clientFirm: this.activeFirms[0]?.name || '',
-      warehouseId: defaultWh?.id || '',
-      warehouseName: defaultWh?.name || '',
+      warehouseId: '',
+      warehouseName: '',
       godownName: '',
       chamberName: '',
       stackNumber: '',
@@ -941,6 +1000,13 @@ export class SaudaManagementComponent implements OnInit {
       sellerName: '',
       buyerName: '',
       expectedDeliveryDate: '',
+      truckReceiptDate: today,
+      truckVehicleNo: '',
+      truckStatus: 'In Transit',
+      truckTransporterName: '',
+      truckDriverName: '',
+      truckDriverPhone: '',
+      truckExpectedArrivalDate: '',
       totalAmountInr: null,
       buyerBrokerageAmount: null,
       sellerBrokerageAmount: null,
@@ -955,13 +1021,7 @@ export class SaudaManagementComponent implements OnInit {
       revisionReason: '',
     });
 
-    if (defaultWh) {
-      this.filteredGodowns = this.godowns.filter(
-        (g) => g.warehouseId === defaultWh.id,
-      );
-    } else {
-      this.filteredGodowns = [];
-    }
+    this.filteredGodowns = [];
     this.availableChambers = [];
     this.availableStacks = [];
 
@@ -1053,6 +1113,20 @@ export class SaudaManagementComponent implements OnInit {
 
     this.recomputeBrokerageAmounts();
     this.updatePartyValidators(initialType);
+
+    const existingTruck = this.erpService.getActiveTrucksForSauda(sauda.id)[0];
+    if (existingTruck) {
+      this.saudaForm.patchValue({
+        truckReceiptDate: existingTruck.dispatchDate,
+        truckVehicleNo: existingTruck.vehicleNo,
+        truckStatus: existingTruck.status,
+        truckTransporterName: existingTruck.transporterName || '',
+        truckDriverName: existingTruck.driverName || '',
+        truckDriverPhone: existingTruck.driverPhone || '',
+        truckExpectedArrivalDate: existingTruck.expectedArrivalDate || '',
+      });
+    }
+
     this.saudaForm
       .get('revisionReason')
       ?.setValidators([Validators.required, Validators.minLength(5)]);
@@ -1087,23 +1161,28 @@ export class SaudaManagementComponent implements OnInit {
       return;
     }
 
-    if (!v.warehouseId) {
-      this.formError = 'Storage Warehouse is required for all Saudas.';
+    if (v.saudaType !== 'Brokerage' && !v.warehouseId) {
+      this.formError = 'Storage Warehouse is required for Purchase and Sales Saudas.';
       this.notificationService.show(this.formError, 'error', 3500);
       return;
     }
 
-    const selectedWh = this.warehouses.find((w) => w.id === v.warehouseId);
+    const selectedWh = v.warehouseId
+      ? this.warehouses.find((w) => w.id === v.warehouseId)
+      : undefined;
 
     const payload = {
       saudaType: v.saudaType as SaudaType,
       saudaDate: v.saudaDate,
       clientFirm: v.clientFirm,
-      warehouseId: v.warehouseId,
-      warehouseName: selectedWh?.name || v.warehouseName || '',
-      godownName: v.godownName || undefined,
-      chamberName: v.chamberName || undefined,
-      stackNumber: v.stackNumber || undefined,
+      warehouseId: v.saudaType === 'Brokerage' ? undefined : v.warehouseId,
+      warehouseName:
+        v.saudaType === 'Brokerage'
+          ? undefined
+          : (selectedWh?.name || v.warehouseName || ''),
+      godownName: v.saudaType === 'Brokerage' ? undefined : (v.godownName || undefined),
+      chamberName: v.saudaType === 'Brokerage' ? undefined : (v.chamberName || undefined),
+      stackNumber: v.saudaType === 'Brokerage' ? undefined : (v.stackNumber || undefined),
       brokerageBillingMode: v.brokerageBillingMode || undefined,
       linkedPurchaseSaudaId: v.linkedPurchaseSaudaId || undefined,
       linkedPurchaseSaudaNo: v.linkedPurchaseSaudaNo || undefined,
@@ -1172,6 +1251,38 @@ export class SaudaManagementComponent implements OnInit {
         this.notificationService.show(result.message, 'error', 3500);
         return;
       }
+
+      // If truck number is entered, record initial truck entry
+      if (v.truckVehicleNo && v.truckVehicleNo.trim()) {
+        const createdSauda = result.recordId
+          ? this.erpService.getSaudasSnapshot().find((s) => s.id === result.recordId)
+          : this.erpService.getSaudasSnapshot()[0];
+        if (createdSauda) {
+          const truckWh =
+            selectedWh?.name ||
+            v.warehouseName ||
+            (v.saudaType === 'Brokerage' ? 'Direct Delivery' : 'Main Mandi Yard');
+          const truckPayload = {
+            saudaId: createdSauda.id,
+            warehouse: truckWh,
+            dispatchDate: v.truckReceiptDate || v.saudaDate,
+            expectedArrivalDate:
+              v.truckExpectedArrivalDate || v.truckReceiptDate || v.saudaDate,
+            vehicleNo: v.truckVehicleNo.trim().toUpperCase(),
+            status: (v.truckStatus || 'In Transit') as TruckStatus,
+            driverName: (v.truckDriverName || '').trim(),
+            driverPhone: (v.truckDriverPhone || '').trim(),
+            transporterName: (v.truckTransporterName || '').trim(),
+            lrNo: '',
+            freightRatePerMt: 0,
+            advancePaid: 0,
+            commodityItems: payload.commodityItems,
+            remarks: `Initial truck entry linked to ${createdSauda.saudaNo}`,
+          };
+          this.erpService.createTruck(truckPayload);
+        }
+      }
+
       this.notificationService.show(result.message, 'success', 3000);
       this.viewMode = 'listing';
     }

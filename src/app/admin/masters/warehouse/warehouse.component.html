@@ -128,12 +128,7 @@
               }
             </th>
             <th>Supervisor / Contact</th>
-            <th class="sortable-th" (click)="setSort('createdAt')">
-              <span>Created Date</span>
-              @if (sortField === 'createdAt') {
-              <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
-              }
-            </th>
+
             <th class="text-center sortable-th" style="width: 140px" (click)="setSort('status')">
               <span>Status</span>
               @if (sortField === 'status') {
@@ -198,7 +193,7 @@
               <span class="text-muted small">-</span>
               }
             </td>
-            <td class="num">{{ w.createdAt }}</td>
+
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="w.isActive ? 'is-active' : 'is-inactive'"
                 (click)="promptStatusToggle(w)" [title]="w.isActive ? 'Click to Deactivate' : 'Click to Activate'">
