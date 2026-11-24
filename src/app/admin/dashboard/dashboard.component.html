@@ -139,64 +139,6 @@
     </div>
   </div>
 
-  <!-- 3. Quick Actions Row (Highlighted Action Command Center) -->
-  <div class="quick-actions-card">
-    <div class="qa-leading">
-      <div class="qa-bolt-badge">
-        <i class="fa-solid fa-bolt qa-bolt-icon"></i>
-      </div>
-      <div class="qa-title-stack">
-        <span class="qa-tag">ONE-CLICK</span>
-        <span class="qa-title">Quick Actions</span>
-      </div>
-      <div class="qa-divider"></div>
-    </div>
-
-    <div class="qa-buttons-wrap">
-      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="qa-pill-btn qa-btn-sauda">
-        <span class="qa-icon-badge">
-          <i class="fa-solid fa-handshake"></i>
-        </span>
-        <span class="qa-btn-text">Create Sauda</span>
-      </a>
-
-      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="qa-pill-btn qa-btn-truck">
-        <span class="qa-icon-badge">
-          <i class="fa-solid fa-truck"></i>
-        </span>
-        <span class="qa-btn-text">Record Truck</span>
-      </a>
-
-      <button type="button" class="qa-pill-btn qa-btn-invoice" (click)="openCreateInvoice()">
-        <span class="qa-icon-badge">
-          <i class="fa-regular fa-file-lines"></i>
-        </span>
-        <span class="qa-btn-text">Create Invoice</span>
-      </button>
-
-      <a routerLink="/admin/party-ledger" [queryParams]="{ action: 'record-payment' }" class="qa-pill-btn qa-btn-payment">
-        <span class="qa-icon-badge">
-          <i class="fa-solid fa-wallet"></i>
-        </span>
-        <span class="qa-btn-text">Record Payment</span>
-      </a>
-
-      <a routerLink="/admin/party-management" [queryParams]="{ action: 'add' }" class="qa-pill-btn qa-btn-party">
-        <span class="qa-icon-badge">
-          <i class="fa-solid fa-user-plus"></i>
-        </span>
-        <span class="qa-btn-text">Add Party</span>
-      </a>
-
-      <a routerLink="/admin/inventory-management/inventory" class="qa-pill-btn qa-btn-stock">
-        <span class="qa-icon-badge">
-          <i class="fa-solid fa-warehouse"></i>
-        </span>
-        <span class="qa-btn-text">View Stock</span>
-      </a>
-    </div>
-  </div>
-
   <!-- 4. Middle Section (Two Cards) -->
   <div class="dash-grid-two">
     <!-- Today's Work / Action Centre -->
@@ -620,4 +562,42 @@
       </table>
     </div>
   </div>
+
+  <!-- 7. Quick Actions (Bottom Tiles) -->
+  <div class="quick-actions-bottom">
+    <h2 class="qa-section-heading">
+      <i class="fa-solid fa-bolt qa-heading-icon"></i>
+      Quick Actions
+    </h2>
+    <div class="qa-tiles-grid">
+      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="qa-tile qa-tile-sauda">
+        <div class="qa-tile-icon-wrap">
+          <i class="fa-solid fa-handshake"></i>
+        </div>
+        <span class="qa-tile-label">Create Sauda</span>
+      </a>
+
+      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="qa-tile qa-tile-truck">
+        <div class="qa-tile-icon-wrap">
+          <i class="fa-solid fa-truck"></i>
+        </div>
+        <span class="qa-tile-label">Record Truck</span>
+      </a>
+
+      <button type="button" class="qa-tile qa-tile-invoice" (click)="openCreateInvoice()">
+        <div class="qa-tile-icon-wrap">
+          <i class="fa-regular fa-file-lines"></i>
+        </div>
+        <span class="qa-tile-label">Create Invoice</span>
+      </button>
+
+      <a routerLink="/admin/party-ledger" [queryParams]="{ action: 'record-payment' }" class="qa-tile qa-tile-payment">
+        <div class="qa-tile-icon-wrap">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <span class="qa-tile-label">Record Payment</span>
+      </a>
+    </div>
+  </div>
+
 </div>
