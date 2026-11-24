@@ -216,12 +216,18 @@ export interface InventoryRecord {
   warehouseId: string;
   warehouseName: string;
   isActiveWarehouse: boolean;
+  godownId?: string;
+  godownName?: string;
+  chamberId?: string;
+  chamberName?: string;
+  stackNumber?: string;
   productId: string;
   productName: string;
   categoryId: string;
   categoryName: string;
   subCategoryName: string;
   commodity: string;
+  partyName?: string;
   clientFirm: string;
   packagingUom: PackagingUom;
   availableUnits: number;
@@ -235,10 +241,16 @@ export interface InventoryRecord {
 export interface StockAdjustmentRecord {
   id: string;
   adjNo: string;
+  partyName?: string;
   clientFirm: string;
   warehouseId: string;
   warehouseName: string;
   isActiveWarehouse: boolean;
+  godownId?: string;
+  godownName?: string;
+  chamberId?: string;
+  chamberName?: string;
+  stackNumber?: string;
   commodity: string;
   productId?: string;
   productName?: string;
@@ -264,8 +276,12 @@ export interface StockMovementRecord {
   movementNo: string;
   movementType: 'Purchase Receipt' | 'Sales Dispatch' | 'Stock Adjustment';
   movementDirection: 'Stock In' | 'Stock Out';
+  partyName?: string;
   clientFirm: string;
   warehouseName: string;
+  godownName?: string;
+  chamberName?: string;
+  stackNumber?: string;
   commodity: string;
   packagingUom: PackagingUom;
   quantity: number;
@@ -333,6 +349,7 @@ export interface WeightUomRecord {
 export interface WarehouseRecord {
   id: string;
   name: string;
+  partyName?: string;
   clientFirm?: string;
   address: string;
   city: string;
@@ -357,6 +374,7 @@ export interface GodownRecord {
   id: string; // e.g. 'GD-001'
   warehouseId: string;
   warehouseName: string;
+  partyName?: string;
   name: string; // e.g. 'Godown 1 (North Block)'
   supervisor?: string;
   supervisorPhone?: string;
@@ -2250,6 +2268,7 @@ export class SaudaErpMockService {
       id: 'WH-001',
       name: 'Desert Mandi Yard A',
       clientFirm: 'Desert Fresh Traders',
+      partyName: 'Sharma Grain Traders',
       address: 'Plot 12-15, Mandi Yard Phase 1, Basni Industrial Area',
       city: 'Jodhpur',
       contactPerson: 'Kailash Choudhary',
@@ -2265,6 +2284,7 @@ export class SaudaErpMockService {
       id: 'WH-002',
       name: 'Fresh Terminal Cold Hub',
       clientFirm: 'Desert Fresh Traders',
+      partyName: 'Desert Fresh Traders',
       address: 'Warehouse No. 8, Agro Food Park, Sitapura Industrial Area',
       city: 'Jaipur',
       contactPerson: 'Mukesh Sharma',
@@ -2280,6 +2300,7 @@ export class SaudaErpMockService {
       id: 'WH-003',
       name: 'Rajasthan Agro Godown 4',
       clientFirm: 'Rajasthan Agro',
+      partyName: 'Rajasthan Agro Traders',
       address: 'Old Mandi Road, Near Railway Goods Yard, Karni Industrial Area',
       city: 'Bikaner',
       contactPerson: 'Rajendra Solanki',
@@ -2295,6 +2316,7 @@ export class SaudaErpMockService {
       id: 'WH-004',
       name: 'Kota Grain Silo',
       clientFirm: 'Rajasthan Agro',
+      partyName: 'Kota Grain Mandi Agency',
       address: 'Sector 5, RIICO Mandi Complex, Chambal Bypass Road',
       city: 'Kota',
       contactPerson: 'Deepak Meena',
@@ -2310,6 +2332,7 @@ export class SaudaErpMockService {
       id: 'WH-005',
       name: 'Mewar Agro Storage Yard',
       clientFirm: 'Desert Fresh Traders',
+      partyName: 'Mewar Agro Supplies',
       address: 'Depot 3, Sukher Mandi Complex, NH-8',
       city: 'Udaipur',
       contactPerson: 'Bhawani Singh',
@@ -4486,8 +4509,14 @@ export class SaudaErpMockService {
 
   createStockAdjustment(
     payload: {
-      clientFirm: string;
+      clientFirm?: string;
+      partyName?: string;
       warehouseId: string;
+      godownId?: string;
+      godownName?: string;
+      chamberId?: string;
+      chamberName?: string;
+      stackNumber?: string;
       commodity: string;
       productId?: string;
       adjustmentType: 'Increase' | 'Decrease';
@@ -4500,10 +4529,11 @@ export class SaudaErpMockService {
     makerRole: 'Operations Executive (Maker)' | 'Business Owner / Admin (Checker)',
     makerName: string,
   ): ActionResult {
-    if (!payload.clientFirm || !payload.warehouseId || !payload.commodity) {
+    const effectiveParty = (payload.partyName || payload.clientFirm || '').trim();
+    if (!effectiveParty || !payload.warehouseId || !payload.commodity) {
       return {
         ok: false,
-        message: 'Client Firm, Warehouse and Commodity are mandatory.',
+        message: 'Party, Warehouse and Commodity are mandatory.',
       };
     }
 
@@ -4535,7 +4565,8 @@ export class SaudaErpMockService {
     if (payload.adjustmentType === 'Decrease') {
       const existing = this.inventorySubject.value.find(
         (i) =>
-          i.clientFirm.toLowerCase() === payload.clientFirm.toLowerCase() &&
+          ((i.partyName && i.partyName.toLowerCase() === effectiveParty.toLowerCase()) ||
+            i.clientFirm.toLowerCase() === effectiveParty.toLowerCase()) &&
           (i.warehouseId === warehouseId || i.warehouseName.toLowerCase() === warehouseName.toLowerCase()) &&
           i.commodity.toLowerCase() === payload.commodity.toLowerCase(),
       );
@@ -4586,10 +4617,16 @@ export class SaudaErpMockService {
     const newAdjustment: StockAdjustmentRecord = {
       id: `ADJ-REC-${Date.now().toString().slice(-5)}`,
       adjNo,
-      clientFirm: payload.clientFirm,
+      partyName: effectiveParty,
+      clientFirm: effectiveParty,
       warehouseId,
       warehouseName,
       isActiveWarehouse,
+      godownId: payload.godownId,
+      godownName: payload.godownName,
+      chamberId: payload.chamberId,
+      chamberName: payload.chamberName,
+      stackNumber: payload.stackNumber,
       commodity: payload.commodity,
       productId: matchedProduct?.id || payload.productId,
       productName: matchedProduct?.name || payload.commodity,
@@ -4714,12 +4751,18 @@ export class SaudaErpMockService {
         warehouseId: adj.warehouseId,
         warehouseName: adj.warehouseName,
         isActiveWarehouse: adj.isActiveWarehouse,
+        godownId: adj.godownId,
+        godownName: adj.godownName,
+        chamberId: adj.chamberId,
+        chamberName: adj.chamberName,
+        stackNumber: adj.stackNumber,
         productId: adj.productId || '',
         productName: adj.productName || adj.commodity,
         categoryId: '',
         categoryName: 'Stock Lot',
         subCategoryName: '—',
         commodity: adj.commodity,
+        partyName: adj.partyName || adj.clientFirm,
         clientFirm: adj.clientFirm,
         packagingUom: adj.packagingUom,
         availableUnits: balanceUnitsAfter,
@@ -4754,8 +4797,12 @@ export class SaudaErpMockService {
       movementNo: `MOV-2026-${String(nextMovSeq).padStart(4, '0')}`,
       movementType: 'Stock Adjustment',
       movementDirection: adj.adjustmentType === 'Increase' ? 'Stock In' : 'Stock Out',
+      partyName: adj.partyName || adj.clientFirm,
       clientFirm: adj.clientFirm,
       warehouseName: adj.warehouseName,
+      godownName: adj.godownName,
+      chamberName: adj.chamberName,
+      stackNumber: adj.stackNumber,
       commodity: adj.commodity,
       packagingUom: adj.packagingUom,
       quantity: adj.quantity,
@@ -5867,6 +5914,7 @@ export class SaudaErpMockService {
       | string
       | {
           name: string;
+          partyName?: string;
           clientFirm?: string;
           address: string;
           city: string;
@@ -5882,6 +5930,7 @@ export class SaudaErpMockService {
             name: payloadOrName,
             address: `${cityArg || 'Industrial Area'} Mandi Depot`,
             city: cityArg || '',
+            partyName: 'Sharma Grain Traders',
             clientFirm: 'Desert Fresh Traders',
           }
         : payloadOrName;
@@ -5915,10 +5964,12 @@ export class SaudaErpMockService {
 
     const nextNum = this.warehousesSubject.value.length + 1;
     const now = this.formatTimestamp();
+    const effectiveParty = (payload.partyName || payload.clientFirm || '').trim() || 'Sharma Grain Traders';
     const record: WarehouseRecord = {
       id: `WH-${String(nextNum).padStart(3, '0')}`,
       name: trimmedName,
-      clientFirm: (payload.clientFirm || '').trim() || 'Desert Fresh Traders',
+      partyName: effectiveParty,
+      clientFirm: effectiveParty,
       address: trimmedAddress,
       city: trimmedCity,
       contactPerson: (payload.contactPerson || '').trim() || undefined,
@@ -5941,6 +5992,7 @@ export class SaudaErpMockService {
       | string
       | {
           name: string;
+          partyName?: string;
           clientFirm?: string;
           address: string;
           city: string;
@@ -5959,6 +6011,7 @@ export class SaudaErpMockService {
             name: payloadOrName,
             address: existing.address,
             city: cityArg || existing.city,
+            partyName: existing.partyName || existing.clientFirm,
             clientFirm: existing.clientFirm,
           }
         : payloadOrName;
@@ -5992,16 +6045,15 @@ export class SaudaErpMockService {
     }
 
     const now = this.formatTimestamp();
+    const effectiveParty = (payload.partyName || payload.clientFirm || existing.partyName || existing.clientFirm || '').trim();
     this.warehousesSubject.next(
       this.warehousesSubject.value.map((w) =>
         w.id === id
           ? {
               ...w,
               name: trimmedName,
-              clientFirm:
-                (payload.clientFirm || '').trim() ||
-                w.clientFirm ||
-                'Desert Fresh Traders',
+              partyName: effectiveParty,
+              clientFirm: effectiveParty,
               address: trimmedAddress,
               city: trimmedCity,
               contactPerson: (payload.contactPerson || '').trim() || undefined,
@@ -6013,7 +6065,7 @@ export class SaudaErpMockService {
           : w,
       ),
     );
-    return { ok: true, message: `Warehouse "${trimmedName}" (${id}) updated successfully.` };
+    return { ok: true, message: `Warehouse "${trimmedName}" updated successfully.` };
   }
 
   canDeactivateWarehouse(warehouseId: string): {

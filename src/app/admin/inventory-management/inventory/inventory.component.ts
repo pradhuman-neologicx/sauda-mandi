@@ -3,9 +3,12 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { combineLatest } from 'rxjs';
 import {
+  ChamberConfig,
   CommodityRecord,
   FirmRecord,
+  GodownRecord,
   InvCategoryRecord,
   InvProductRecord,
   InvSubCategoryRecord,
@@ -55,6 +58,8 @@ export class InventoryComponent implements OnInit {
   filteredMovements: StockMovementRecord[] = [];
 
   warehouses: WarehouseRecord[] = [];
+  godowns: GodownRecord[] = [];
+  parties: string[] = [];
   commodities: CommodityRecord[] = [];
   firms: FirmRecord[] = [];
   products: InvProductRecord[] = [];
@@ -87,6 +92,7 @@ export class InventoryComponent implements OnInit {
   stockUomFilter = 'All';
   stockAvailabilityFilter: 'All' | 'Available Stock' | 'Zero Stock' = 'All';
   stockFirmFilter = 'All';
+  stockPartyFilter = 'All';
   showStockReset = false;
   stockPage = 1;
   stockTableSize: number | 'all' = 10;
@@ -97,6 +103,7 @@ export class InventoryComponent implements OnInit {
   appliedAdjSearchTerm = '';
   adjWarehouseFilter = 'All';
   adjFirmFilter = 'All';
+  adjPartyFilter = 'All';
   showAdjReset = false;
   adjPage = 1;
   adjTableSize: number | 'all' = 10;
@@ -128,9 +135,17 @@ export class InventoryComponent implements OnInit {
   // Create Adjustment Modal (UC-INV-04)
   showCreateAdjModal = false;
   createAdjError = '';
+  availableGodowns: GodownRecord[] = [];
+  availableChambers: ChamberConfig[] = [];
+  availableStacks: string[] = [];
+
   createAdjForm = {
     clientFirm: '',
+    partyName: '',
     warehouseId: '',
+    godownId: '',
+    chamberId: '',
+    stackNumber: '',
     commodity: '',
     productId: '',
     adjustmentType: 'Increase' as 'Increase' | 'Decrease',
@@ -152,6 +167,7 @@ export class InventoryComponent implements OnInit {
   movSearchTerm = '';
   appliedMovSearchTerm = '';
   movFirmFilter = 'All';
+  movPartyFilter = 'All';
   movWarehouseFilter = 'All';
   movCommodityFilter = 'All';
   movTypeFilter: 'All' | 'Purchase Receipt' | 'Sales Dispatch' | 'Stock Adjustment' = 'All';
@@ -192,6 +208,31 @@ export class InventoryComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((list) => {
         this.warehouses = list;
+      });
+
+    // Godowns stream
+    this.erp.godowns$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((list) => {
+        this.godowns = list.filter((g) => g.isActive);
+      });
+
+    // Parties stream
+    combineLatest([this.erp.sellers$, this.erp.buyers$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([sellers, buyers]) => {
+        const set = new Set<string>();
+        sellers.filter((s) => s.isActive).forEach((s) => set.add(s.name));
+        buyers.filter((b) => b.isActive).forEach((b) => set.add(b.name));
+        this.parties = Array.from(set).sort();
+        if (this.parties.length === 0) {
+          this.parties = [
+            'Sharma Grain Traders',
+            'Desert Fresh Traders',
+            'Rajasthan Agro Traders',
+            'Kota Grain Mandi Agency',
+          ];
+        }
       });
 
     // Commodities stream
@@ -313,6 +354,7 @@ export class InventoryComponent implements OnInit {
       this.stockCommodityFilter !== 'All' ||
       this.stockUomFilter !== 'All' ||
       this.stockAvailabilityFilter !== 'All' ||
+      this.stockPartyFilter !== 'All' ||
       (this.isChecker && this.stockFirmFilter !== 'All');
     this.applyStockFilters();
   }
@@ -324,6 +366,7 @@ export class InventoryComponent implements OnInit {
     this.stockCommodityFilter = 'All';
     this.stockUomFilter = 'All';
     this.stockAvailabilityFilter = 'All';
+    this.stockPartyFilter = 'All';
     this.stockFirmFilter = this.isMaker ? this.assignedPrimaryFirm : 'All';
     this.showStockReset = false;
     this.stockPage = 1;
@@ -339,6 +382,13 @@ export class InventoryComponent implements OnInit {
       }
       if (this.isChecker && this.stockFirmFilter !== 'All' && item.clientFirm !== this.stockFirmFilter) {
         return false;
+      }
+      if (this.stockPartyFilter !== 'All') {
+        const partyLower = this.stockPartyFilter.toLowerCase();
+        const matchesParty =
+          (item.partyName && item.partyName.toLowerCase() === partyLower) ||
+          item.clientFirm.toLowerCase() === partyLower;
+        if (!matchesParty) return false;
       }
 
       // Warehouse filter
@@ -373,6 +423,10 @@ export class InventoryComponent implements OnInit {
       if (!term) return true;
       return (
         item.warehouseName.toLowerCase().includes(term) ||
+        (item.godownName || '').toLowerCase().includes(term) ||
+        (item.chamberName || '').toLowerCase().includes(term) ||
+        (item.stackNumber || '').toLowerCase().includes(term) ||
+        (item.partyName || '').toLowerCase().includes(term) ||
         item.clientFirm.toLowerCase().includes(term) ||
         item.commodity.toLowerCase().includes(term) ||
         (item.productName || '').toLowerCase().includes(term) ||
@@ -410,6 +464,7 @@ export class InventoryComponent implements OnInit {
     this.showAdjReset =
       !!this.appliedAdjSearchTerm ||
       this.adjWarehouseFilter !== 'All' ||
+      this.adjPartyFilter !== 'All' ||
       (this.isChecker && this.adjFirmFilter !== 'All');
     this.applyAdjFilters();
   }
@@ -418,6 +473,7 @@ export class InventoryComponent implements OnInit {
     this.adjSearchTerm = '';
     this.appliedAdjSearchTerm = '';
     this.adjWarehouseFilter = 'All';
+    this.adjPartyFilter = 'All';
     this.adjFirmFilter = this.isMaker ? this.assignedPrimaryFirm : 'All';
     this.showAdjReset = false;
     this.adjPage = 1;
@@ -442,6 +498,13 @@ export class InventoryComponent implements OnInit {
       if (this.isChecker && this.adjFirmFilter !== 'All' && adj.clientFirm !== this.adjFirmFilter) {
         return false;
       }
+      if (this.adjPartyFilter !== 'All') {
+        const partyLower = this.adjPartyFilter.toLowerCase();
+        const matchesParty =
+          (adj.partyName && adj.partyName.toLowerCase() === partyLower) ||
+          adj.clientFirm.toLowerCase() === partyLower;
+        if (!matchesParty) return false;
+      }
 
       // Warehouse
       if (
@@ -458,6 +521,10 @@ export class InventoryComponent implements OnInit {
         adj.adjNo.toLowerCase().includes(term) ||
         adj.commodity.toLowerCase().includes(term) ||
         adj.warehouseName.toLowerCase().includes(term) ||
+        (adj.godownName || '').toLowerCase().includes(term) ||
+        (adj.chamberName || '').toLowerCase().includes(term) ||
+        (adj.stackNumber || '').toLowerCase().includes(term) ||
+        (adj.partyName || '').toLowerCase().includes(term) ||
         adj.clientFirm.toLowerCase().includes(term) ||
         adj.makerName.toLowerCase().includes(term) ||
         adj.reason.toLowerCase().includes(term)
@@ -466,18 +533,49 @@ export class InventoryComponent implements OnInit {
     this.updateAdjKpis();
   }
 
+  // 4-Level Location cascade handlers
+  onWarehouseChange(): void {
+    const whId = this.createAdjForm.warehouseId;
+    this.availableGodowns = this.godowns.filter((g) => g.warehouseId === whId);
+    this.createAdjForm.godownId = '';
+    this.availableChambers = [];
+    this.createAdjForm.chamberId = '';
+    this.availableStacks = [];
+    this.createAdjForm.stackNumber = '';
+  }
+
+  onGodownChange(): void {
+    const gdId = this.createAdjForm.godownId;
+    const gd = this.availableGodowns.find((g) => g.id === gdId);
+    this.availableChambers = gd?.chambers || [];
+    this.createAdjForm.chamberId = '';
+    this.availableStacks = [];
+    this.createAdjForm.stackNumber = '';
+  }
+
+  onChamberChange(): void {
+    const chId = this.createAdjForm.chamberId;
+    const ch = this.availableChambers.find((c) => c.id === chId);
+    this.availableStacks = ch?.stackNumbers || [];
+    this.createAdjForm.stackNumber = '';
+  }
+
   // Create Adjustment Modal (UC-INV-04)
   openCreateAdjModal(preset?: InventoryRecord): void {
     this.createAdjError = '';
     const today = new Date().toISOString().slice(0, 10);
-    const defaultFirm = preset?.clientFirm || (this.isMaker ? this.assignedPrimaryFirm : this.firms[0]?.name || '');
+    const defaultParty = preset?.partyName || preset?.clientFirm || this.parties[0] || 'Sharma Grain Traders';
     const defaultWh = preset?.warehouseId || this.warehouses[0]?.id || '';
     const defaultComm = preset?.commodity || this.commodities[0]?.name || 'Bajra';
     const defaultUom = preset?.packagingUom || 'Bag';
 
     this.createAdjForm = {
-      clientFirm: defaultFirm,
+      clientFirm: defaultParty,
+      partyName: defaultParty,
       warehouseId: defaultWh,
+      godownId: preset?.godownId || '',
+      chamberId: preset?.chamberId || '',
+      stackNumber: preset?.stackNumber || '',
       commodity: defaultComm,
       productId: preset?.productId || '',
       adjustmentType: 'Increase',
@@ -487,6 +585,17 @@ export class InventoryComponent implements OnInit {
       reason: '',
       adjustmentDate: today,
     };
+
+    this.availableGodowns = this.godowns.filter((g) => g.warehouseId === defaultWh);
+    if (this.createAdjForm.godownId) {
+      const gd = this.availableGodowns.find((g) => g.id === this.createAdjForm.godownId);
+      this.availableChambers = gd?.chambers || [];
+      if (this.createAdjForm.chamberId) {
+        const ch = this.availableChambers.find((c) => c.id === this.createAdjForm.chamberId);
+        this.availableStacks = ch?.stackNumbers || [];
+      }
+    }
+
     this.updateAdjCalculations();
     this.showCreateAdjModal = true;
   }
@@ -501,12 +610,14 @@ export class InventoryComponent implements OnInit {
 
   updateAdjCalculations(): void {
     const form = this.createAdjForm;
-    if (!form.clientFirm || !form.warehouseId || !form.commodity) {
+    const effectiveParty = form.partyName || form.clientFirm;
+    if (!effectiveParty || !form.warehouseId || !form.commodity) {
       this.liveSelectedStock = undefined;
     } else {
       this.liveSelectedStock = this.inventoryList.find(
         (i) =>
-          i.clientFirm.toLowerCase() === form.clientFirm.toLowerCase() &&
+          ((i.partyName && i.partyName.toLowerCase() === effectiveParty.toLowerCase()) ||
+            i.clientFirm.toLowerCase() === effectiveParty.toLowerCase()) &&
           (i.warehouseId === form.warehouseId ||
             i.warehouseName.toLowerCase() === form.warehouseId.toLowerCase()) &&
           i.commodity.toLowerCase() === form.commodity.toLowerCase(),
@@ -525,8 +636,9 @@ export class InventoryComponent implements OnInit {
   submitCreateAdjustment(): void {
     this.createAdjError = '';
     const form = this.createAdjForm;
-    if (!form.clientFirm || !form.warehouseId || !form.commodity) {
-      this.createAdjError = 'Client Firm, Warehouse and Commodity are mandatory.';
+    const effectiveParty = form.partyName || form.clientFirm;
+    if (!effectiveParty || !form.warehouseId || !form.commodity) {
+      this.createAdjError = 'Party, Warehouse and Commodity are mandatory.';
       return;
     }
     const qty = Number(form.quantity);
@@ -540,11 +652,20 @@ export class InventoryComponent implements OnInit {
       return;
     }
 
+    const selectedGodown = this.availableGodowns.find((g) => g.id === form.godownId);
+    const selectedChamber = this.availableChambers.find((c) => c.id === form.chamberId);
+
     // Call mock service (UC-INV-04)
     const res = this.erp.createStockAdjustment(
       {
-        clientFirm: form.clientFirm,
+        clientFirm: effectiveParty,
+        partyName: effectiveParty,
         warehouseId: form.warehouseId,
+        godownId: form.godownId || undefined,
+        godownName: selectedGodown?.name || undefined,
+        chamberId: form.chamberId || undefined,
+        chamberName: selectedChamber?.name || undefined,
+        stackNumber: form.stackNumber || undefined,
         commodity: form.commodity,
         productId: form.productId || undefined,
         adjustmentType: form.adjustmentType,
@@ -722,6 +843,7 @@ export class InventoryComponent implements OnInit {
       this.movCommodityFilter !== 'All' ||
       this.movTypeFilter !== 'All' ||
       this.movDirectionFilter !== 'All' ||
+      this.movPartyFilter !== 'All' ||
       !!this.movFromDate ||
       !!this.movToDate ||
       (this.isChecker && this.movFirmFilter !== 'All');
@@ -737,6 +859,7 @@ export class InventoryComponent implements OnInit {
     this.movDirectionFilter = 'All';
     this.movFromDate = '';
     this.movToDate = '';
+    this.movPartyFilter = 'All';
     this.movFirmFilter = this.isMaker ? this.assignedPrimaryFirm : 'All';
     this.showMovReset = false;
     this.movPage = 1;
@@ -752,6 +875,13 @@ export class InventoryComponent implements OnInit {
       }
       if (this.isChecker && this.movFirmFilter !== 'All' && m.clientFirm !== this.movFirmFilter) {
         return false;
+      }
+      if (this.movPartyFilter !== 'All') {
+        const partyLower = this.movPartyFilter.toLowerCase();
+        const matchesParty =
+          (m.partyName && m.partyName.toLowerCase() === partyLower) ||
+          m.clientFirm.toLowerCase() === partyLower;
+        if (!matchesParty) return false;
       }
 
       // Warehouse
@@ -788,6 +918,10 @@ export class InventoryComponent implements OnInit {
         m.movementNo.toLowerCase().includes(term) ||
         m.commodity.toLowerCase().includes(term) ||
         m.warehouseName.toLowerCase().includes(term) ||
+        (m.godownName || '').toLowerCase().includes(term) ||
+        (m.chamberName || '').toLowerCase().includes(term) ||
+        (m.stackNumber || '').toLowerCase().includes(term) ||
+        (m.partyName || '').toLowerCase().includes(term) ||
         m.clientFirm.toLowerCase().includes(term) ||
         m.sourceRef.toLowerCase().includes(term) ||
         (m.truckNo || '').toLowerCase().includes(term)

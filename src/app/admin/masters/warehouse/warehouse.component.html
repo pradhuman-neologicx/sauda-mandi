@@ -120,7 +120,7 @@
               <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
               }
             </th>
-            <th>Client Firm</th>
+            <th>Party</th>
             <th class="sortable-th" (click)="setSort('city')">
               <span>City / Mandi Hub</span>
               @if (sortField === 'city') {
@@ -176,7 +176,8 @@
               </div>
             </td>
             <td>
-              <span class="firm-tag">{{ w.clientFirm || 'Desert Fresh Traders' }}</span>
+              <span class="firm-tag"><i class="fa-solid fa-user-group me-1"></i>{{ w.partyName || w.clientFirm ||
+                'Sharma Grain Traders' }}</span>
             </td>
             <td>
               <span class="city-pill">
@@ -238,8 +239,8 @@
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ filteredWarehouses.length }} entries
       </div>
-      <pagination-controls id="whPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev" nextLabel="Next"
-        class="my-pagination"></pagination-controls>
+      <pagination-controls id="whPagination" (pageChange)="onTableDataChange($event)" previousLabel="Prev"
+        nextLabel="Next" class="my-pagination"></pagination-controls>
     </div>
   </div>
 </div>
@@ -274,17 +275,17 @@
         </div>
         }
 
-        <!-- Client Firm (First field as requested) -->
+        <!-- Party (First field as requested) -->
         <div class="field-group mb-3">
-          <label>Client Firm <span class="req">*</span></label>
+          <label>Party <span class="req">*</span></label>
           <select formControlName="clientFirm" class="erp-input">
-            <option value="">Select Client Firm...</option>
-            @for (firm of firms; track firm.id) {
-            <option [value]="firm.name">{{ firm.name }}</option>
+            <option value="">Select Party...</option>
+            @for (p of parties; track p) {
+            <option [value]="p">{{ p }}</option>
             }
           </select>
           @if (warehouseForm.get('clientFirm')?.touched && warehouseForm.get('clientFirm')?.invalid) {
-          <span class="field-error">Client firm selection is mandatory.</span>
+          <span class="field-error">Party selection is mandatory.</span>
           }
         </div>
 
@@ -394,9 +395,10 @@
 
       <div class="detail-grid">
         <div class="detail-item full-width-item">
-          <span class="detail-label">Client Firm</span>
+          <span class="detail-label">Party</span>
           <span class="detail-val fw-bold text-primary fs-6">
-            <i class="fa-solid fa-building me-1"></i>{{ viewingWarehouse.clientFirm || 'Desert Fresh Traders' }}
+            <i class="fa-solid fa-user-group me-1"></i>{{ viewingWarehouse.partyName || viewingWarehouse.clientFirm ||
+            'Sharma Grain Traders' }}
           </span>
         </div>
 

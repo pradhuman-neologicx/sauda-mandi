@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import {
   FirmRecord,
   SaudaErpMockService,
@@ -34,6 +35,7 @@ export class WarehouseComponent implements OnInit {
   warehouses: WarehouseRecord[] = [];
   filteredWarehouses: WarehouseRecord[] = [];
   firms: FirmRecord[] = [];
+  parties: string[] = [];
 
   // Search & Filter controls (UC-WH-02)
   searchTerm = '';
@@ -84,6 +86,23 @@ export class WarehouseComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+
+    combineLatest([this.erpService.sellers$, this.erpService.buyers$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([sellers, buyers]) => {
+        const set = new Set<string>();
+        sellers.filter((s) => s.isActive).forEach((s) => set.add(s.name));
+        buyers.filter((b) => b.isActive).forEach((b) => set.add(b.name));
+        this.parties = Array.from(set).sort();
+        if (this.parties.length === 0) {
+          this.parties = [
+            'Sharma Grain Traders',
+            'Desert Fresh Traders',
+            'Rajasthan Agro Traders',
+            'Kota Grain Mandi Agency',
+          ];
+        }
+      });
 
     this.erpService.firms$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -157,6 +176,7 @@ export class WarehouseComponent implements OnInit {
         w.name.toLowerCase().includes(q) ||
         w.id.toLowerCase().includes(q) ||
         w.city.toLowerCase().includes(q) ||
+        (w.partyName && w.partyName.toLowerCase().includes(q)) ||
         (w.clientFirm && w.clientFirm.toLowerCase().includes(q)) ||
         (w.contactPerson && w.contactPerson.toLowerCase().includes(q));
 
@@ -244,7 +264,7 @@ export class WarehouseComponent implements OnInit {
     this.selectedWarehouse = null;
     this.formError = '';
     this.warehouseForm.reset({
-      clientFirm: this.firms[0]?.name || '',
+      clientFirm: this.parties[0] || this.firms[0]?.name || '',
       name: '',
       address: '',
       city: '',
@@ -260,7 +280,7 @@ export class WarehouseComponent implements OnInit {
     this.selectedWarehouse = w;
     this.formError = '';
     this.warehouseForm.reset({
-      clientFirm: w.clientFirm || this.firms[0]?.name || '',
+      clientFirm: w.partyName || w.clientFirm || this.parties[0] || '',
       name: w.name,
       address: w.address,
       city: w.city,
@@ -280,15 +300,20 @@ export class WarehouseComponent implements OnInit {
     this.formError = '';
     if (this.warehouseForm.invalid) {
       this.warehouseForm.markAllAsTouched();
-      this.formError = 'Please select a Client Firm and fill all mandatory fields (Name, Address, City).';
+      this.formError = 'Please select a Party and fill all mandatory fields (Name, Address, City).';
       return;
     }
 
     const val = this.warehouseForm.value;
+    const payload = {
+      ...val,
+      partyName: val.clientFirm,
+      clientFirm: val.clientFirm,
+    };
     const res =
       this.isEdit && this.selectedWarehouse
-        ? this.erpService.updateWarehouse(this.selectedWarehouse.id, val)
-        : this.erpService.createWarehouse(val);
+        ? this.erpService.updateWarehouse(this.selectedWarehouse.id, payload)
+        : this.erpService.createWarehouse(payload);
 
     if (!res.ok) {
       this.formError = res.message;

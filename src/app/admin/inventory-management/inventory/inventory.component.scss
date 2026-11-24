@@ -234,6 +234,36 @@
   border: 1px solid #cbd5e1;
 }
 
+.wh-hierarchy-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge-loc {
+  display: inline-flex;
+  align-items: center;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.badge-stack {
+  display: inline-flex;
+  align-items: center;
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #ccfbf1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .text-break-uom {
   word-break: break-word;
   line-height: 1.35;

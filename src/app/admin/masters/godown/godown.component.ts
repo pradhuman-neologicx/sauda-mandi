@@ -215,6 +215,11 @@ export class GodownComponent implements OnInit {
     return godown.chambers.reduce((s, c) => s + c.stackNumbers.length, 0);
   }
 
+  getWarehouseParty(warehouseId: string): string {
+    const wh = this.warehouses.find((w) => w.id === warehouseId);
+    return wh?.partyName || wh?.clientFirm || '—';
+  }
+
   onTableSizeChange(): void {
     this.page = 1;
   }
