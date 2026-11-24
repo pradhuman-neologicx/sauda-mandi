@@ -55,6 +55,13 @@ export const ADMIN_ROUTES: Routes = [
                 (c) => c.WarehouseComponent,
               ),
           },
+          {
+            path: 'godown',
+            loadComponent: () =>
+              import('./masters/godown/godown.component').then(
+                (c) => c.GodownComponent,
+              ),
+          },
         ],
       },
       {

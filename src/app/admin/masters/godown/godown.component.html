@@ -1,0 +1,689 @@
+<div class="erp-page">
+  <!-- Header -->
+  <div class="erp-header">
+    <div>
+      <div class="erp-breadcrumb">JP-BROKERS ERP &bull; Masters</div>
+      <h1 class="erp-title">Godown Master</h1>
+      <p class="erp-subtitle">
+        Manage godowns, chambers, and stack allocations linked to warehouse facilities
+      </p>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" class="btn-erp-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Godown</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top KPI Overview Strip -->
+  <div class="warehouse-kpi-grid mb-4">
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-blue">
+        <i class="fa-solid fa-warehouse"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Godowns</span>
+        <span class="kpi-val">{{ totalGodowns }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-purple">
+        <i class="fa-solid fa-door-open"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Chambers</span>
+        <span class="kpi-val text-purple">{{ totalChambers }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-green">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Stack Numbers</span>
+        <span class="kpi-val text-green">{{ totalStacks }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-box kpi-amber">
+        <i class="fa-solid fa-building"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Mapped Warehouses</span>
+        <span class="kpi-val text-amber">{{ mappedWarehousesCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="erp-card filter-card mb-4">
+    <div class="filter-toolbar">
+      <div class="filter-left-group">
+        <div class="table-size-selector">
+          <span>Show</span>
+          <select class="limit-select" [(ngModel)]="tableSize" (ngModelChange)="onTableSizeChange()">
+            @for (size of tableSizes; track size) {
+            <option [ngValue]="size">{{ size === 'all' ? 'All' : size }}</option>
+            }
+          </select>
+          <span>entries</span>
+        </div>
+
+        <!-- Warehouse Filter Dropdown -->
+        <div class="filter-group">
+          <select class="filter-select" [(ngModel)]="warehouseFilter" name="warehouseFilter"
+            (ngModelChange)="onSearch()">
+            <option value="all">All Warehouses</option>
+            @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Status Filter Dropdown -->
+        <div class="filter-group">
+          <select class="filter-select" [(ngModel)]="statusFilter" name="statusFilter"
+            (ngModelChange)="onSearch()">
+            <option value="all">All Statuses</option>
+            <option value="Active">Active Only</option>
+            <option value="Inactive">Inactive Only</option>
+          </select>
+        </div>
+      </div>
+
+      <form (ngSubmit)="onSearch()" class="filter-form-right">
+        <!-- Search Box (by Godown, Warehouse, Chamber, Stack, Supervisor) -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="searchTerm" [(ngModel)]="searchTerm"
+            placeholder="Search Godown, Warehouse, Chamber, Stack..." />
+        </div>
+
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+
+        @if (showReset) {
+        <button type="button" class="btn-erp-ghost" (click)="resetFilters()" title="Reset Filters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- Godown Listing Table -->
+  <div class="erp-card table-card">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">S.No.</th>
+            <th class="sortable-th" (click)="setSort('warehouse')">
+              Warehouse
+              @if (sortField === 'warehouse') {
+              <i class="fa-solid" [class.fa-arrow-up]="sortAsc" [class.fa-arrow-down]="!sortAsc"></i>
+              }
+            </th>
+            <th class="sortable-th" (click)="setSort('name')">
+              Godown Name
+              @if (sortField === 'name') {
+              <i class="fa-solid" [class.fa-arrow-up]="sortAsc" [class.fa-arrow-down]="!sortAsc"></i>
+              }
+            </th>
+            <th class="sortable-th" (click)="setSort('chambers')">
+              Chambers
+              @if (sortField === 'chambers') {
+              <i class="fa-solid" [class.fa-arrow-up]="sortAsc" [class.fa-arrow-down]="!sortAsc"></i>
+              }
+            </th>
+            <th class="sortable-th text-center" (click)="setSort('stacks')">
+              Total Stacks
+              @if (sortField === 'stacks') {
+              <i class="fa-solid" [class.fa-arrow-up]="sortAsc" [class.fa-arrow-down]="!sortAsc"></i>
+              }
+            </th>
+            <th class="text-end">Capacity (MT)</th>
+            <th class="sortable-th text-center" (click)="setSort('status')">
+              Status
+              @if (sortField === 'status') {
+              <i class="fa-solid" [class.fa-arrow-up]="sortAsc" [class.fa-arrow-down]="!sortAsc"></i>
+              }
+            </th>
+            <th class="text-center" style="width: 140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+          godown of filteredGodowns
+          | paginate
+          : {
+          itemsPerPage: tableSize === 'all' ? filteredGodowns.length : tableSize,
+          currentPage: page,
+          id: 'godownPagination'
+          };
+          track godown.id;
+          let idx = $index
+          ) {
+          <tr [class.inactive-row]="!godown.isActive">
+            <td class="num">
+              {{ tableSize === 'all' ? idx + 1 : (page - 1) * tableSize + idx + 1 }}
+            </td>
+
+            <!-- Warehouse Name & City -->
+            <td>
+              <div class="wh-name-cell">
+                <span class="wh-name-text">
+                  <i class="fa-solid fa-building text-primary me-1"></i>
+                  {{ godown.warehouseName }}
+                </span>
+                <span class="wh-address-sub">ID: {{ godown.warehouseId }}</span>
+              </div>
+            </td>
+
+            <!-- Godown Name -->
+            <td>
+              <div class="godown-name-cell">
+                <span class="godown-title-text">{{ godown.name }}</span>
+                @if (godown.supervisor) {
+                <span class="sub-cell">
+                  <i class="fa-solid fa-user-tie me-1"></i>{{ godown.supervisor }}
+                  @if (godown.supervisorPhone) { ({{ godown.supervisorPhone }}) }
+                </span>
+                }
+              </div>
+            </td>
+
+            <!-- Chambers Preview -->
+            <td>
+              <div class="chambers-pill-list">
+                @for (c of godown.chambers; track c.id) {
+                <span class="chamber-preview-pill" title="{{ c.stackNumbers.join(', ') }}">
+                  <i class="fa-solid fa-door-open me-1 text-purple"></i>
+                  {{ c.name }}
+                  <span class="chamber-stack-badge">({{ c.stackNumbers.length }} Stacks)</span>
+                </span>
+                } @empty {
+                <span class="text-muted small">No chambers</span>
+                }
+              </div>
+            </td>
+
+            <!-- Total Stacks Count -->
+            <td class="text-center">
+              <span class="stacks-count-badge">
+                <i class="fa-solid fa-layer-group me-1 text-green"></i>
+                {{ getStackCount(godown) }} Stacks
+              </span>
+            </td>
+
+            <!-- Capacity (MT) -->
+            <td class="text-end num">
+              {{ godown.capacityMt ? (godown.capacityMt | number: '1.0-2') + ' MT' : '—' }}
+            </td>
+
+            <!-- Status -->
+            <td class="text-center">
+              <button type="button" class="status-toggle-btn" [class.is-active]="godown.isActive"
+                [class.is-inactive]="!godown.isActive" (click)="toggleStatus(godown)"
+                title="Click to toggle status">
+                <span class="dot"></span>
+                <span>{{ godown.isActive ? 'Active' : 'Inactive' }}</span>
+              </button>
+            </td>
+
+            <!-- Actions -->
+            <td class="text-center">
+              <div class="table-actions">
+                <!-- View Details -->
+                <button type="button" class="btn-action-icon btn-view" (click)="openViewModal(godown)"
+                  title="View Godown, Chambers &amp; Stack Numbers">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+
+                <!-- Edit Godown -->
+                <button type="button" class="btn-action-icon btn-edit" (click)="openEditModal(godown)"
+                  title="Edit Godown &amp; Chambers">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+
+                <!-- Delete -->
+                <button type="button" class="btn-action-icon btn-void" (click)="openDeleteModal(godown)"
+                  title="Delete Godown">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-domain fs-2 d-block mb-2 text-slate-300"></i>
+              No godowns found matching criteria. Click <strong>"Add Godown"</strong> to register storage units.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer with Pagination -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ filteredGodowns.length }} of {{ godowns.length }} godown entries
+      </div>
+      <pagination-controls id="godownPagination" (pageChange)="page = $event" [autoHide]="true" [responsive]="true"
+        previousLabel="Prev" nextLabel="Next" class="my-pagination">
+      </pagination-controls>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 1: ADD / EDIT GODOWN (USER SELECTS WAREHOUSE FIRST)     -->
+<!-- ============================================================== -->
+@if (isModalOpen) {
+<div class="modal-backdrop-erp" (click)="closeModal()">
+  <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp">
+          <i class="fa-solid fa-warehouse text-primary me-2"></i>
+          {{ isEdit ? 'Edit Godown & Chambers' : 'Add New Godown' }}
+        </h3>
+        <p class="modal-sub-erp">
+          Select warehouse, define godown name, and configure chambers with stack numbers
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveGodown()" class="modal-body-erp">
+      @if (modalError) {
+      <div class="alert-erp alert-danger-erp mb-3">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ modalError }}
+      </div>
+      }
+
+      <!-- STEP 1: SELECT WAREHOUSE FIRST -->
+      <div class="hierarchy-section-card mb-3">
+        <div class="section-badge level-1-badge">
+          <i class="fa-solid fa-building me-1"></i> Warehouse
+        </div>
+
+        <div class="field-group mt-2">
+          <label class="form-label-erp">Select Warehouse <span class="req">*</span></label>
+          <select class="erp-input select-highlight" [(ngModel)]="formWarehouseId" name="formWarehouseId" required>
+            <option value="" disabled>-- Choose Warehouse Facility --</option>
+            @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.id" [disabled]="!wh.isActive">
+              {{ wh.name }} ({{ wh.city }}) {{ !wh.isActive ? '- [Inactive]' : '' }}
+            </option>
+            }
+          </select>
+        </div>
+
+        <!-- Selected Warehouse Preview Card -->
+        @if (getSelectedWarehouseRecord(); as selectedWh) {
+        <div class="warehouse-info-preview mt-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="city-pill"><i class="fa-solid fa-location-dot me-1"></i>{{ selectedWh.city }}</span>
+            <span class="firm-tag"><i class="fa-solid fa-briefcase me-1"></i>{{ selectedWh.clientFirm || 'Desert Fresh Traders' }}</span>
+            <span class="text-muted small">&bull; {{ selectedWh.address }}</span>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- STEP 2: GODOWN DETAILS -->
+      <div class="hierarchy-section-card mb-3">
+        <div class="section-badge level-2-badge">
+          <i class="fa-solid fa-warehouse me-1"></i> Godown Details
+        </div>
+
+        <div class="form-row-2 mt-2">
+          <div class="field-group">
+            <label class="form-label-erp">Godown Name <span class="req">*</span></label>
+            <input type="text" class="erp-input" [(ngModel)]="formName" name="formName"
+              placeholder="e.g. Godown 1, North Wing Godown, Grain Shed B" required />
+          </div>
+
+          <div class="field-group">
+            <label class="form-label-erp">Total Capacity (MT)</label>
+            <input type="number" min="0" class="erp-input" [(ngModel)]="formCapacityMt" name="formCapacityMt"
+              placeholder="e.g. 350" />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="field-group">
+            <label class="form-label-erp">Supervisor / In-Charge Name</label>
+            <input type="text" class="erp-input" [(ngModel)]="formSupervisor" name="formSupervisor"
+              placeholder="e.g. Rameshwar Lal" />
+          </div>
+
+          <div class="field-group">
+            <label class="form-label-erp">Contact Mobile Number</label>
+            <input type="text" class="erp-input" [(ngModel)]="formSupervisorPhone" name="formSupervisorPhone"
+              placeholder="10-digit mobile number" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="form-label-erp">Remarks / Storage Notes</label>
+          <input type="text" class="erp-input" [(ngModel)]="formRemarks" name="formRemarks"
+            placeholder="e.g. Climate controlled, heavy bag storage, direct road access" />
+        </div>
+      </div>
+
+      <!-- STEP 3: CHAMBERS & STACK NUMBERS -->
+      <div class="hierarchy-section-card mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-badge level-3-badge">
+            <i class="fa-solid fa-door-open me-1"></i> Chambers &amp; Stack Numbers
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn-xs btn-outline-secondary" (click)="populateSampleChambers()"
+              title="Quickly fill sample chambers with stacks">
+              <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Sample Chambers
+            </button>
+            <button type="button" class="btn-xs btn-primary-soft" (click)="addChamber()">
+              <i class="fa-solid fa-plus me-1"></i> Add Chamber
+            </button>
+          </div>
+        </div>
+
+        <p class="section-hint-text">
+          Godown ke andar chambers define karein, aur har chamber ke specific <strong>Stack Numbers</strong> add karein.
+        </p>
+
+        <!-- Dynamic Chamber List -->
+        <div class="chambers-container">
+          @for (chamber of formChambers; track chamber.id; let chIdx = $index) {
+          <div class="chamber-card-builder">
+            <div class="chamber-header-row">
+              <div class="d-flex align-items-center gap-2 flex-grow-1">
+                <span class="chamber-order-chip">#{{ chIdx + 1 }}</span>
+                <input type="text" class="erp-input chamber-name-input" [(ngModel)]="chamber.name"
+                  [name]="'chamberName_' + chIdx" placeholder="Chamber Name (e.g. Chamber A, Chill Chamber 1)" required />
+                <input type="number" min="0" class="erp-input chamber-cap-input" [(ngModel)]="chamber.capacityMt"
+                  [name]="'chamberCap_' + chIdx" placeholder="Cap (MT)" title="Capacity in MT" />
+              </div>
+
+              <button type="button" class="btn-icon-danger" (click)="removeChamber(chIdx)"
+                title="Remove this chamber" [disabled]="formChambers.length <= 1">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <!-- Stack Numbers Manager for this Chamber -->
+            <div class="stack-builder-section mt-2">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="level-4-tag"><i class="fa-solid fa-layer-group me-1"></i>Stack Numbers:</span>
+                <input type="text" class="erp-input stack-input-field" [(ngModel)]="chamber.newStackInput"
+                  [name]="'newStack_' + chIdx" (keydown.enter)="$event.preventDefault(); addStackToChamber(chamber)"
+                  placeholder="Type Stack No. (e.g. 101, 102, 110) & press Enter" />
+                <button type="button" class="btn-xs btn-secondary-soft" (click)="addStackToChamber(chamber)">
+                  <i class="fa-solid fa-plus me-1"></i> Add Stack
+                </button>
+              </div>
+
+              <!-- Stack Tags Display -->
+              <div class="stack-tags-wrapper">
+                @for (stack of chamber.stackNumbers; track stack; let stIdx = $index) {
+                <span class="stack-number-tag">
+                  <i class="fa-solid fa-cube text-green me-1"></i>
+                  {{ stack }}
+                  <button type="button" class="tag-close-btn" (click)="removeStackFromChamber(chamber, stIdx)"
+                    title="Remove stack">
+                    &times;
+                  </button>
+                </span>
+                } @empty {
+                <span class="no-stacks-hint">No stacks added yet. Type a stack number above and click Add Stack.</span>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-erp-primary">
+          <i class="fa-solid fa-check me-1"></i>
+          <span>{{ isEdit ? 'Save Changes' : 'Create Godown' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<!-- ============================================================== -->
+<!-- MODAL 2: VIEW DETAILS (WAREHOUSE -> GODOWN -> CHAMBERS -> STACKS) -->
+<!-- ============================================================== -->
+@if (isViewModalOpen && viewingGodown) {
+<div class="modal-backdrop-erp" (click)="closeViewModal()">
+  <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h3 class="modal-title-erp mb-0">{{ viewingGodown.name }}</h3>
+          <span class="wh-id-badge">{{ viewingGodown.id }}</span>
+          <span class="status-badge" [class.badge-green]="viewingGodown.isActive" [class.badge-red]="!viewingGodown.isActive">
+            {{ viewingGodown.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="modal-sub-erp">
+          Storage Details: Warehouse &bull; Godown &bull; Chambers &bull; Stack Numbers
+        </p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <!-- Clean Visual Pathway Banner -->
+      <div class="hierarchy-pathway-banner mb-4">
+        <div class="pathway-step level-1">
+          <div class="step-icon"><i class="fa-solid fa-building"></i></div>
+          <div class="step-content">
+            <span class="step-level">Warehouse</span>
+            <span class="step-val">{{ viewingGodown.warehouseName }}</span>
+          </div>
+        </div>
+
+        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+        <div class="pathway-step level-2">
+          <div class="step-icon"><i class="fa-solid fa-warehouse"></i></div>
+          <div class="step-content">
+            <span class="step-level">Godown</span>
+            <span class="step-val">{{ viewingGodown.name }}</span>
+          </div>
+        </div>
+
+        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+        <div class="pathway-step level-3">
+          <div class="step-icon"><i class="fa-solid fa-door-open"></i></div>
+          <div class="step-content">
+            <span class="step-level">Chambers</span>
+            <span class="step-val">{{ viewingGodown.chambers.length }} Chambers</span>
+          </div>
+        </div>
+
+        <div class="pathway-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+        <div class="pathway-step level-4">
+          <div class="step-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="step-content">
+            <span class="step-level">Stack Numbers</span>
+            <span class="step-val">{{ getStackCount(viewingGodown) }} Stacks</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Profile Cards (Warehouse & Godown) -->
+      <div class="detail-grid mb-4">
+        <div class="detail-item">
+          <span class="detail-label">Warehouse Name</span>
+          <span class="detail-val text-primary fw-bold">
+            <i class="fa-solid fa-building me-1"></i>{{ viewingGodown.warehouseName }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Warehouse City &amp; Address</span>
+          <span class="detail-val">
+            @if (viewingWarehouse) {
+            {{ viewingWarehouse.city }} &bull; {{ viewingWarehouse.address }}
+            } @else {
+            {{ viewingGodown.warehouseName }} Facility
+            }
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Godown Name</span>
+          <span class="detail-val fw-bold">{{ viewingGodown.name }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Total Godown Capacity</span>
+          <span class="detail-val">
+            {{ viewingGodown.capacityMt ? (viewingGodown.capacityMt | number: '1.0-2') + ' MT' : 'Not Specified' }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Supervisor / In-Charge</span>
+          <span class="detail-val">
+            {{ viewingGodown.supervisor || 'Not assigned' }}
+            @if (viewingGodown.supervisorPhone) { ({{ viewingGodown.supervisorPhone }}) }
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Remarks / Storage Notes</span>
+          <span class="detail-val">{{ viewingGodown.remarks || '—' }}</span>
+        </div>
+      </div>
+
+      <!-- CHAMBERS & STACK NUMBERS BREAKDOWN -->
+      <div class="chambers-detail-section mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0 fw-bold fs-6 text-dark">
+            <i class="fa-solid fa-door-open me-2 text-purple"></i>
+            Chambers ({{ viewingGodown.chambers.length }}) &amp; Assigned Stack Numbers ({{ getStackCount(viewingGodown) }})
+          </h4>
+        </div>
+
+        <div class="chambers-view-grid">
+          @for (chamber of viewingGodown.chambers; track chamber.id; let cIdx = $index) {
+          <div class="chamber-view-card">
+            <div class="chamber-view-header">
+              <div class="d-flex align-items-center gap-2">
+                <span class="chamber-avatar">
+                  <i class="fa-solid fa-door-closed"></i>
+                </span>
+                <div>
+                  <h5 class="chamber-view-title mb-0">{{ chamber.name }}</h5>
+                  @if (chamber.capacityMt) {
+                  <span class="chamber-view-subtitle">Capacity: {{ chamber.capacityMt }} MT</span>
+                  }
+                </div>
+              </div>
+
+              <span class="chamber-stacks-count-badge">
+                <i class="fa-solid fa-layer-group me-1"></i>
+                {{ chamber.stackNumbers.length }} Stacks
+              </span>
+            </div>
+
+            <!-- Stacks List inside this Chamber -->
+            <div class="chamber-view-body">
+              <span class="stacks-header-label">Stack Numbers in this Chamber:</span>
+              <div class="stack-pills-flow">
+                @for (stack of chamber.stackNumbers; track stack) {
+                <div class="stack-view-pill">
+                  <div class="stack-icon-box">
+                    <i class="fa-solid fa-cube"></i>
+                  </div>
+                  <span class="stack-name-text">{{ stack }}</span>
+                </div>
+                } @empty {
+                <div class="text-muted small py-2">No stacks defined under this chamber.</div>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-outline" (click)="closeViewModal(); openEditModal(viewingGodown)">
+        <i class="fa-solid fa-pen-to-square me-1"></i> Edit Godown
+      </button>
+      <button type="button" class="btn-erp-ghost" (click)="closeViewModal()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ============================================================== -->
+<!-- MODAL 3: DELETE CONFIRMATION MODAL                            -->
+<!-- ============================================================== -->
+@if (isDeleteModalOpen && deletingGodown) {
+<div class="modal-backdrop-erp" (click)="closeDeleteModal()">
+  <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp">
+      <div>
+        <h3 class="modal-title-erp text-danger">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>Delete Godown
+        </h3>
+        <p class="modal-sub-erp">This action will remove the godown and its chambers</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeDeleteModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp">
+      <p class="text-dark">
+        Are you sure you want to delete Godown <strong>{{ deletingGodown.name }}</strong> ({{ deletingGodown.warehouseName }})?
+      </p>
+      <div class="alert-erp alert-danger-erp small">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        This godown currently has {{ deletingGodown.chambers.length }} chamber(s) and {{ getStackCount(deletingGodown) }} stack number(s).
+      </div>
+    </div>
+
+    <div class="modal-footer-erp">
+      <button type="button" class="btn-erp-ghost" (click)="closeDeleteModal()">
+        Cancel
+      </button>
+      <button type="button" class="btn-erp-primary btn-danger-confirm" (click)="confirmDelete()">
+        <i class="fa-solid fa-trash-can me-1"></i> Yes, Delete
+      </button>
+    </div>
+  </div>
+</div>
+}

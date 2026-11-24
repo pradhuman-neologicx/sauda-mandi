@@ -323,6 +323,30 @@ export interface WarehouseRecord {
   updatedBy: string;
 }
 
+export interface ChamberConfig {
+  id: string; // e.g. 'CH-01'
+  name: string; // e.g. 'Chamber 1', 'Chamber A'
+  capacityMt?: number;
+  stackNumbers: string[]; // e.g. ['Stack No. 101', 'Stack No. 102', 'Stack No. 110']
+}
+
+export interface GodownRecord {
+  id: string; // e.g. 'GD-001'
+  warehouseId: string;
+  warehouseName: string;
+  name: string; // e.g. 'Godown 1 (North Block)'
+  supervisor?: string;
+  supervisorPhone?: string;
+  capacityMt?: number;
+  remarks?: string;
+  chambers: ChamberConfig[];
+  isActive: boolean;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export type UserType = 'Business Owner / Admin' | 'Operations Executive';
 export type AccountStatus = 'Active' | 'Inactive';
 export type PasswordSetupStatus = 'Pending' | 'Completed';
@@ -2357,8 +2381,136 @@ export class SaudaErpMockService {
     },
   ];
 
+  private readonly initialGodowns: GodownRecord[] = [
+    {
+      id: 'GD-001',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      name: 'Godown 1 (Grain & Pulses)',
+      supervisor: 'Rameshwar Lal',
+      supervisorPhone: '9829011122',
+      capacityMt: 350,
+      remarks: 'Primary covered godown for pulses and wheat stock',
+      chambers: [
+        {
+          id: 'CH-01',
+          name: 'Chamber A (Moong & Chana)',
+          capacityMt: 180,
+          stackNumbers: ['Stack No. 101', 'Stack No. 102', 'Stack No. 103', 'Stack No. 104'],
+        },
+        {
+          id: 'CH-02',
+          name: 'Chamber B (Wheat & Barley)',
+          capacityMt: 170,
+          stackNumbers: ['Stack No. 105', 'Stack No. 106', 'Stack No. 110'],
+        },
+      ],
+      isActive: true,
+      createdAt: '2026-11-02 09:30',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-02 09:30',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'GD-002',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      name: 'Godown 2 (Oilseeds Shed)',
+      supervisor: 'Suraj Mal',
+      supervisorPhone: '9829033344',
+      capacityMt: 250,
+      remarks: 'Dry floor ventilated storage for mustard & guar seed',
+      chambers: [
+        {
+          id: 'CH-01',
+          name: 'Chamber 1 (Mustard Seed)',
+          capacityMt: 130,
+          stackNumbers: ['Stack No. 201', 'Stack No. 202', 'Stack No. 203'],
+        },
+        {
+          id: 'CH-02',
+          name: 'Chamber 2 (Guar & Til)',
+          capacityMt: 120,
+          stackNumbers: ['Stack No. 204', 'Stack No. 205', 'Stack No. 208'],
+        },
+      ],
+      isActive: true,
+      createdAt: '2026-11-03 11:15',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-03 11:15',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'GD-003',
+      warehouseId: 'WH-002',
+      warehouseName: 'Fresh Terminal Cold Hub',
+      name: 'Central Cold Godown C-1',
+      supervisor: 'Mukesh Sharma',
+      supervisorPhone: '9829023456',
+      capacityMt: 500,
+      remarks: 'Insulated climate-controlled multi-chamber unit',
+      chambers: [
+        {
+          id: 'CH-01',
+          name: 'Chamber 1 (Chill 4°C)',
+          capacityMt: 200,
+          stackNumbers: ['Stack No. 301', 'Stack No. 302', 'Stack No. 303', 'Stack No. 304'],
+        },
+        {
+          id: 'CH-02',
+          name: 'Chamber 2 (Deep Chill 0°C)',
+          capacityMt: 150,
+          stackNumbers: ['Stack No. 305', 'Stack No. 306', 'Stack No. 310'],
+        },
+        {
+          id: 'CH-03',
+          name: 'Chamber 3 (Dehumidified)',
+          capacityMt: 150,
+          stackNumbers: ['Stack No. 311', 'Stack No. 312', 'Stack No. 315'],
+        },
+      ],
+      isActive: true,
+      createdAt: '2026-11-04 14:00',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-04 14:00',
+      updatedBy: 'Business Owner / Admin',
+    },
+    {
+      id: 'GD-004',
+      warehouseId: 'WH-003',
+      warehouseName: 'Rajasthan Agro Godown 4',
+      name: 'Transit Godown T4',
+      supervisor: 'Rajendra Solanki',
+      supervisorPhone: '9829034567',
+      capacityMt: 150,
+      remarks: 'Temporary staging & dispatch godown',
+      chambers: [
+        {
+          id: 'CH-01',
+          name: 'General Inward Bay',
+          capacityMt: 80,
+          stackNumbers: ['Stack No. 401', 'Stack No. 402'],
+        },
+        {
+          id: 'CH-02',
+          name: 'General Outward Bay',
+          capacityMt: 70,
+          stackNumbers: ['Stack No. 403', 'Stack No. 404'],
+        },
+      ],
+      isActive: false,
+      createdAt: '2026-11-05 16:30',
+      createdBy: 'Business Owner / Admin',
+      updatedAt: '2026-11-05 16:30',
+      updatedBy: 'Business Owner / Admin',
+    },
+  ];
+
   private warehousesSubject = new BehaviorSubject<WarehouseRecord[]>(
     this.initialWarehouses,
+  );
+  private godownsSubject = new BehaviorSubject<GodownRecord[]>(
+    this.initialGodowns,
   );
   private usersSubject = new BehaviorSubject<UserRecord[]>(this.initialUsers);
   private stockAdjustmentsSubject = new BehaviorSubject<StockAdjustmentRecord[]>(
@@ -2388,10 +2540,15 @@ export class SaudaErpMockService {
   readonly packagingUoms$ = this.packagingUomsSubject.asObservable();
   readonly weightUoms$ = this.weightUomsSubject.asObservable();
   readonly warehouses$ = this.warehousesSubject.asObservable();
+  readonly godowns$ = this.godownsSubject.asObservable();
   readonly users$ = this.usersSubject.asObservable();
 
   constructor() {
     this.recomputeAllSaudaStatuses();
+  }
+
+  getGodownsSnapshot(): GodownRecord[] {
+    return this.godownsSubject.value;
   }
 
   getSaudasSnapshot(): SaudaRecord[] {
@@ -5752,6 +5909,174 @@ export class SaudaErpMockService {
       ok: true,
       message: `Warehouse "${existing.name}" (${id}) successfully marked as ${nextActive ? 'Active' : 'Inactive'}.`,
     };
+  }
+
+  // ── Godown Operations (4-Level Storage Hierarchy: Warehouse -> Godown -> Chamber -> Stack) ──
+
+  createGodown(payload: {
+    warehouseId: string;
+    name: string;
+    supervisor?: string;
+    supervisorPhone?: string;
+    capacityMt?: number;
+    remarks?: string;
+    chambers: ChamberConfig[];
+  }): ActionResult {
+    const trimmedName = (payload.name || '').trim();
+    if (trimmedName.length < 2) {
+      return { ok: false, message: 'Godown name must be at least 2 characters.' };
+    }
+    const wh = this.warehousesSubject.value.find((w) => w.id === payload.warehouseId);
+    if (!wh) {
+      return { ok: false, message: 'Please select a valid Warehouse.' };
+    }
+
+    if (
+      this.godownsSubject.value.some(
+        (g) =>
+          g.warehouseId === payload.warehouseId &&
+          g.name.toLowerCase() === trimmedName.toLowerCase(),
+      )
+    ) {
+      return {
+        ok: false,
+        message: `Godown "${trimmedName}" already exists under warehouse "${wh.name}".`,
+      };
+    }
+
+    const nextNum = this.godownsSubject.value.length + 1;
+    const now = this.formatTimestamp();
+
+    const formattedChambers: ChamberConfig[] = (payload.chambers || []).map(
+      (c, idx) => ({
+        id: c.id || `CH-${String(idx + 1).padStart(2, '0')}`,
+        name: (c.name || '').trim() || `Chamber ${idx + 1}`,
+        capacityMt: c.capacityMt ? Number(c.capacityMt) : undefined,
+        stackNumbers: (c.stackNumbers || []).map((s) => s.trim()).filter((s) => !!s),
+      }),
+    );
+
+    const record: GodownRecord = {
+      id: `GD-${String(nextNum).padStart(3, '0')}`,
+      warehouseId: wh.id,
+      warehouseName: wh.name,
+      name: trimmedName,
+      supervisor: (payload.supervisor || '').trim() || undefined,
+      supervisorPhone: (payload.supervisorPhone || '').trim() || undefined,
+      capacityMt: payload.capacityMt ? Number(payload.capacityMt) : undefined,
+      remarks: (payload.remarks || '').trim() || undefined,
+      chambers: formattedChambers,
+      isActive: true,
+      createdAt: now,
+      createdBy: 'Business Owner / Admin',
+      updatedAt: now,
+      updatedBy: 'Business Owner / Admin',
+    };
+
+    this.godownsSubject.next([record, ...this.godownsSubject.value]);
+    return { ok: true, message: `Godown "${trimmedName}" created successfully under ${wh.name}.` };
+  }
+
+  updateGodown(
+    id: string,
+    payload: {
+      warehouseId: string;
+      name: string;
+      supervisor?: string;
+      supervisorPhone?: string;
+      capacityMt?: number;
+      remarks?: string;
+      chambers: ChamberConfig[];
+    },
+  ): ActionResult {
+    const existing = this.godownsSubject.value.find((g) => g.id === id);
+    if (!existing) return { ok: false, message: 'Godown not found.' };
+
+    const trimmedName = (payload.name || '').trim();
+    if (trimmedName.length < 2) {
+      return { ok: false, message: 'Godown name must be at least 2 characters.' };
+    }
+    const wh = this.warehousesSubject.value.find((w) => w.id === payload.warehouseId);
+    if (!wh) {
+      return { ok: false, message: 'Please select a valid Warehouse.' };
+    }
+
+    if (
+      this.godownsSubject.value.some(
+        (g) =>
+          g.id !== id &&
+          g.warehouseId === payload.warehouseId &&
+          g.name.toLowerCase() === trimmedName.toLowerCase(),
+      )
+    ) {
+      return {
+        ok: false,
+        message: `Godown "${trimmedName}" already exists under warehouse "${wh.name}".`,
+      };
+    }
+
+    const now = this.formatTimestamp();
+    const formattedChambers: ChamberConfig[] = (payload.chambers || []).map(
+      (c, idx) => ({
+        id: c.id || `CH-${String(idx + 1).padStart(2, '0')}`,
+        name: (c.name || '').trim() || `Chamber ${idx + 1}`,
+        capacityMt: c.capacityMt ? Number(c.capacityMt) : undefined,
+        stackNumbers: (c.stackNumbers || []).map((s) => s.trim()).filter((s) => !!s),
+      }),
+    );
+
+    this.godownsSubject.next(
+      this.godownsSubject.value.map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              warehouseId: wh.id,
+              warehouseName: wh.name,
+              name: trimmedName,
+              supervisor: (payload.supervisor || '').trim() || undefined,
+              supervisorPhone: (payload.supervisorPhone || '').trim() || undefined,
+              capacityMt: payload.capacityMt ? Number(payload.capacityMt) : undefined,
+              remarks: (payload.remarks || '').trim() || undefined,
+              chambers: formattedChambers,
+              updatedAt: now,
+              updatedBy: 'Business Owner / Admin',
+            }
+          : g,
+      ),
+    );
+    return { ok: true, message: `Godown "${trimmedName}" updated successfully.` };
+  }
+
+  toggleGodownStatus(id: string): ActionResult {
+    const existing = this.godownsSubject.value.find((g) => g.id === id);
+    if (!existing) return { ok: false, message: 'Godown not found.' };
+
+    const nextActive = !existing.isActive;
+    const now = this.formatTimestamp();
+    this.godownsSubject.next(
+      this.godownsSubject.value.map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              isActive: nextActive,
+              updatedAt: now,
+              updatedBy: 'Business Owner / Admin',
+            }
+          : g,
+      ),
+    );
+    return {
+      ok: true,
+      message: `Godown "${existing.name}" marked as ${nextActive ? 'Active' : 'Inactive'}.`,
+    };
+  }
+
+  deleteGodown(id: string): ActionResult {
+    const existing = this.godownsSubject.value.find((g) => g.id === id);
+    if (!existing) return { ok: false, message: 'Godown not found.' };
+
+    this.godownsSubject.next(this.godownsSubject.value.filter((g) => g.id !== id));
+    return { ok: true, message: `Godown "${existing.name}" deleted successfully.` };
   }
 
   // ── Internal Helpers ──

@@ -90,6 +90,12 @@ export class SidenavComponent implements OnInit {
             label: 'Warehouse Master',
             route: '/admin/masters/warehouse',
           },
+          {
+            index: 28,
+            icon: 'domain',
+            label: 'Godown Master',
+            route: '/admin/masters/godown',
+          },
         ],
       },
       {
