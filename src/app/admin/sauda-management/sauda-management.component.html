@@ -508,7 +508,7 @@
 
       <div formArrayName="commodityItems" class="commodity-rows-stack mt-3">
         @for (row of commodityRows.controls; track $index; let idx = $index) {
-        <div [formGroupName]="idx" class="commodity-row-box">
+        <div [formGroupName]="idx" class="commodity-row-box" [class.purchase-row-box]="saudaForm.get('saudaType')?.value === 'Purchase'">
           <div class="field-group">
             <label>Commodity <span class="req">*</span></label>
             <select formControlName="commodity" class="erp-input" (change)="onCommoditySelected(idx)">
@@ -526,9 +526,12 @@
 
           <div class="field-group">
             <label>Packaging UOM <span class="req">*</span></label>
-            <select formControlName="packagingUom" class="erp-input">
-              @for (u of packagingUoms; track u) {
-              <option [value]="u">{{ u }}</option>
+            <select formControlName="packagingUom" class="erp-input" (change)="onPackagingUomChanged(idx)">
+              @for (u of dynamicPackagingUoms; track u.id) {
+              <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }})</option>
+              }
+              @if (!hasDynamicPkg(row.get('packagingUom')?.value)) {
+              <option [value]="row.get('packagingUom')?.value">{{ row.get('packagingUom')?.value }}</option>
               }
             </select>
           </div>
@@ -539,26 +542,17 @@
           </div>
 
           <div class="field-group">
-            <label>Weight UOM <span class="req">*</span></label>
-            <select formControlName="weightUom" class="erp-input">
-              @for (w of weightUoms; track w) {
-              <option [value]="w">{{ w }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Weight (MT / Qtl / Kg) <span class="req">*</span></label>
-            <input type="number" step="0.01" min="0.01" formControlName="actualWeight" class="erp-input"
-              placeholder="0.00" />
+            <label>Total Weight (MT) <span class="req">*</span></label>
+            <input type="number" step="0.001" formControlName="actualWeight" class="erp-input readonly-input"
+              placeholder="0.000 MT" readonly title="Auto-calculated from Packaging UOM capacity and quantity (BR-SA-12, BR-SA-13)" />
           </div>
 
           <!-- Rate: Hidden on Purchase Saudas per BR-SA-16 -->
           @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
           <div class="field-group">
-            <label>Sale Rate (₹) <span class="req">*</span></label>
+            <label>Sale Rate (₹/MT) <span class="req">*</span></label>
             <input type="number" step="0.01" min="0.01" formControlName="rate" class="erp-input"
-              placeholder="₹ / unit" />
+              placeholder="₹ / MT" />
           </div>
 
           <div class="field-group">
@@ -693,7 +687,7 @@
     }
 
     <!-- Section 4: Credit Terms (Only for Brokerage and Sales) -->
-    <!-- @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
+    @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
     <div class="erp-card section-card">
       <h2 class="section-card-title">Credit Terms</h2>
 
@@ -741,7 +735,7 @@
         Credit Start Date is user-selectable. Due date is calculated using calendar days.
       </div>
     </div>
-    } -->
+    }
 
     <!-- Section 5: Remarks & Save -->
     <div class="erp-card section-card">
@@ -1014,10 +1008,9 @@
                 <th>Commodity</th>
                 <th>Packaging UOM</th>
                 <th class="text-end">Packaging Qty</th>
-                <th>Weight UOM</th>
-                <th class="text-end">Weight (MT / Qtl)</th>
+                <th class="text-end">Total Weight (MT)</th>
                 @if (selectedSauda.saudaType !== 'Purchase') {
-                <th class="text-end">Sale Rate (₹)</th>
+                <th class="text-end">Sale Rate (₹/MT)</th>
                 <th class="text-end">Total (₹)</th>
                 }
               </tr>
@@ -1028,8 +1021,7 @@
                 <td class="fw-semibold text-dark">{{ item.commodity }}</td>
                 <td>{{ item.packagingUom }}</td>
                 <td class="text-end num">{{ item.packagingQty | number }}</td>
-                <td>{{ item.weightUom }}</td>
-                <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+                <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} MT</td>
                 @if (selectedSauda.saudaType !== 'Purchase') {
                 <td class="text-end num">₹{{ item.rate || 0 | number: '1.2-2' }}</td>
                 <td class="text-end num fw-semibold text-dark">

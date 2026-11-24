@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
@@ -15,6 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CommodityLineItem,
   PackagingUom,
+  PackagingUomRecord,
   SaudaErpMockService,
   SaudaRecord,
   SaudaType,
@@ -78,6 +80,7 @@ export class TruckManagementComponent implements OnInit {
     'In Transit',
     'Delivered',
   ];
+  dynamicPackagingUoms: PackagingUomRecord[] = [];
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
     'Crate',
@@ -87,6 +90,13 @@ export class TruckManagementComponent implements OnInit {
     'Loose',
   ];
   readonly weightUoms: WeightUom[] = ['KG', 'Quintal', 'MT'];
+
+  getPackagingCapacity(name: string): number {
+    const pkg = this.dynamicPackagingUoms.find(
+      (p) => p.name.toLowerCase() === (name || '').toLowerCase(),
+    );
+    return pkg?.bagQuantity ?? 50;
+  }
 
   // Summary & Pagination properties
   activeTrucksList: TruckEntryRecord[] = [];
@@ -127,12 +137,14 @@ export class TruckManagementComponent implements OnInit {
       this.erpService.trucks$,
       this.erpService.saudas$,
       this.erpService.warehouses$,
+      this.erpService.packagingUoms$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([trucks, saudas, warehouses]) => {
+      .subscribe(([trucks, saudas, warehouses, pkgs]) => {
         this.allTrucks = trucks;
         this.allSaudas = saudas;
         this.allWarehouses = warehouses.filter((w) => w.isActive);
+        this.dynamicPackagingUoms = (pkgs || []).filter((p) => p.isActive);
         this.applyFilters();
         if (this.selectedTruck) {
           this.selectedTruck =
@@ -203,19 +215,59 @@ export class TruckManagementComponent implements OnInit {
   }
 
   private createCommodityRow(item?: CommodityLineItem): FormGroup {
-    return this.fb.group({
+    const defaultPkg =
+      item?.packagingUom || (this.dynamicPackagingUoms[0]?.name || 'Bag');
+    let initialWeight: number | null = null;
+    if (item) {
+      if (item.actualWeight && item.weightUom) {
+        if (item.weightUom === 'KG') initialWeight = Number((item.actualWeight / 1000).toFixed(3));
+        else if (item.weightUom === 'Quintal') initialWeight = Number((item.actualWeight / 10).toFixed(3));
+        else initialWeight = Number(item.actualWeight);
+      } else if (item.packagingQty) {
+        const bagKg = this.getPackagingCapacity(defaultPkg);
+        initialWeight = Number(((item.packagingQty * bagKg) / 1000).toFixed(3));
+      }
+    }
+
+    const row = this.fb.group({
       commodity: [item?.commodity || '', Validators.required],
-      packagingUom: [item?.packagingUom || 'Crate', Validators.required],
+      packagingUom: [defaultPkg, Validators.required],
       packagingQty: [
         item?.packagingQty ?? null,
         [Validators.required, Validators.min(1)],
       ],
-      weightUom: [item?.weightUom || 'KG', Validators.required],
+      weightUom: ['MT'],
       actualWeight: [
-        item?.actualWeight ?? null,
-        [Validators.required, Validators.min(0.1)],
+        initialWeight,
+        [Validators.required, Validators.min(0.001)],
       ],
     });
+
+    row
+      .get('packagingUom')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.recomputeTruckRowWeight(row);
+      });
+
+    row
+      .get('packagingQty')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.recomputeTruckRowWeight(row);
+      });
+
+    return row;
+  }
+
+  recomputeTruckRowWeight(row: FormGroup | AbstractControl): void {
+    const pkgName = row.get('packagingUom')?.value;
+    const qty = Number(row.get('packagingQty')?.value) || 0;
+    const bagKg = this.getPackagingCapacity(pkgName);
+    const weightMt = qty > 0 ? Number(((qty * bagKg) / 1000).toFixed(3)) : 0;
+    row.get('actualWeight')?.setValue(weightMt > 0 ? weightMt : null, { emitEvent: false });
+    row.get('weightUom')?.setValue('MT', { emitEvent: false });
+    this.updateFormCalculations();
   }
 
 

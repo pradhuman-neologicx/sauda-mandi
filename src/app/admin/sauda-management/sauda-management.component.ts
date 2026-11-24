@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
@@ -23,6 +24,7 @@ import {
   InvProductRecord,
   InvSubCategoryRecord,
   PackagingUom,
+  PackagingUomRecord,
   SaudaErpMockService,
   SaudaRecord,
   SaudaType,
@@ -94,6 +96,7 @@ export class SaudaManagementComponent implements OnInit {
     'PS-3: Everything together',
   ];
   commodities: string[] = [];
+  dynamicPackagingUoms: PackagingUomRecord[] = [];
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
     'Crate',
@@ -185,6 +188,7 @@ export class SaudaManagementComponent implements OnInit {
       this.erpService.invCategories$,
       this.erpService.warehouses$,
       this.erpService.godowns$,
+      this.erpService.packagingUoms$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
@@ -198,6 +202,7 @@ export class SaudaManagementComponent implements OnInit {
           invCategories,
           warehouses,
           godowns,
+          pkgs,
         ]) => {
           this.allSaudas = saudas;
           this.activeFirms = firms.filter((f) => f.isActive);
@@ -205,6 +210,7 @@ export class SaudaManagementComponent implements OnInit {
           this.activeBuyers = buyers.filter((b) => b.isActive);
           this.warehouses = warehouses.filter((w) => w.isActive);
           this.godowns = godowns.filter((g) => g.isActive);
+          this.dynamicPackagingUoms = (pkgs || []).filter((p) => p.isActive);
 
           const partySet = new Set<string>();
           this.activeSellers.forEach((s) => partySet.add(s.name));
@@ -353,55 +359,112 @@ export class SaudaManagementComponent implements OnInit {
     });
   }
 
+  getPackagingCapacity(name: string): number {
+    const pkg = this.dynamicPackagingUoms.find(
+      (p) => p.name.toLowerCase() === (name || '').toLowerCase(),
+    );
+    return pkg?.bagQuantity ?? 50;
+  }
+
+  hasDynamicPkg(name: string): boolean {
+    return this.dynamicPackagingUoms.some(
+      (p) => p.name.toLowerCase() === (name || '').toLowerCase(),
+    );
+  }
+
   private createCommodityRow(item?: CommodityLineItem): FormGroup {
+    const defaultPkg =
+      item?.packagingUom || (this.dynamicPackagingUoms[0]?.name || 'Bag');
+
+    let initialWeight: number | null = null;
+    if (item) {
+      if (item.actualWeight && item.weightUom) {
+        if (item.weightUom === 'KG') initialWeight = Number((item.actualWeight / 1000).toFixed(3));
+        else if (item.weightUom === 'Quintal') initialWeight = Number((item.actualWeight / 10).toFixed(3));
+        else initialWeight = Number(item.actualWeight);
+      } else if (item.packagingQty) {
+        const bagKg = this.getPackagingCapacity(defaultPkg);
+        initialWeight = Number(((item.packagingQty * bagKg) / 1000).toFixed(3));
+      }
+    }
+
     const row = this.fb.group({
       commodity: [item?.commodity || '', Validators.required],
-      packagingUom: [item?.packagingUom || 'Bag', Validators.required],
+      packagingUom: [defaultPkg, Validators.required],
       packagingQty: [
         item?.packagingQty ?? null,
         [Validators.required, Validators.min(1)],
       ],
-      weightUom: [item?.weightUom || 'Quintal', Validators.required],
+      weightUom: ['MT'],
       actualWeight: [
-        item?.actualWeight ?? null,
-        [Validators.required, Validators.min(0.01)],
+        initialWeight,
+        [Validators.required, Validators.min(0.001)],
       ],
       rate: [
         item?.rate ?? null,
-        [Validators.required, Validators.min(0.01)],
       ],
       lineTotal: [{ value: item?.lineTotal ?? null, disabled: true }],
     });
 
-    if (item?.actualWeight && item?.rate) {
+    if (initialWeight && item?.rate) {
       row.patchValue(
-        { lineTotal: Number((item.actualWeight * item.rate).toFixed(2)) },
+        { lineTotal: Number((initialWeight * item.rate).toFixed(2)) },
         { emitEvent: false },
       );
     }
 
     row
-      .get('actualWeight')
+      .get('packagingUom')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.recomputeRowLineTotal(row);
+        this.recomputeRowWeightAndTotal(row);
       });
+
+    row
+      .get('packagingQty')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.recomputeRowWeightAndTotal(row);
+      });
+
     row
       .get('rate')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.recomputeRowLineTotal(row);
+        const wt = Number(row.get('actualWeight')?.value) || 0;
+        const rate = Number(row.get('rate')?.value) || 0;
+        const total = Number((wt * rate).toFixed(2));
+        row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
+        this.recomputeTotalAmountFromLines();
       });
 
     return row;
   }
 
-  private recomputeRowLineTotal(row: FormGroup): void {
-    const wt = Number(row.get('actualWeight')?.value) || 0;
-    const rate = Number(row.get('rate')?.value) || 0;
-    const total = Number((wt * rate).toFixed(2));
-    row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
+  recomputeRowWeightAndTotal(row: FormGroup | AbstractControl): void {
+    const pkgName = row.get('packagingUom')?.value;
+    const qty = Number(row.get('packagingQty')?.value) || 0;
+    const bagKg = this.getPackagingCapacity(pkgName);
+
+    // Rule BR-SA-12, BR-SA-13: Auto-calculate Total Weight in Metric Tons (MT)
+    const weightMt = qty > 0 ? Number(((qty * bagKg) / 1000).toFixed(3)) : 0;
+    row.get('actualWeight')?.setValue(weightMt > 0 ? weightMt : null, { emitEvent: false });
+    row.get('weightUom')?.setValue('MT', { emitEvent: false });
+
+    const isPurchase = this.saudaForm?.get('saudaType')?.value === 'Purchase';
+    if (!isPurchase) {
+      const rate = Number(row.get('rate')?.value) || 0;
+      const total = Number((weightMt * rate).toFixed(2));
+      row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
+    } else {
+      row.get('rate')?.setValue(null, { emitEvent: false });
+      row.get('lineTotal')?.setValue(null, { emitEvent: false });
+    }
     this.recomputeTotalAmountFromLines();
+  }
+
+  private recomputeRowLineTotal(row: FormGroup): void {
+    this.recomputeRowWeightAndTotal(row);
   }
 
   private recomputeTotalAmountFromLines(): void {
@@ -597,7 +660,7 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   onCommoditySelected(index: number): void {
-    const row = this.commodityRows.at(index);
+    const row = this.commodityRows.at(index) as FormGroup;
     if (!row) return;
     const val = (row.get('commodity')?.value || '').trim();
     if (!val) return;
@@ -622,10 +685,18 @@ export class SaudaManagementComponent implements OnInit {
       row.patchValue(
         {
           packagingUom: match.packagingUom,
-          weightUom: match.weightUom,
+          weightUom: 'MT',
         },
         { emitEvent: false },
       );
+      this.recomputeRowWeightAndTotal(row);
+    }
+  }
+
+  onPackagingUomChanged(index: number): void {
+    const row = this.commodityRows.at(index) as FormGroup;
+    if (row) {
+      this.recomputeRowWeightAndTotal(row);
     }
   }
 
@@ -685,6 +756,20 @@ export class SaudaManagementComponent implements OnInit {
     totalAmountCtrl?.updateValueAndValidity({ emitEvent: false });
     linkedSaudaCtrl?.updateValueAndValidity({ emitEvent: false });
     billingModeCtrl?.updateValueAndValidity({ emitEvent: false });
+
+    if (this.commodityRows) {
+      for (const ctrl of this.commodityRows.controls) {
+        const rateCtrl = ctrl.get('rate');
+        if (type === 'Purchase') {
+          rateCtrl?.clearValidators();
+          rateCtrl?.setValue(null, { emitEvent: false });
+          ctrl.get('lineTotal')?.setValue(null, { emitEvent: false });
+        } else {
+          rateCtrl?.setValidators([Validators.required, Validators.min(0.01)]);
+        }
+        rateCtrl?.updateValueAndValidity({ emitEvent: false });
+      }
+    }
   }
 
   addTruckEntryForSauda(sauda: SaudaRecord): void {
@@ -1017,14 +1102,17 @@ export class SaudaManagementComponent implements OnInit {
       sellerName: (v.sellerName || '').trim(),
       buyerName: (v.buyerName || '').trim(),
       expectedDeliveryDate: v.expectedDeliveryDate || '',
-      commodityItems: (v.commodityItems || []).map((c: any) => ({
+      commodityItems: (this.saudaForm.getRawValue().commodityItems || []).map((c: any) => ({
         commodity: c.commodity,
         packagingUom: c.packagingUom,
         packagingQty: Number(c.packagingQty),
-        weightUom: c.weightUom,
+        weightUom: 'MT',
         actualWeight: Number(c.actualWeight),
-        rate: Number(c.rate),
-        lineTotal: Number((Number(c.actualWeight) * Number(c.rate)).toFixed(2)),
+        rate: v.saudaType === 'Purchase' ? undefined : (Number(c.rate) || undefined),
+        lineTotal:
+          v.saudaType === 'Purchase'
+            ? undefined
+            : Number((Number(c.actualWeight) * (Number(c.rate) || 0)).toFixed(2)),
       })),
       totalAmountInr: Number(v.totalAmountInr),
       buyerBrokerageAmount:

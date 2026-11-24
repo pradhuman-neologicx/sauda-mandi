@@ -370,8 +370,7 @@
             <th>Commodity</th>
             <th>Packaging UOM</th>
             <th class="text-end">Packaging Quantity</th>
-            <th>Weight UOM</th>
-            <th class="text-end">Actual Weight</th>
+            <th class="text-end">Total Weight (MT)</th>
           </tr>
         </thead>
         <tbody>
@@ -380,8 +379,7 @@
             <td class="fw-semibold text-dark">{{ item.commodity }}</td>
             <td>{{ item.packagingUom }}</td>
             <td class="text-end num">{{ item.packagingQty | number }}</td>
-            <td>{{ item.weightUom }}</td>
-            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.0-2' }}</td>
+            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} MT</td>
           </tr>
           }
         </tbody>
@@ -441,18 +439,18 @@
     <div>
       <h1 class="erp-title">
         {{
-          isEditMode
-            ? 'Edit Truck Fulfilment — ' + selectedTruck?.entryNo
-            : selectedLinkedSauda?.saudaType === 'Sales'
-            ? 'Record Truck Dispatch (Sales Outward)'
-            : 'Record Truck Receipt (Purchase Inward)'
+        isEditMode
+        ? 'Edit Truck Fulfilment — ' + selectedTruck?.entryNo
+        : selectedLinkedSauda?.saudaType === 'Sales'
+        ? 'Record Truck Dispatch (Sales Outward)'
+        : 'Record Truck Receipt (Purchase Inward)'
         }}
       </h1>
       <p class="erp-subtitle">
         {{
-          selectedLinkedSauda?.saudaType === 'Sales'
-            ? 'Record outward commodity dispatch from warehouse to buyer via transport vehicle'
-            : 'Record inward commodity receipt from seller into warehouse via transport vehicle'
+        selectedLinkedSauda?.saudaType === 'Sales'
+        ? 'Record outward commodity dispatch from warehouse to buyer via transport vehicle'
+        : 'Record inward commodity receipt from seller into warehouse via transport vehicle'
         }}
       </p>
     </div>
@@ -497,8 +495,10 @@
           {{ selectedLinkedSauda?.saudaType === 'Sales' ? 'Outward Dispatch Details' : 'Inward Receipt Details' }}
         </h2>
         @if (selectedLinkedSauda) {
-        <span class="type-pill" [ngClass]="selectedLinkedSauda.saudaType === 'Purchase' ? 'type-purchase' : 'type-sales'">
-          <i class="fa-solid" [ngClass]="selectedLinkedSauda.saudaType === 'Purchase' ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+        <span class="type-pill"
+          [ngClass]="selectedLinkedSauda.saudaType === 'Purchase' ? 'type-purchase' : 'type-sales'">
+          <i class="fa-solid"
+            [ngClass]="selectedLinkedSauda.saudaType === 'Purchase' ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
           {{ selectedLinkedSauda.saudaType === 'Purchase' ? 'Purchase Inward Fulfilment' : 'Sales Outward Dispatch' }}
         </span>
         }
@@ -517,8 +517,10 @@
           </select>
           @if (selectedLinkedSauda) {
           <span class="field-hint text-primary fw-semibold">
-            Contract: {{ selectedLinkedSauda.saudaNo }} &bull; Remaining: {{ selectedSaudaRemainingMt | number: '1.0-3' }} MT
-            &bull; {{ selectedLinkedSauda.saudaType === 'Purchase' ? 'Seller' : 'Buyer' }}: {{ selectedLinkedSauda.partyName }}
+            Contract: {{ selectedLinkedSauda.saudaNo }} &bull; Remaining: {{ selectedSaudaRemainingMt | number: '1.0-3'
+            }} MT
+            &bull; {{ selectedLinkedSauda.saudaType === 'Purchase' ? 'Seller' : 'Buyer' }}: {{
+            selectedLinkedSauda.partyName }}
           </span>
           }
         </div>
@@ -535,12 +537,14 @@
             }
           </select>
           @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse) {
-          <div class="stock-indicator-pill" [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'stock-ok' : 'stock-warn'">
-            <i class="fa-solid" [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'fa-circle-check text-success' : 'fa-triangle-exclamation text-danger'"></i>
+          <div class="stock-indicator-pill"
+            [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'stock-ok' : 'stock-warn'">
+            <i class="fa-solid"
+              [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'fa-circle-check text-success' : 'fa-triangle-exclamation text-danger'"></i>
             <span>Warehouse Stock: <strong>{{ availableWarehouseStockMt | number: '1.0-3' }} MT</strong></span>
-            @if (availableWarehouseStockMt < formTotalWeightMt) {
-            <span class="text-danger fw-bold">(Insufficient)</span>
-            }
+            @if (availableWarehouseStockMt < formTotalWeightMt) { <span class="text-danger fw-bold">
+              (Insufficient)</span>
+              }
           </div>
           }
         </div>
@@ -631,7 +635,8 @@
             </select>
             @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse && row.get('commodity')?.value) {
             <span class="field-hint text-muted">
-              Stock in {{ selectedWarehouse }}: <strong>{{ getWarehouseStockForItem(row.get('commodity')?.value) | number: '1.0-3' }} MT</strong>
+              Stock in {{ selectedWarehouse }}: <strong>{{ getWarehouseStockForItem(row.get('commodity')?.value) |
+                number: '1.0-3' }} MT</strong>
             </span>
             }
           </div>
@@ -639,8 +644,8 @@
           <div class="field-group">
             <label>Packaging UOM <span class="req">*</span></label>
             <select formControlName="packagingUom" class="erp-input">
-              @for (u of packagingUoms; track u) {
-              <option [value]="u">{{ u }}</option>
+              @for (u of dynamicPackagingUoms; track u.id) {
+              <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }})</option>
               }
             </select>
           </div>
@@ -651,18 +656,9 @@
           </div>
 
           <div class="field-group">
-            <label>Weight UOM <span class="req">*</span></label>
-            <select formControlName="weightUom" class="erp-input">
-              @for (w of weightUoms; track w) {
-              <option [value]="w">{{ w }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>Actual Weight <span class="req">*</span></label>
-            <input type="number" step="0.1" min="0.1" formControlName="actualWeight" class="erp-input"
-              placeholder="0" />
+            <label>Total Weight (MT) <span class="req">*</span></label>
+            <input type="number" step="0.001" formControlName="actualWeight" class="erp-input readonly-input"
+              placeholder="0.000 MT" readonly title="Auto-calculated from Packaging UOM and Qty" />
           </div>
 
           <div class="remove-btn-wrap">
@@ -694,7 +690,8 @@
       </div>
       }
 
-      @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse && formTotalWeightMt > availableWarehouseStockMt) {
+      @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse && formTotalWeightMt >
+      availableWarehouseStockMt) {
       <div class="alert-erp alert-danger-erp mt-2">
         <i class="fa-solid fa-triangle-exclamation me-1"></i>
         Insufficient Warehouse Stock: Selected warehouse ({{ selectedWarehouse }}) only has
@@ -727,11 +724,11 @@
       <div class="form-actions-left mt-4">
         <button type="submit" class="btn-erp-primary">
           {{
-            isEditMode
-              ? 'Update Truck Fulfilment'
-              : selectedLinkedSauda?.saudaType === 'Sales'
-              ? 'Record Truck Dispatch'
-              : 'Record Truck Receipt'
+          isEditMode
+          ? 'Update Truck Fulfilment'
+          : selectedLinkedSauda?.saudaType === 'Sales'
+          ? 'Record Truck Dispatch'
+          : 'Record Truck Receipt'
           }}
         </button>
         <button type="button" class="btn-erp-ghost" (click)="backToListing()">
