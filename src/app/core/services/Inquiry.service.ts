@@ -48,10 +48,6 @@ export class InquiryService {
     );
   }
 
-  GetFeeDetails(body: any) {
-    const headers = new HttpHeaders().set('Content-Type', 'application/json');
-    return this.apiservice.post('masters/get-fee', body, headers);
-  }
 
   Uploaddocuemt(formData: any) {
     return this.apiservice.postWithoutHeader('onboarding/student', formData);
@@ -149,9 +145,7 @@ export class InquiryService {
   getstudentspecific(id: any) {
     return this.apiservice.get('walkIn/all/' + id);
   }
-  getcourseFeesComponent() {
-    return this.apiservice.get('masters/fee-courses-components');
-  }
+ 
 
   Bulkuploadinquiryapi(formData: any) {
     return this.apiservice.postWithoutHeader(

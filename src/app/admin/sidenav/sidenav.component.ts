@@ -52,7 +52,7 @@ export class SidenavComponent implements OnInit {
         index: 2,
         icon: 'tune',
         label: 'Configuration',
-        route: '/admin/masters',
+        route: '/admin/configuration',
         subItems: [
           {
             index: 21,
@@ -82,19 +82,19 @@ export class SidenavComponent implements OnInit {
             index: 26,
             icon: 'straighten',
             label: 'UOM Master',
-            route: '/admin/masters/uom',
+            route: '/admin/configuration/uom',
           },
           {
             index: 27,
             icon: 'warehouse',
             label: 'Warehouse Master',
-            route: '/admin/masters/warehouse',
+            route: '/admin/configuration/warehouse',
           },
           {
             index: 28,
             icon: 'domain',
             label: 'Godown Master',
-            route: '/admin/masters/godown',
+            route: '/admin/configuration/godown',
           },
         ],
       },

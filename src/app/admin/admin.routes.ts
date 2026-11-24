@@ -39,7 +39,7 @@ export const ADMIN_ROUTES: Routes = [
         pathMatch: 'full',
       },
       {
-        path: 'masters',
+        path: 'configuration',
         canActivate: [AuthGuard],
         children: [
           { path: '', redirectTo: 'uom', pathMatch: 'full' },
