@@ -139,6 +139,98 @@
     </div>
   </div>
 
+  <!-- 3. Quick Actions Section Card -->
+  <div class="dash-card quick-actions-card mb-4">
+    <div class="qa-card-header">
+      <div class="qa-header-left">
+        <div class="qa-bolt-badge">
+          <i class="fa-solid fa-bolt qa-bolt-icon"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="dash-card-title mb-0">Quick Actions</h2>
+            <span class="qa-pill-tag">ONE-CLICK SHORTCUTS</span>
+          </div>
+          <p class="qa-header-sub mb-0">Fast-track everyday trade, truck fulfillment & financial entries</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-tiles-grid">
+      <!-- 1. Create Sauda -->
+      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="qa-tile-card tile-sauda">
+        <div class="qa-tile-icon-box icon-sauda">
+          <i class="fa-solid fa-handshake"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">Create Sauda</span>
+          <span class="qa-tile-sub">New Deal / Trade</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </a>
+
+      <!-- 2. Record Truck -->
+      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="qa-tile-card tile-truck">
+        <div class="qa-tile-icon-box icon-truck">
+          <i class="fa-solid fa-truck-front"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">Record Truck</span>
+          <span class="qa-tile-sub">Receipt / Dispatch</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </a>
+
+      <!-- 3. Create Invoice -->
+      <button type="button" class="qa-tile-card tile-invoice" (click)="openCreateInvoice()">
+        <div class="qa-tile-icon-box icon-invoice">
+          <i class="fa-regular fa-file-lines"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">Create Invoice</span>
+          <span class="qa-tile-sub">Generate Bill</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </button>
+
+      <!-- 4. Record Payment -->
+      <a routerLink="/admin/party-ledger" [queryParams]="{ action: 'record-payment' }" class="qa-tile-card tile-payment">
+        <div class="qa-tile-icon-box icon-payment">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">Record Payment</span>
+          <span class="qa-tile-sub">Receipt / Pay</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </a>
+
+      <!-- 5. Add Party -->
+      <a routerLink="/admin/party-management" [queryParams]="{ action: 'add' }" class="qa-tile-card tile-party">
+        <div class="qa-tile-icon-box icon-party">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">Add Party</span>
+          <span class="qa-tile-sub">Buyer / Seller</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </a>
+
+      <!-- 6. View Stock -->
+      <a routerLink="/admin/inventory-management/inventory" class="qa-tile-card tile-stock">
+        <div class="qa-tile-icon-box icon-stock">
+          <i class="fa-solid fa-warehouse"></i>
+        </div>
+        <div class="qa-tile-content">
+          <span class="qa-tile-title">View Stock</span>
+          <span class="qa-tile-sub">Godown Stock</span>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square qa-tile-arrow"></i>
+      </a>
+    </div>
+  </div>
+
   <!-- 4. Middle Section (Two Cards) -->
   <div class="dash-grid-two">
     <!-- Today's Work / Action Centre -->
@@ -562,42 +654,4 @@
       </table>
     </div>
   </div>
-
-  <!-- 7. Quick Actions (Bottom Tiles) -->
-  <div class="quick-actions-bottom">
-    <h2 class="qa-section-heading">
-      <i class="fa-solid fa-bolt qa-heading-icon"></i>
-      Quick Actions
-    </h2>
-    <div class="qa-tiles-grid">
-      <a routerLink="/admin/sauda-management" [queryParams]="{ action: 'create' }" class="qa-tile qa-tile-sauda">
-        <div class="qa-tile-icon-wrap">
-          <i class="fa-solid fa-handshake"></i>
-        </div>
-        <span class="qa-tile-label">Create Sauda</span>
-      </a>
-
-      <a routerLink="/admin/truck-management" [queryParams]="{ action: 'create' }" class="qa-tile qa-tile-truck">
-        <div class="qa-tile-icon-wrap">
-          <i class="fa-solid fa-truck"></i>
-        </div>
-        <span class="qa-tile-label">Record Truck</span>
-      </a>
-
-      <button type="button" class="qa-tile qa-tile-invoice" (click)="openCreateInvoice()">
-        <div class="qa-tile-icon-wrap">
-          <i class="fa-regular fa-file-lines"></i>
-        </div>
-        <span class="qa-tile-label">Create Invoice</span>
-      </button>
-
-      <a routerLink="/admin/party-ledger" [queryParams]="{ action: 'record-payment' }" class="qa-tile qa-tile-payment">
-        <div class="qa-tile-icon-wrap">
-          <i class="fa-solid fa-wallet"></i>
-        </div>
-        <span class="qa-tile-label">Record Payment</span>
-      </a>
-    </div>
-  </div>
-
 </div>
