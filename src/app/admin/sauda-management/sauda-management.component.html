@@ -581,12 +581,12 @@
       }
     </div>
 
-    <!-- Section 3: Financial Details & Brokerage Invoicing (UC-SA-06) -->
+    <!-- Section 3: Financial Details & Brokerage Invoicing (UC-SA-06) (Commented out in HTML as requested) -->
+    <!--
     @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
     <div class="erp-card section-card">
       <h2 class="section-card-title">Financial Details &amp; Brokerage Invoicing</h2>
 
-      <!-- The 3 Ways to Bill Brokerage (UC-SA-06) -->
       <div class="p-3 mb-3 rounded bg-light border">
         <div class="field-group mb-3">
           <label class="fw-semibold text-dark">
@@ -685,8 +685,10 @@
       </div>
     </div>
     }
+    -->
 
-    <!-- Section 4: Credit Terms (Only for Brokerage and Sales) -->
+    <!-- Section 4: Credit Terms (Only for Brokerage and Sales) (Commented out in HTML as requested) -->
+    <!--
     @if (saudaForm.get('saudaType')?.value !== 'Purchase') {
     <div class="erp-card section-card">
       <h2 class="section-card-title">Credit Terms</h2>
@@ -736,6 +738,7 @@
       </div>
     </div>
     }
+    -->
 
     <!-- Section 5: Remarks & Save -->
     <div class="erp-card section-card">
@@ -941,7 +944,8 @@
         </div>
         }
 
-        <!-- Brokerage Amounts (for Brokerage and Sales) -->
+        <!-- Brokerage Amounts (for Brokerage and Sales) (Commented out in HTML as requested) -->
+        <!--
         @if (selectedSauda.saudaType !== 'Purchase' && (selectedSauda.buyerBrokerageAmount ||
         selectedSauda.sellerBrokerageAmount)) {
         <div class="detail-item" style="grid-column: 1 / -1">
@@ -954,6 +958,7 @@
           </span>
         </div>
         }
+        -->
 
         <!-- Dispatched vs Total Weight -->
         <div class="detail-item">
@@ -965,7 +970,8 @@
           </span>
         </div>
 
-        <!-- Credit Terms (Only for non-Purchase per BR-SA-16) -->
+        <!-- Credit Terms (Only for non-Purchase per BR-SA-16) (Commented out in HTML as requested) -->
+        <!--
         @if (selectedSauda.saudaType !== 'Purchase') {
         @if (selectedSauda.sellerDueDate) {
         <div class="detail-item">
@@ -986,6 +992,7 @@
         </div>
         }
         }
+        -->
 
         <div class="detail-item" style="grid-column: 1 / -1">
           <span class="detail-label">Remarks</span>
