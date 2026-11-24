@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -21,6 +22,10 @@ import {
 } from 'src/app/core/services/sauda-erp-mock.service';
 import { NotificationService } from 'src/app/core/services/notificationnew.service';
 
+export interface PackagingUomOption extends PackagingUomRecord {
+  displayLabel?: string;
+}
+
 @Component({
   selector: 'app-product-master',
   standalone: true,
@@ -29,6 +34,7 @@ import { NotificationService } from 'src/app/core/services/notificationnew.servi
     ReactiveFormsModule,
     FormsModule,
     NgxPaginationModule,
+    NgSelectModule,
   ],
   templateUrl: './product-master.component.html',
   styleUrl: './product-master.component.scss',
@@ -43,7 +49,7 @@ export class ProductMasterComponent implements OnInit {
   filteredProducts: InvProductRecord[] = [];
   categories: InvCategoryRecord[] = [];
   subCategories: InvSubCategoryRecord[] = [];
-  dynamicPackagingUoms: PackagingUomRecord[] = [];
+  dynamicPackagingUoms: PackagingUomOption[] = [];
 
   readonly packagingUoms: PackagingUom[] = [
     'Bag',
@@ -81,7 +87,7 @@ export class ProductMasterComponent implements OnInit {
     this.productForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       subCategoryId: ['', Validators.required],
-      packagingUom: ['Bag', Validators.required],
+      packagingUoms: [[], [Validators.required]],
     });
 
     combineLatest([
@@ -95,7 +101,12 @@ export class ProductMasterComponent implements OnInit {
         this.products = products;
         this.categories = cats;
         this.subCategories = subs;
-        this.dynamicPackagingUoms = pkgs.filter((p) => p.isActive);
+        this.dynamicPackagingUoms = pkgs
+          .filter((p) => p.isActive)
+          .map((p) => ({
+            ...p,
+            displayLabel: `${p.name} (${p.bagQuantity} ${p.unit || 'Kg'}/bag)`,
+          }));
         this.activeSubCategories = this.subCategories.filter((sc) => sc.isActive);
         this.applyFilters();
       });
@@ -167,14 +178,43 @@ export class ProductMasterComponent implements OnInit {
     this.updatePaginationCounters();
   }
 
+  getProductUoms(prod: InvProductRecord | null | undefined): string[] {
+    if (!prod) return [];
+    if (prod.packagingUoms && prod.packagingUoms.length > 0) {
+      return prod.packagingUoms;
+    }
+    if (prod.packagingUom) {
+      return prod.packagingUom
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  selectAllUoms(): void {
+    const allNames = this.dynamicPackagingUoms.map((u) => u.name);
+    this.productForm.get('packagingUoms')?.setValue(allNames);
+    this.productForm.get('packagingUoms')?.markAsDirty();
+  }
+
+  clearAllUoms(): void {
+    this.productForm.get('packagingUoms')?.setValue([]);
+    this.productForm.get('packagingUoms')?.markAsDirty();
+  }
+
   openAddModal(): void {
     this.isEditMode = false;
     this.selectedProduct = null;
     this.formError = '';
+    const defaultUoms =
+      this.dynamicPackagingUoms.length > 0
+        ? [this.dynamicPackagingUoms[0].name]
+        : ['Bag'];
     this.productForm.reset({
       name: '',
       subCategoryId: this.activeSubCategories[0]?.id || '',
-      packagingUom: this.dynamicPackagingUoms[0]?.name || 'Bag',
+      packagingUoms: defaultUoms,
     });
     this.isFormOpen = true;
   }
@@ -183,10 +223,11 @@ export class ProductMasterComponent implements OnInit {
     this.isEditMode = true;
     this.selectedProduct = prod;
     this.formError = '';
+    const uoms = this.getProductUoms(prod);
     this.productForm.reset({
       name: prod.name,
       subCategoryId: prod.subCategoryId,
-      packagingUom: prod.packagingUom,
+      packagingUoms: uoms.length > 0 ? uoms : ['Bag'],
     });
     this.isFormOpen = true;
   }
@@ -211,10 +252,22 @@ export class ProductMasterComponent implements OnInit {
     }
 
     const v = this.productForm.value;
+    const selectedUoms: string[] = Array.isArray(v.packagingUoms)
+      ? v.packagingUoms
+      : v.packagingUoms
+        ? [v.packagingUoms]
+        : [];
+
+    if (selectedUoms.length === 0) {
+      this.formError = 'Please select at least one Packaging UOM.';
+      return;
+    }
+
     const payload = {
       name: v.name,
       subCategoryId: v.subCategoryId,
-      packagingUom: v.packagingUom,
+      packagingUom: selectedUoms.join(', '),
+      packagingUoms: selectedUoms,
       weightUom: (this.selectedProduct?.weightUom || 'KG') as WeightUom,
       minStock: 0,
     };

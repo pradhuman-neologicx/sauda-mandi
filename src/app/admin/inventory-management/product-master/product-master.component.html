@@ -92,7 +92,11 @@
             <td>{{ getCategoryNameForSub(prod.subCategoryId) }}</td>
             <td>{{ getSubCategoryName(prod.subCategoryId) }}</td>
             <td>
-              <span class="badge-uom">{{ prod.packagingUom }}</span>
+              <div class="d-flex flex-wrap gap-1">
+                @for (u of getProductUoms(prod); track u) {
+                <span class="badge-uom">{{ u }}</span>
+                }
+              </div>
             </td>
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="prod.isActive ? 'is-active' : 'is-inactive'"
@@ -172,12 +176,61 @@
       </div>
 
       <div class="field-group mt-3">
-        <label>Packaging UOM <span class="req">*</span></label>
-        <select formControlName="packagingUom" class="erp-input">
-          @for (u of dynamicPackagingUoms; track u.id) {
-          <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)</option>
-          }
-        </select>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="mb-0">Packaging UOM <span class="req">*</span></label>
+          <span class="text-xs text-muted">Select one or multiple</span>
+        </div>
+        <ng-select
+          [items]="dynamicPackagingUoms"
+          bindLabel="displayLabel"
+          bindValue="name"
+          [multiple]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          [searchable]="true"
+          placeholder="Select Packaging UOM(s)"
+          formControlName="packagingUoms"
+          class="erp-ng-select"
+        >
+          <ng-template ng-header-tmp>
+            <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom bg-light">
+              <small class="text-muted fw-semibold">Available Packaging UOMs</small>
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold"
+                  style="font-size: 11px;"
+                  (click)="selectAllUoms()"
+                >
+                  Select All
+                </button>
+                <span class="text-muted" style="font-size: 11px;">|</span>
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 text-decoration-none text-secondary fw-semibold"
+                  style="font-size: 11px;"
+                  (click)="clearAllUoms()"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </ng-template>
+          <ng-template ng-option-tmp let-item="item" let-item$="item$">
+            <div class="d-flex align-items-center gap-2">
+              <input
+                type="checkbox"
+                [checked]="item$.selected"
+                class="form-check-input m-0 cursor-pointer"
+                tabindex="-1"
+              />
+              <span>{{ item.displayLabel }}</span>
+            </div>
+          </ng-template>
+        </ng-select>
+        @if (productForm.get('packagingUoms')?.touched && productForm.get('packagingUoms')?.invalid) {
+        <span class="text-danger text-xs mt-1 d-block">Please select at least one Packaging UOM.</span>
+        }
       </div>
 
       <div class="modal-footer-erp">
@@ -219,8 +272,12 @@
           <span class="detail-value">{{ getSubCategoryName(selectedProduct.subCategoryId) }}</span>
         </div>
         <div class="detail-item">
-          <span class="detail-label">Packaging UOM</span>
-          <span class="detail-value">{{ selectedProduct.packagingUom }}</span>
+          <span class="detail-label">Packaging UOM(s)</span>
+          <div class="detail-value d-flex flex-wrap gap-1 mt-1">
+            @for (u of getProductUoms(selectedProduct); track u) {
+            <span class="badge-uom">{{ u }}</span>
+            }
+          </div>
         </div>
       </div>
 

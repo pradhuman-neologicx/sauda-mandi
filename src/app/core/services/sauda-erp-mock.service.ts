@@ -303,7 +303,8 @@ export interface InvProductRecord {
   name: string;
   commodityName?: string;
   subCategoryId: string;
-  packagingUom: PackagingUom;
+  packagingUom: string;
+  packagingUoms?: string[];
   weightUom: WeightUom;
   minStock?: number;
   isActive: boolean;
@@ -4352,7 +4353,11 @@ export class SaudaErpMockService {
 
     const { categoryId, categoryName, subCategoryName, commodity } =
       this.resolveProductHierarchy(product);
-    const packagingUom = payload.packagingUom || product.packagingUom;
+    const packagingUom = (
+      payload.packagingUom ||
+      (product.packagingUoms && product.packagingUoms[0]) ||
+      (product.packagingUom ? product.packagingUom.split(',')[0].trim() : 'Bag')
+    ) as PackagingUom;
     const now = this.formatTimestamp();
 
     const warehouse = this.warehousesSubject.value.find(
@@ -5011,7 +5016,11 @@ export class SaudaErpMockService {
             subCategoryName: hierarchy.subCategoryName,
             commodity: item.commodity,
             clientFirm: sauda.clientFirm,
-            packagingUom: item.packagingUom || matchedProduct?.packagingUom || 'Bag',
+            packagingUom: (
+              item.packagingUom ||
+              (matchedProduct?.packagingUoms && matchedProduct.packagingUoms[0]) ||
+              (matchedProduct?.packagingUom ? matchedProduct.packagingUom.split(',')[0].trim() : 'Bag')
+            ) as PackagingUom,
             availableUnits: newUnits,
             availableWeightMt: newWeight,
             averageWeightKg: newAvgWeight,
@@ -5034,7 +5043,11 @@ export class SaudaErpMockService {
           clientFirm: sauda.clientFirm,
           warehouseName,
           commodity: item.commodity,
-          packagingUom: item.packagingUom || matchedProduct?.packagingUom || 'Bag',
+          packagingUom: (
+            item.packagingUom ||
+            (matchedProduct?.packagingUoms && matchedProduct.packagingUoms[0]) ||
+            (matchedProduct?.packagingUom ? matchedProduct.packagingUom.split(',')[0].trim() : 'Bag')
+          ) as PackagingUom,
           quantity: Math.abs(unitsDelta),
           totalWeightMt: Math.abs(weightDelta),
           averageWeightKg: newAvgWeight,
@@ -5223,7 +5236,8 @@ export class SaudaErpMockService {
   createInvProduct(payload: {
     name: string;
     subCategoryId: string;
-    packagingUom: PackagingUom;
+    packagingUom: string;
+    packagingUoms?: string[];
     weightUom: WeightUom;
     minStock?: number;
   }): ActionResult {
@@ -5246,11 +5260,20 @@ export class SaudaErpMockService {
     }
     const nextNum = this.invProductsSubject.value.length + 1;
     const now = this.formatTimestamp();
+    const uoms =
+      payload.packagingUoms && payload.packagingUoms.length > 0
+        ? payload.packagingUoms
+        : payload.packagingUom
+          ? payload.packagingUom.split(',').map((s) => s.trim()).filter(Boolean)
+          : ['Bag'];
+    const packagingUomStr = uoms.join(', ');
+
     const record: InvProductRecord = {
       id: `PRD-${String(nextNum).padStart(3, '0')}`,
       name: trimmed,
       subCategoryId: payload.subCategoryId,
-      packagingUom: payload.packagingUom,
+      packagingUom: packagingUomStr,
+      packagingUoms: uoms,
       weightUom: payload.weightUom,
       minStock: payload.minStock !== undefined ? Number(payload.minStock) : 0,
       isActive: true,
@@ -5266,7 +5289,8 @@ export class SaudaErpMockService {
     payload: {
       name: string;
       subCategoryId: string;
-      packagingUom: PackagingUom;
+      packagingUom: string;
+      packagingUoms?: string[];
       weightUom: WeightUom;
       minStock?: number;
     },
@@ -5291,6 +5315,14 @@ export class SaudaErpMockService {
       return { ok: false, message: `Product "${trimmed}" already exists.` };
     }
     const now = this.formatTimestamp();
+    const uoms =
+      payload.packagingUoms && payload.packagingUoms.length > 0
+        ? payload.packagingUoms
+        : payload.packagingUom
+          ? payload.packagingUom.split(',').map((s) => s.trim()).filter(Boolean)
+          : ['Bag'];
+    const packagingUomStr = uoms.join(', ');
+
     this.invProductsSubject.next(
       this.invProductsSubject.value.map((p) =>
         p.id === id
@@ -5298,7 +5330,8 @@ export class SaudaErpMockService {
               ...p,
               name: trimmed,
               subCategoryId: payload.subCategoryId,
-              packagingUom: payload.packagingUom,
+              packagingUom: packagingUomStr,
+              packagingUoms: uoms,
               weightUom: payload.weightUom,
               minStock: payload.minStock !== undefined ? Number(payload.minStock) : (p.minStock ?? 0),
               updatedAt: now,

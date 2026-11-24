@@ -646,11 +646,19 @@ export class SaudaManagementComponent implements OnInit {
           ? `${prod.commodityName} — ${prod.name} (${catName})`
           : `${prod.name} (${catName})`;
 
+      const defaultPkgUom = (
+        prod.packagingUoms && prod.packagingUoms.length > 0
+          ? prod.packagingUoms[0]
+          : prod.packagingUom
+            ? prod.packagingUom.split(',')[0].trim()
+            : 'Bag'
+      ) as PackagingUom;
+
       options.push({
         value,
         label,
         categoryName: catName,
-        packagingUom: prod.packagingUom,
+        packagingUom: defaultPkgUom,
         weightUom: prod.weightUom,
       });
     }

@@ -69,7 +69,7 @@ export class SidenavComponent implements OnInit {
           {
             index: 24,
             icon: 'category',
-            label: 'Categories',
+            label: 'Product Categories',
             route: '/admin/inventory-management/categories',
           },
           {
