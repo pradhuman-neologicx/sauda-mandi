@@ -56,22 +56,23 @@
             <input type="date" class="erp-input" [(ngModel)]="form.entryDate">
           </div>
 
-          <!-- Invoice No (with Show Pending Amount Invoice Only) -->
+          <!-- Invoice No (Input field user se lene ke liye) -->
           <div class="col-md-3">
             <label class="erp-field-label">
               Invoice No <span class="text-danger">*</span>
             </label>
-            <select class="erp-input" [(ngModel)]="form.invoiceNo" (change)="onInvoiceSelect()">
-              <option value="">-- Select Invoice --</option>
+            <input type="text" class="erp-input" [(ngModel)]="form.invoiceNo" (input)="onInvoiceSelect()"
+              list="invoicesList" placeholder="Enter Invoice / Bill No...">
+            <datalist id="invoicesList">
               @for (inv of eligibleInvoices; track inv.id) {
               <option [value]="inv.invoiceNo">
                 {{ inv.invoiceNo }} &bull; {{ inv.partyName }} (Bal: ₹{{ inv.finalAmount | number: '1.0-0' }})
               </option>
               }
-            </select>
+            </datalist>
             @if (showPendingOnly) {
             <span class="field-hint text-primary">
-              <i class="fa-solid fa-circle-check me-1"></i> Filtered to pending balance invoices
+              <i class="fa-solid fa-circle-check me-1"></i> Suggestions from pending balance invoices
             </span>
             }
           </div>
@@ -218,6 +219,7 @@
       <!-- Calculation Summary Strip -->
       <div class="journal-summary-strip p-3 rounded mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div class="d-flex gap-4 flex-wrap">
+          @if (invoicePendingAmount > 0) {
           <div>
             <span class="summary-label">Invoice Pending Before</span>
             <span class="summary-val text-dark">₹{{ invoicePendingAmount | number: '1.2-2' }}</span>
@@ -232,6 +234,17 @@
             <span class="summary-label text-success">Net Pending Balance After</span>
             <span class="summary-val text-success">₹{{ netPendingAfterAdjustment | number: '1.2-2' }}</span>
           </div>
+          } @else {
+          <div>
+            <span class="summary-label text-muted">Invoice No</span>
+            <span class="summary-val text-dark font-monospace">{{ form.invoiceNo || 'Manual Invoice' }}</span>
+          </div>
+
+          <div>
+            <span class="summary-label text-danger">Total Deductions / Adjustments</span>
+            <span class="summary-val text-danger">₹{{ totalAdjustments | number: '1.2-2' }}</span>
+          </div>
+          }
         </div>
 
         <div class="d-flex align-items-center gap-2">

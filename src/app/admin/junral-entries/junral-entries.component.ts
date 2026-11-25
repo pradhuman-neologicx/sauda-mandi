@@ -129,14 +129,19 @@ export class JunralEntriesComponent implements OnInit {
       this.selectedInvoice = null;
       return;
     }
-    const inv = this.allInvoices.find((i) => i.invoiceNo === this.form.invoiceNo);
+    const cleanNo = this.form.invoiceNo.trim().toLowerCase();
+    const inv = this.allInvoices.find(
+      (i) => i.invoiceNo.trim().toLowerCase() === cleanNo,
+    );
     if (inv) {
       this.selectedInvoice = inv;
       if (inv.partyRole === 'Buyer') {
-        this.form.buyer = inv.partyName;
+        if (!this.form.buyer) this.form.buyer = inv.partyName;
       } else {
-        this.form.seller = inv.partyName;
+        if (!this.form.seller) this.form.seller = inv.partyName;
       }
+    } else {
+      this.selectedInvoice = null;
     }
   }
 
