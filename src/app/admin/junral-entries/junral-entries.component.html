@@ -1,0 +1,448 @@
+<div class="erp-page-wrapper">
+  <!-- Page Header -->
+  <div class="erp-header-row mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="erp-title">
+        <i class="fa-solid fa-book-journal-whills text-primary me-2"></i>Journal Entries
+      </h1>
+      <p class="erp-subtitle text-muted">
+        Mandi Trade Expense Deductions &amp; Journal Adjustment Vouchers
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn-erp-primary" [class.active-btn]="viewMode === 'create'"
+        (click)="viewMode = 'create'">
+        <i class="fa-solid fa-pen-nib me-1"></i> New Journal Entry
+      </button>
+
+      <button type="button" class="btn-erp-outline" [class.active-btn]="viewMode === 'list'"
+        (click)="viewMode = 'list'">
+        <i class="fa-solid fa-list me-1"></i> Voucher History ({{ journalEntries.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- 1. CREATE JOURNAL ENTRY FORM (Client Image: JUNRAL ENTRY)           -->
+  <!-- ==================================================================== -->
+  @if (viewMode === 'create') {
+  <div class="erp-card journal-form-card mb-4">
+    <!-- Clean ERP Header Bar (Replaced harsh black with modern ERP theme) -->
+    <div class="card-header-erp d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="card-header-title">JUNRAL ENTRY</span>
+        <span class="status-badge badge-blue">Adjustment Voucher</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 pending-switch-wrap">
+        <span class="pending-switch-label">
+          <i class="fa-solid fa-filter me-1 text-primary"></i> SHOW PENDING AMOUNT INVOICE ONLY
+        </span>
+        <div class="form-check form-switch m-0 d-inline-block">
+          <input class="form-check-input cursor-pointer" type="checkbox" role="switch" [(ngModel)]="showPendingOnly"
+            id="pendingInvoiceSwitch">
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body-erp p-4">
+      <!-- Section 1: Header Linking (Buyer, Seller, Invoice) -->
+      <div class="header-linking-box mb-4 p-3 rounded">
+        <div class="row g-3">
+          <!-- Date -->
+          <div class="col-md-3">
+            <label class="erp-field-label">Voucher Date <span class="text-danger">*</span></label>
+            <input type="date" class="erp-input" [(ngModel)]="form.entryDate">
+          </div>
+
+          <!-- Invoice No (with Show Pending Amount Invoice Only) -->
+          <div class="col-md-3">
+            <label class="erp-field-label">
+              Invoice No <span class="text-danger">*</span>
+            </label>
+            <select class="erp-input" [(ngModel)]="form.invoiceNo" (change)="onInvoiceSelect()">
+              <option value="">-- Select Invoice --</option>
+              @for (inv of eligibleInvoices; track inv.id) {
+              <option [value]="inv.invoiceNo">
+                {{ inv.invoiceNo }} &bull; {{ inv.partyName }} (Bal: ₹{{ inv.finalAmount | number: '1.0-0' }})
+              </option>
+              }
+            </select>
+            @if (showPendingOnly) {
+            <span class="field-hint text-primary">
+              <i class="fa-solid fa-circle-check me-1"></i> Filtered to pending balance invoices
+            </span>
+            }
+          </div>
+
+          <!-- Buyer -->
+          <div class="col-md-3">
+            <label class="erp-field-label">BUYER</label>
+            <input type="text" class="erp-input" [(ngModel)]="form.buyer" list="buyersList"
+              placeholder="e.g. City Wholesale Market">
+            <datalist id="buyersList">
+              @for (b of allBuyers; track b) {
+              <option [value]="b"></option>
+              }
+            </datalist>
+          </div>
+
+          <!-- Seller -->
+          <div class="col-md-3">
+            <label class="erp-field-label">SELLER</label>
+            <input type="text" class="erp-input" [(ngModel)]="form.seller" list="sellersList"
+              placeholder="e.g. Sharma Grain Traders">
+            <datalist id="sellersList">
+              @for (s of allSellers; track s) {
+              <option [value]="s"></option>
+              }
+            </datalist>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Invoice Linked Info Strip -->
+      @if (selectedInvoice) {
+      <div class="invoice-info-pill py-2 px-3 mb-4 rounded d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="small">
+          <i class="fa-solid fa-file-invoice text-primary me-2"></i>
+          <strong>Invoice #{{ selectedInvoice.invoiceNo }}</strong> &bull;
+          <span>{{ selectedInvoice.clientFirm }}</span> &bull;
+          <span>{{ selectedInvoice.partyName }} ({{ selectedInvoice.partyRole }})</span>
+        </div>
+        <div class="small">
+          <span class="text-muted">Current Invoice Pending:</span>
+          <span class="fw-bold text-danger ms-1">₹{{ selectedInvoice.finalAmount | number: '1.2-2' }}</span>
+        </div>
+      </div>
+      }
+
+      <!-- Section 2: Expense Adjustments & Deductions (Grid from Client Sheet) -->
+      <div class="deductions-container mb-4">
+        <div class="section-sub-title mb-3">
+          <i class="fa-solid fa-calculator text-primary me-2"></i>Deductions &amp; Expense Items (₹)
+        </div>
+
+        <div class="row g-3">
+          <!-- Dharam Kanta -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">DHARAM KANTA (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.dharamKanta" placeholder="0.00">
+              <span class="field-hint">Weighbridge charge</span>
+            </div>
+          </div>
+
+          <!-- Mudat -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">MUDAT (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.mudat" placeholder="0.00">
+              <span class="field-hint">Credit days / interest discount</span>
+            </div>
+          </div>
+
+          <!-- Labour -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">LABOUR (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.labour" placeholder="0.00">
+              <span class="field-hint">Hamali / Unloading charges</span>
+            </div>
+          </div>
+
+          <!-- Claim -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">CLAIM (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.claim" placeholder="0.00">
+              <span class="field-hint">Quality / moisture deduction</span>
+            </div>
+          </div>
+
+          <!-- Brokrage -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">BROKRAGE (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.brokerage" placeholder="0.00">
+              <span class="field-hint">Dallali / Broker commission</span>
+            </div>
+          </div>
+
+          <!-- Interest -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">INTEREST (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.interest" placeholder="0.00">
+              <span class="field-hint">Late interest charges</span>
+            </div>
+          </div>
+
+          <!-- Warehouse Rent -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">WAREHOUSE RENT (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.warehouseRent" placeholder="0.00">
+              <span class="field-hint">Storage / Godown hire charges</span>
+            </div>
+          </div>
+
+          <!-- TDS -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">TDS (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.tds" placeholder="0.00">
+              <span class="field-hint">Income tax TDS (194Q / 206C)</span>
+            </div>
+          </div>
+
+          <!-- Other -->
+          <div class="col-md-4">
+            <div class="deduction-box p-3 rounded">
+              <label class="erp-field-label">OTHER (₹)</label>
+              <input type="number" min="0" class="erp-input fw-bold" [(ngModel)]="form.other" placeholder="0.00">
+              <span class="field-hint">Miscellaneous adjustments</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Narration -->
+      <div class="mb-4">
+        <label class="erp-field-label">NARRATION</label>
+        <textarea class="erp-input" rows="2" [(ngModel)]="form.narration"
+          placeholder="Enter voucher description, remarks, or terms agreed between parties..."></textarea>
+      </div>
+
+      <!-- Calculation Summary Strip -->
+      <div class="journal-summary-strip p-3 rounded mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex gap-4 flex-wrap">
+          <div>
+            <span class="summary-label">Invoice Pending Before</span>
+            <span class="summary-val text-dark">₹{{ invoicePendingAmount | number: '1.2-2' }}</span>
+          </div>
+
+          <div>
+            <span class="summary-label text-danger">Total Deductions / Adjustments</span>
+            <span class="summary-val text-danger">- ₹{{ totalAdjustments | number: '1.2-2' }}</span>
+          </div>
+
+          <div>
+            <span class="summary-label text-success">Net Pending Balance After</span>
+            <span class="summary-val text-success">₹{{ netPendingAfterAdjustment | number: '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn-erp-ghost" (click)="resetForm()">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+          </button>
+
+          <button type="button" class="btn-erp-primary" (click)="saveJournalEntry()">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Save Journal Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ==================================================================== -->
+  <!-- 2. JOURNAL ENTRIES HISTORY LISTING                                   -->
+  <!-- ==================================================================== -->
+  @if (viewMode === 'list') {
+  <div class="erp-card">
+    <!-- Filter bar -->
+    <div class="table-filter-bar p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="search-wrap" style="max-width: 380px; width: 100%;">
+        <div class="input-group-search">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" class="erp-input search-input" [(ngModel)]="searchTerm" (input)="applyFilter()"
+            placeholder="Search by Voucher #, Invoice #, Buyer, Seller...">
+        </div>
+      </div>
+
+      <div class="text-muted small">
+        Showing {{ filteredEntries.length }} Journal Vouchers
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Voucher #</th>
+            <th>Date</th>
+            <th>Invoice No</th>
+            <th>Buyer</th>
+            <th>Seller</th>
+            <th class="text-end">Total Adjustments</th>
+            <th class="text-end">Net Balance</th>
+            <th>Narration</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of filteredEntries | paginate: { itemsPerPage: pageSize, currentPage: page }; track e.id) {
+          <tr>
+            <td class="fw-bold font-monospace text-primary">{{ e.voucherNo }}</td>
+            <td class="text-muted small">{{ e.entryDate }}</td>
+            <td class="fw-semibold text-dark">{{ e.invoiceNo }}</td>
+            <td class="small">{{ e.buyerName }}</td>
+            <td class="small">{{ e.sellerName }}</td>
+            <td class="text-end fw-bold text-danger">₹{{ e.totalAdjustments | number: '1.2-2' }}</td>
+            <td class="text-end fw-bold text-success">₹{{ e.netPendingAmountAfter | number: '1.2-2' }}</td>
+            <td class="text-muted small text-truncate" style="max-width: 200px;" [title]="e.narration">
+              {{ e.narration }}
+            </td>
+            <td class="text-center">
+              <button type="button" class="btn-erp-outline btn-sm py-1 px-2" (click)="openViewModal(e)"
+                title="View Full Voucher Breakdown">
+                <i class="fa-solid fa-eye me-1"></i> View
+              </button>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="9" class="erp-table-empty">
+              <i class="fa-solid fa-book-open"></i>
+              <p>No journal vouchers recorded yet.</p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="text-muted small">Page {{ page }}</div>
+      <pagination-controls (pageChange)="page = $event"></pagination-controls>
+    </div>
+  </div>
+  }
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: VIEW JOURNAL VOUCHER BREAKDOWN (Clean ERP Theme Modal)         -->
+  <!-- ==================================================================== -->
+  @if (showViewModal && selectedEntryForView) {
+  <div class="modal-backdrop-erp" (click)="closeViewModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <h3 class="modal-title-erp">Journal Voucher: {{ selectedEntryForView.voucherNo }}</h3>
+          <p class="modal-sub-erp">Mandi Expense Deductions &amp; Settlement Breakdown</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeViewModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp" id="printableVoucher">
+        <!-- Voucher Meta Header -->
+        <div class="view-detail-card mb-4">
+          <div class="view-grid">
+            <div class="view-item">
+              <span class="view-label">Voucher Date</span>
+              <span class="view-val fw-bold">{{ selectedEntryForView.entryDate }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Linked Invoice</span>
+              <span class="view-val fw-bold text-primary">{{ selectedEntryForView.invoiceNo }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Buyer</span>
+              <span class="view-val">{{ selectedEntryForView.buyerName }}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Seller</span>
+              <span class="view-val">{{ selectedEntryForView.sellerName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9 Deductions Grid Breakdown -->
+        <div class="section-sub-title mb-2">Deduction &amp; Adjustment Breakdown</div>
+        <div class="table-responsive mb-4">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th>Expense Head</th>
+                <th class="text-end">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DHARAM KANTA</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.dharamKanta | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>MUDAT</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.mudat | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>LABOUR (Hamali)</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.labour | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>CLAIM (Quality deduction)</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.claim | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>BROKRAGE</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.brokerage | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>INTEREST</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.interest | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>WAREHOUSE RENT</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.warehouseRent | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>TDS</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.tds | number: '1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td>OTHER</td>
+                <td class="text-end fw-semibold">₹{{ selectedEntryForView.other | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="table-summary-row fw-bold">
+                <td>TOTAL ADJUSTMENTS / DEDUCTIONS</td>
+                <td class="text-end text-danger fs-6">₹{{ selectedEntryForView.totalAdjustments | number: '1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Narration & Summary -->
+        <div class="narration-box p-3 rounded mb-3">
+          <strong class="text-secondary small text-uppercase d-block mb-1">NARRATION</strong>
+          <div>{{ selectedEntryForView.narration }}</div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center p-3 rounded net-balance-banner">
+          <div>
+            <span class="text-muted small text-uppercase d-block">Original Pending:</span>
+            <span class="fw-bold">₹{{ selectedEntryForView.originalInvoicePendingAmount | number: '1.2-2' }}</span>
+          </div>
+          <div class="text-end">
+            <span class="text-muted small text-uppercase d-block">Net Balance After Adjustment:</span>
+            <span class="fs-5 fw-bold text-success">₹{{ selectedEntryForView.netPendingAmountAfter | number: '1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeViewModal()">Close</button>
+        <button type="button" class="btn-erp-primary" (click)="printVoucher()">
+          <i class="fa-solid fa-print me-1"></i> Print Voucher
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

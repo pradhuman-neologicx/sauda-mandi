@@ -124,6 +124,27 @@ export const ADMIN_ROUTES: Routes = [
             (c) => c.UserManagementComponent,
           ),
       },
+      {
+        path: 'journal-entries',
+        canActivate: [AuthGuard],
+        loadComponent: () =>
+          import('./junral-entries/junral-entries.component').then(
+            (c) => c.JunralEntriesComponent,
+          ),
+      },
+      {
+        path: 'junral-entries',
+        redirectTo: 'journal-entries',
+        pathMatch: 'full',
+      },
+      {
+        path: 'payments',
+        canActivate: [AuthGuard],
+        loadComponent: () =>
+          import('./payments/payments.component').then(
+            (c) => c.PaymentsComponent,
+          ),
+      },
     ],
   },
 ];

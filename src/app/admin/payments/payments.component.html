@@ -1,0 +1,372 @@
+<div class="erp-page-wrapper">
+  <!-- Top Header with Actions -->
+  <div class="erp-header-row mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="erp-title">
+        <i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>Payment Entries (Cash &amp; Bank Book)
+      </h1>
+      <p class="erp-subtitle">
+        Voucher Entries with Real-Time Automatic Running Balance (Client Mandi Sheet)
+      </p>
+    </div>
+
+    <!-- Top Action Buttons (Including client requested: UPLOAD EXCEL & Report Generation) -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <button type="button" class="btn-erp-success" (click)="openExcelUploadModal()">
+        <i class="fa-solid fa-file-excel me-1"></i> UPLOAD EXCEL
+      </button>
+
+      <button type="button" class="btn-erp-outline" (click)="exportReportToCsv()">
+        <i class="fa-solid fa-file-arrow-down me-1"></i> Export Report (CSV)
+      </button>
+
+
+
+      <button type="button" class="btn-erp-primary" (click)="showCreateForm = !showCreateForm">
+        <i class="fa-solid" [class.fa-plus]="!showCreateForm" [class.fa-xmark]="showCreateForm"></i>
+        {{ showCreateForm ? 'Close Entry Form' : '+ New Payment Entry' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="sauda-kpi-grid mb-4">
+    <!-- Total Received -->
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">
+        <i class="fa-solid fa-circle-arrow-down text-success me-1"></i> Total Received (Inflow)
+      </div>
+      <div class="sauda-kpi-val text-success">
+        ₹{{ totalReceivedSum | number: '1.2-2' }}
+      </div>
+      <div class="kpi-sub">Total credit amounts collected</div>
+    </div>
+
+    <!-- Total Payment -->
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">
+        <i class="fa-solid fa-circle-arrow-up text-danger me-1"></i> Total Payment (Outflow)
+      </div>
+      <div class="sauda-kpi-val text-danger">
+        ₹{{ totalPaymentSum | number: '1.2-2' }}
+      </div>
+      <div class="kpi-sub">Total debit amounts disbursed</div>
+    </div>
+
+    <!-- Automatic Balance -->
+    <div class="sauda-kpi-card">
+      <div class="sauda-kpi-label">
+        <i class="fa-solid fa-scale-balanced text-primary me-1"></i> Automatic Closing Balance
+      </div>
+      <div class="sauda-kpi-val" [class.text-primary]="currentClosingBalance >= 0"
+        [class.text-danger]="currentClosingBalance < 0">
+        ₹{{ currentClosingBalance | number: '1.2-2' }}
+      </div>
+      <div class="kpi-sub">Live running balance of all vouchers</div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- 1. MANUAL ENTRY FORM (PAYMENT ENTERY from Client Image)             -->
+  <!-- ==================================================================== -->
+  @if (showCreateForm) {
+  <div class="erp-card payment-form-card mb-4">
+    <div class="card-header-erp d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <span class="card-header-title">PAYMENT ENTERY</span>
+        <span class="status-badge badge-green">Manual Voucher</span>
+      </div>
+      <button type="button" class="close-btn" (click)="showCreateForm = false">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="card-body-erp p-4">
+      <div class="row g-3 mb-3">
+        <!-- DATE -->
+        <div class="col-md-2">
+          <label class="erp-field-label">DATE <span class="text-danger">*</span></label>
+          <input type="date" class="erp-input" [(ngModel)]="entryForm.date">
+        </div>
+
+        <!-- VOUCHER DETAILAS -->
+        <div class="col-md-3">
+          <label class="erp-field-label">
+            VOUCHER DETAILAS <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="erp-input" [(ngModel)]="entryForm.voucherDetails"
+            placeholder="e.g. UTR-881902 / CHQ-10023">
+          <span class="field-hint">Voucher No, Cheque #, or UTR ref</span>
+        </div>
+
+        <!-- A/C (ACCOUNT) -->
+        <div class="col-md-3">
+          <label class="erp-field-label">
+            A/C (ACCOUNT) <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="erp-input" [(ngModel)]="entryForm.account" list="accountsList"
+            placeholder="Select or enter Account...">
+          <datalist id="accountsList">
+            @for (acct of allAccounts; track acct) {
+            <option [value]="acct"></option>
+            }
+          </datalist>
+          <span class="field-hint">Bank A/c, Cash A/c, or Party ledger</span>
+        </div>
+
+        <!-- RECEIVED -->
+        <div class="col-md-2">
+          <label class="erp-field-label text-success">RECEIVED (₹)</label>
+          <input type="number" min="0" class="erp-input text-success fw-bold" [(ngModel)]="entryForm.received"
+            placeholder="0.00">
+          <span class="field-hint">Credit / Amount received</span>
+        </div>
+
+        <!-- PAYMENT -->
+        <div class="col-md-2">
+          <label class="erp-field-label text-danger">PAYMENT (₹)</label>
+          <input type="number" min="0" class="erp-input text-danger fw-bold" [(ngModel)]="entryForm.payment"
+            placeholder="0.00">
+          <span class="field-hint">Debit / Amount paid</span>
+        </div>
+      </div>
+
+      <!-- NARRATION & AUTOMATIC BALANCE -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-8">
+          <label class="erp-field-label">NARRATION</label>
+          <input type="text" class="erp-input" [(ngModel)]="entryForm.narration"
+            placeholder="Enter payment description, party remarks, or deal settlement reference...">
+        </div>
+
+        <div class="col-md-4">
+          <label class="erp-field-label text-primary">
+            <i class="fa-solid fa-calculator me-1"></i> AUTOMATIC BALANCE (AFTER ENTRY)
+          </label>
+          <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Projected:</span>
+            <span class="fs-5 fw-bold" [class.text-primary]="projectedNewBalance >= 0"
+              [class.text-danger]="projectedNewBalance < 0">
+              ₹{{ projectedNewBalance | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex justify-content-end align-items-center gap-2">
+        <button type="button" class="btn-erp-ghost px-3" (click)="resetEntryForm()">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear
+        </button>
+        <button type="button" class="btn-erp-success px-4" (click)="savePaymentEntry()">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save Payment Entry
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ==================================================================== -->
+  <!-- 2. FILTER & SEARCH BAR                                               -->
+  <!-- ==================================================================== -->
+  <div class="erp-card mb-3 p-3">
+    <div class="row g-2 align-items-end">
+      <!-- Search -->
+      <div class="col-md-4">
+        <label class="erp-field-label mb-1">Search Vouchers</label>
+        <div class="input-group-search">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" class="erp-input search-input" [(ngModel)]="searchTerm" (input)="applyFilters()"
+            placeholder="Search by Voucher Details, A/C, Narration...">
+        </div>
+      </div>
+
+      <!-- A/C Filter -->
+      <div class="col-md-3">
+        <label class="erp-field-label mb-1">Filter by A/C</label>
+        <select class="erp-input" [(ngModel)]="selectedAccountFilter" (change)="applyFilters()">
+          <option value="All">All Accounts &amp; Ledgers</option>
+          @for (acct of allAccounts; track acct) {
+          <option [value]="acct">{{ acct }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- From Date -->
+      <div class="col-md-2">
+        <label class="erp-field-label mb-1">From Date</label>
+        <input type="date" class="erp-input" [(ngModel)]="startDateFilter" (change)="applyFilters()">
+      </div>
+
+      <!-- To Date -->
+      <div class="col-md-2">
+        <label class="erp-field-label mb-1">To Date</label>
+        <input type="date" class="erp-input" [(ngModel)]="endDateFilter" (change)="applyFilters()">
+      </div>
+
+      <!-- Reset -->
+      <div class="col-md-1">
+        <button type="button" class="btn-erp-outline w-100 py-2" (click)="resetFilters()" title="Reset Filters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- 3. RUNNING BALANCE TABLE (Matching Client Sheet Layout)              -->
+  <!-- ==================================================================== -->
+  <div class="erp-card" id="printableReport">
+    <div class="table-responsive">
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th style="width: 110px;">DATE</th>
+            <th>VOUCHER DETAILAS</th>
+            <th>A/C (ACCOUNT)</th>
+            <th class="text-end text-success" style="width: 140px;">RECEIVED (₹)</th>
+            <th class="text-end text-danger" style="width: 140px;">PAYMENT (₹)</th>
+            <th class="text-end text-primary" style="width: 160px;">AUTOMATIC BALANCE (₹)</th>
+            <th>NARRATION</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of filteredEntries | paginate: { itemsPerPage: pageSize, currentPage: page }; track e.id) {
+          <tr>
+            <td class="text-muted small">{{ e.entryDate }}</td>
+            <td class="fw-bold font-monospace text-dark">{{ e.voucherDetails }}</td>
+            <td>
+              <span class="acct-pill">{{ e.accountName }}</span>
+            </td>
+            <td class="text-end fw-bold text-success">
+              {{ e.receivedAmount > 0 ? (e.receivedAmount | number: '1.2-2') : '—' }}
+            </td>
+            <td class="text-end fw-bold text-danger">
+              {{ e.paymentAmount > 0 ? (e.paymentAmount | number: '1.2-2') : '—' }}
+            </td>
+            <td class="text-end fw-bold fs-6" [class.text-primary]="e.balanceAfter >= 0"
+              [class.text-danger]="e.balanceAfter < 0">
+              ₹{{ e.balanceAfter | number: '1.2-2' }}
+            </td>
+            <td class="small text-muted text-truncate" style="max-width: 260px;" [title]="e.narration">
+              {{ e.narration }}
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="7" class="erp-table-empty">
+              <i class="fa-solid fa-receipt"></i>
+              <p>No payment entries found matching your filters.</p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Pagination & Client Sheet note: Report generation outside -->
+    <div class="table-footer p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">Showing {{ filteredEntries.length }} entries</span>
+        <button type="button" class="btn-erp-outline btn-sm py-1 px-3" (click)="exportReportToCsv()">
+          <i class="fa-solid fa-file-csv me-1 text-primary"></i> Generate Report Outside
+        </button>
+      </div>
+
+      <pagination-controls (pageChange)="page = $event"></pagination-controls>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: UPLOAD EXCEL (Client Image: UPLOAD EXCEL)                     -->
+  <!-- ==================================================================== -->
+  @if (showExcelUploadModal) {
+  <div class="modal-backdrop-erp" (click)="closeExcelUploadModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-wrap bg-green-subtle">
+            <i class="fa-solid fa-file-excel text-success fs-5"></i>
+          </div>
+          <div>
+            <h3 class="modal-title-erp">UPLOAD EXCEL &bull; Batch Payment Entry</h3>
+            <p class="modal-sub-erp">Import multiple payment and receipt vouchers from spreadsheet</p>
+          </div>
+        </div>
+        <button type="button" class="close-btn" (click)="closeExcelUploadModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <!-- Template Download Banner -->
+        <div
+          class="template-download-box p-3 mb-4 rounded d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h6 class="mb-1 fw-bold text-dark">Need the format template?</h6>
+            <small class="text-muted">Columns: DATE, VOUCHER DETAILS, RECEIVED, PAYMENT, A/C, NARRATION</small>
+          </div>
+          <button type="button" class="btn-erp-outline btn-sm px-3 text-success fw-bold"
+            (click)="downloadSampleExcel()">
+            <i class="fa-solid fa-download me-1"></i> Download Sample Excel / CSV
+          </button>
+        </div>
+
+        <!-- File Upload Dropzone -->
+        <div class="upload-dropzone p-4 rounded text-center mb-4">
+          <i class="fa-solid fa-cloud-arrow-up fs-2 text-primary mb-2"></i>
+          <h6 class="fw-bold mb-1">Select Excel or CSV File to Upload</h6>
+          <p class="text-muted small mb-3">Supports .csv, .txt, .xls, .xlsx</p>
+          <input type="file" accept=".csv, .txt, .xls, .xlsx" (change)="onFileSelected($event)" class="erp-input"
+            style="max-width: 400px; margin: 0 auto;">
+        </div>
+
+        <!-- Parsed Rows Preview -->
+        @if (excelParsedRows.length > 0) {
+        <div class="border rounded p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-success mb-0">
+              <i class="fa-solid fa-check-circle me-1"></i> Ready to Import: {{ excelParsedRows.length }} Entries
+            </h6>
+          </div>
+          <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+            <table class="erp-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Voucher Details</th>
+                  <th class="text-end text-success">Received</th>
+                  <th class="text-end text-danger">Payment</th>
+                  <th>A/C</th>
+                  <th>Narration</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of excelParsedRows; track $index) {
+                <tr>
+                  <td>{{ r.date }}</td>
+                  <td class="font-monospace fw-semibold">{{ r.voucherDetails }}</td>
+                  <td class="text-end text-success">{{ r.received | number: '1.2-2' }}</td>
+                  <td class="text-end text-danger">{{ r.payment | number: '1.2-2' }}</td>
+                  <td>{{ r.account }}</td>
+                  <td class="small">{{ r.narration }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        }
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeExcelUploadModal()">Cancel</button>
+        <button type="button" class="btn-erp-success px-4" [disabled]="excelParsedRows.length === 0"
+          (click)="confirmExcelImport()">
+          <i class="fa-solid fa-file-import me-1"></i> Import {{ excelParsedRows.length }} Entries
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

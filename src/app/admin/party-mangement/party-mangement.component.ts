@@ -81,6 +81,9 @@ export class PartyMangementComponent implements OnInit {
   saudas: SaudaRecord[] = [];
   settlements: LedgerSettlementRecord[] = [];
   partyLedger: PartyLedgerOverview | null = null;
+  partySaudas: SaudaRecord[] = [];
+  partySettlements: LedgerSettlementRecord[] = [];
+  activeDetailTab: 'overview' | 'saudas' | 'payments' | 'ledger' = 'overview';
 
   // Filter States
   statusFilter: 'All' | 'Active' | 'Inactive' = 'All';
@@ -534,15 +537,54 @@ export class PartyMangementComponent implements OnInit {
     return Math.abs(val || 0);
   }
 
+  setActiveDetailTab(tab: 'overview' | 'saudas' | 'payments' | 'ledger'): void {
+    this.activeDetailTab = tab;
+  }
+
+  getSaudaBadgeClass(status: string): string {
+    switch (status) {
+      case 'Completed':
+        return 'badge-green';
+      case 'Partial':
+        return 'badge-amber';
+      case 'Open':
+        return 'badge-blue';
+      case 'Voided':
+        return 'badge-gray';
+      default:
+        return 'badge-gray';
+    }
+  }
+
   openViewModal(party: UnifiedParty): void {
     this.selectedParty = party;
+    const pName = party.name.trim().toLowerCase();
+
+    // 1. All Saudas related to this party
+    this.partySaudas = this.saudas.filter(
+      (s) =>
+        (s.partyName && s.partyName.trim().toLowerCase() === pName) ||
+        (s.sellerName && s.sellerName.trim().toLowerCase() === pName) ||
+        (s.buyerName && s.buyerName.trim().toLowerCase() === pName) ||
+        (s.partyName && s.partyName.toLowerCase().includes(pName)),
+    );
+
+    // 2. All payments / settlements for this party
+    this.partySettlements = this.settlements.filter(
+      (st) => st.partyName && st.partyName.trim().toLowerCase() === pName,
+    );
+
+    // 3. Build ledger
     this.buildPartyLedger(party);
+    this.activeDetailTab = 'overview';
     this.showViewModal = true;
   }
 
   closeViewModal(): void {
     this.selectedParty = null;
     this.partyLedger = null;
+    this.partySaudas = [];
+    this.partySettlements = [];
     this.showViewModal = false;
   }
 

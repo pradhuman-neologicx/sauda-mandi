@@ -491,6 +491,45 @@ export interface InvoiceRecord {
   createdAt: string;
 }
 
+export interface JournalEntryRecord {
+  id: string;
+  voucherNo: string;
+  entryDate: string;
+  buyerName: string;
+  sellerName: string;
+  invoiceNo: string;
+  invoiceId?: string;
+  originalInvoicePendingAmount: number;
+  dharamKanta: number;
+  mudat: number;
+  labour: number;
+  claim: number;
+  brokerage: number;
+  interest: number;
+  warehouseRent: number;
+  tds: number;
+  other: number;
+  totalAdjustments: number;
+  netPendingAmountAfter: number;
+  narration: string;
+  recordedBy: string;
+  createdAt: string;
+}
+
+export interface PaymentEntryRecord {
+  id: string;
+  entryDate: string;
+  voucherDetails: string;
+  receivedAmount: number;
+  paymentAmount: number;
+  accountName: string;
+  partyName?: string;
+  narration: string;
+  balanceAfter: number;
+  recordedBy: string;
+  createdAt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -2537,6 +2576,140 @@ export class SaudaErpMockService {
       issuedAt: '2026-11-12 11:30',
       createdAt: '2026-11-12 11:30',
     },
+    {
+      id: 'INV-2026-0003',
+      invoiceNo: 'INV-2026-0003',
+      invoiceDate: '2026-11-15',
+      clientFirm: 'Rajasthan Agro',
+      partyName: 'Om Traders',
+      partyRole: 'Seller',
+      linkedSaudas: [
+        {
+          saudaId: 'SAU-2026-0004',
+          saudaNo: 'SAU-2026-0004',
+          saudaDate: '2026-11-07',
+          saudaType: 'Purchase',
+          commodity: 'Maize',
+          quantityMt: 5,
+          totalAmountInr: 95000,
+        },
+      ],
+      originalCalculatedAmount: 95000,
+      finalAmount: 95000,
+      adjustmentAmount: 0,
+      status: 'Issued',
+      issuedBy: 'Sauda Admin',
+      issuedAt: '2026-11-15 14:00',
+      createdAt: '2026-11-15 14:00',
+    },
+    {
+      id: 'INV-2026-0004',
+      invoiceNo: 'INV-2026-0004',
+      invoiceDate: '2026-11-18',
+      clientFirm: 'Desert Fresh Traders',
+      partyName: 'Marwar Agro Retailers',
+      partyRole: 'Buyer',
+      linkedSaudas: [
+        {
+          saudaId: 'SAU-2026-0009',
+          saudaNo: 'SAU-2026-0009',
+          saudaDate: '2026-11-14',
+          saudaType: 'Sales',
+          commodity: 'Wheat',
+          quantityMt: 5,
+          totalAmountInr: 130000,
+        },
+      ],
+      originalCalculatedAmount: 130000,
+      finalAmount: 130000,
+      adjustmentAmount: 0,
+      status: 'Issued',
+      issuedBy: 'Sauda Admin',
+      issuedAt: '2026-11-18 16:30',
+      createdAt: '2026-11-18 16:30',
+    },
+  ];
+
+  private readonly initialJournalEntries: JournalEntryRecord[] = [
+    {
+      id: 'JRN-2026-0001',
+      voucherNo: 'JRN-2026-0001',
+      entryDate: '2026-11-16',
+      buyerName: 'City Wholesale Market',
+      sellerName: 'Sharma Grain Traders',
+      invoiceNo: 'INV-2026-0002',
+      invoiceId: 'INV-2026-0002',
+      originalInvoicePendingAmount: 148500,
+      dharamKanta: 500,
+      mudat: 1200,
+      labour: 800,
+      claim: 0,
+      brokerage: 1500,
+      interest: 0,
+      warehouseRent: 1000,
+      tds: 150,
+      other: 0,
+      totalAdjustments: 5150,
+      netPendingAmountAfter: 143350,
+      narration: 'Weighbridge, mudat discount & godown rent deductions settled against Bajra Sauda.',
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-16 11:20',
+    },
+  ];
+
+  private readonly initialPaymentEntries: PaymentEntryRecord[] = [
+    {
+      id: 'PAY-2026-0001',
+      entryDate: '2026-11-01',
+      voucherDetails: 'OPENING-BALANCE',
+      receivedAmount: 500000,
+      paymentAmount: 0,
+      accountName: 'State Bank of India (Mandi Main Branch)',
+      partyName: '',
+      narration: 'Opening balance brought forward in Mandi Bank A/c',
+      balanceAfter: 500000,
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-01 09:00',
+    },
+    {
+      id: 'PAY-2026-0002',
+      entryDate: '2026-11-06',
+      voucherDetails: 'CHQ-778901',
+      receivedAmount: 0,
+      paymentAmount: 100000,
+      accountName: 'Sharma Grain Traders',
+      partyName: 'Sharma Grain Traders',
+      narration: 'Advance payment towards Bajra consignment',
+      balanceAfter: 400000,
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-06 15:40',
+    },
+    {
+      id: 'PAY-2026-0003',
+      entryDate: '2026-11-10',
+      voucherDetails: 'UTR-20261110-881920',
+      receivedAmount: 125000,
+      paymentAmount: 0,
+      accountName: 'City Wholesale Market',
+      partyName: 'City Wholesale Market',
+      narration: 'Full settlement received against Wheat Sales INV-2026-0001',
+      balanceAfter: 525000,
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-10 14:30',
+    },
+    {
+      id: 'PAY-2026-0004',
+      entryDate: '2026-11-14',
+      voucherDetails: 'VCH-CASH-0012',
+      receivedAmount: 0,
+      paymentAmount: 12500,
+      accountName: 'Cash in Hand (Mandi Petty Cash)',
+      partyName: 'Mandi Labour Union',
+      narration: 'Hamali and unloader labour charges paid for 5 MT unloading',
+      balanceAfter: 512500,
+      recordedBy: 'Sauda Admin',
+      createdAt: '2026-11-14 18:00',
+    },
   ];
 
   private readonly initialPackagingUoms: PackagingUomRecord[] = [
@@ -2886,6 +3059,12 @@ export class SaudaErpMockService {
   private invoicesSubject = new BehaviorSubject<InvoiceRecord[]>(
     this.initialInvoices,
   );
+  private journalEntriesSubject = new BehaviorSubject<JournalEntryRecord[]>(
+    this.initialJournalEntries,
+  );
+  private paymentEntriesSubject = new BehaviorSubject<PaymentEntryRecord[]>(
+    this.initialPaymentEntries,
+  );
 
   readonly saudas$ = this.saudasSubject.asObservable();
   readonly trucks$ = this.trucksSubject.asObservable();
@@ -2901,6 +3080,8 @@ export class SaudaErpMockService {
   readonly invProducts$ = this.invProductsSubject.asObservable();
   readonly ledgerSettlements$ = this.ledgerSettlementsSubject.asObservable();
   readonly invoices$ = this.invoicesSubject.asObservable();
+  readonly journalEntries$ = this.journalEntriesSubject.asObservable();
+  readonly paymentEntries$ = this.paymentEntriesSubject.asObservable();
   readonly packagingUoms$ = this.packagingUomsSubject.asObservable();
   readonly weightUoms$ = this.weightUomsSubject.asObservable();
   readonly warehouses$ = this.warehousesSubject.asObservable();
@@ -6955,6 +7136,124 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `Invitation email resent to ${target.email} with an expiring password-setup link.`,
+    };
+  }
+
+  // ==========================================
+  // JOURNAL ENTRIES (JUNRAL ENTRY)
+  // ==========================================
+  getJournalEntriesSnapshot(): JournalEntryRecord[] {
+    return this.journalEntriesSubject.value;
+  }
+
+  createJournalEntry(payload: Omit<JournalEntryRecord, 'id' | 'voucherNo' | 'createdAt'>): {
+    ok: boolean;
+    message: string;
+    record?: JournalEntryRecord;
+  } {
+    const nextNum = this.journalEntriesSubject.value.length + 1;
+    const voucherNo = `JRN-2026-${String(nextNum).padStart(4, '0')}`;
+    const newEntry: JournalEntryRecord = {
+      ...payload,
+      id: voucherNo,
+      voucherNo,
+      createdAt: this.formatTimestamp(),
+    };
+
+    // If linked to an invoice, deduct adjustments from invoice final amount or mark settled
+    if (payload.invoiceNo) {
+      const invs = this.invoicesSubject.value;
+      const targetInv = invs.find((inv) => inv.invoiceNo === payload.invoiceNo);
+      if (targetInv) {
+        const remaining = Math.max(0, targetInv.finalAmount - (payload.totalAdjustments || 0));
+        const updatedInvs = invs.map((inv) =>
+          inv.id === targetInv.id
+            ? {
+                ...inv,
+                finalAmount: remaining,
+                adjustmentAmount: (inv.adjustmentAmount || 0) - (payload.totalAdjustments || 0),
+                status: remaining === 0 ? ('Paid' as InvoiceStatus) : inv.status,
+              }
+            : inv,
+        );
+        this.invoicesSubject.next(updatedInvs);
+      }
+    }
+
+    this.journalEntriesSubject.next([newEntry, ...this.journalEntriesSubject.value]);
+    return {
+      ok: true,
+      message: `Journal voucher ${voucherNo} successfully created and posted against Invoice ${payload.invoiceNo}.`,
+      record: newEntry,
+    };
+  }
+
+  getPendingInvoices(): InvoiceRecord[] {
+    return this.invoicesSubject.value.filter((inv) => inv.status !== 'Paid');
+  }
+
+  // ==========================================
+  // PAYMENT ENTRIES (PAYMENT ENTERY)
+  // ==========================================
+  getPaymentEntriesSnapshot(): PaymentEntryRecord[] {
+    return this.paymentEntriesSubject.value;
+  }
+
+  createPaymentEntry(payload: Omit<PaymentEntryRecord, 'id' | 'balanceAfter' | 'createdAt'>): {
+    ok: boolean;
+    message: string;
+    record?: PaymentEntryRecord;
+  } {
+    const currentList = this.paymentEntriesSubject.value;
+    const prevBalance = currentList.length > 0 ? currentList[currentList.length - 1].balanceAfter : 0;
+    const newBalance = Number(
+      (prevBalance + Number(payload.receivedAmount || 0) - Number(payload.paymentAmount || 0)).toFixed(2),
+    );
+    const nextNum = currentList.length + 1;
+    const id = `PAY-2026-${String(nextNum).padStart(4, '0')}`;
+    const newEntry: PaymentEntryRecord = {
+      ...payload,
+      id,
+      balanceAfter: newBalance,
+      createdAt: this.formatTimestamp(),
+    };
+
+    this.paymentEntriesSubject.next([...currentList, newEntry]);
+    return {
+      ok: true,
+      message: `Payment entry recorded successfully. Current Balance: ₹${newBalance.toLocaleString('en-IN')}.`,
+      record: newEntry,
+    };
+  }
+
+  importPaymentEntries(
+    records: Omit<PaymentEntryRecord, 'id' | 'balanceAfter' | 'createdAt'>[],
+  ): { ok: boolean; message: string; count: number } {
+    let currentBalance =
+      this.paymentEntriesSubject.value.length > 0
+        ? this.paymentEntriesSubject.value[this.paymentEntriesSubject.value.length - 1].balanceAfter
+        : 0;
+
+    let nextNum = this.paymentEntriesSubject.value.length + 1;
+    const newRecords: PaymentEntryRecord[] = [];
+
+    for (const r of records) {
+      currentBalance = Number(
+        (currentBalance + Number(r.receivedAmount || 0) - Number(r.paymentAmount || 0)).toFixed(2),
+      );
+      newRecords.push({
+        ...r,
+        id: `PAY-2026-${String(nextNum++).padStart(4, '0')}`,
+        balanceAfter: currentBalance,
+        createdAt: this.formatTimestamp(),
+      });
+    }
+
+    this.paymentEntriesSubject.next([...this.paymentEntriesSubject.value, ...newRecords]);
+    return {
+      ok: true,
+      message: `Successfully imported ${newRecords.length} payment entries from Excel file.`,
+      count: newRecords.length,
     };
   }
 
