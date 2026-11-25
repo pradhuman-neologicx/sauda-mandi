@@ -369,7 +369,7 @@ export class DashboardComponent implements OnInit {
       'info',
       2500,
     );
-    this.router.navigate(['/admin/party-ledger']);
+    this.router.navigate(['/admin/payments']);
   }
 
   // Row navigation for Recent Saudas

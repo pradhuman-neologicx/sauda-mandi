@@ -65,14 +65,6 @@ export const ADMIN_ROUTES: Routes = [
         ],
       },
       {
-        path: 'party-ledger',
-        canActivate: [AuthGuard],
-        loadComponent: () =>
-          import('./party-ledger/party-ledger.component').then(
-            (c) => c.PartyLedgerComponent,
-          ),
-      },
-      {
         path: 'sauda-management',
         canActivate: [AuthGuard],
         loadComponent: () =>

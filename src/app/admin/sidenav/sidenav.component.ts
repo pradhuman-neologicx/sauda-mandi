@@ -124,18 +124,12 @@ export class SidenavComponent implements OnInit {
       },
       {
         index: 6,
-        icon: 'account_balance_wallet',
-        label: 'Party Ledger',
-        route: '/admin/party-ledger',
-      },
-      {
-        index: 7,
         icon: 'menu_book',
         label: 'Journal Entries',
         route: '/admin/journal-entries',
       },
       {
-        index: 8,
+        index: 7,
         icon: 'payments',
         label: 'Payment Entry',
         route: '/admin/payments',
