@@ -498,7 +498,7 @@ export class SaudaErpMockService {
       clientFirm: 'Desert Fresh Traders',
       sellerName: 'Sharma Grain Traders',
       buyerName: '',
-      partyName: 'Sharma Grain Traders (Held)',
+      partyName: 'Sharma Grain Traders',
       warehouseId: 'WH-001',
       warehouseName: 'Desert Mandi Yard A',
       godownName: 'Godown 1 (North Block)',
@@ -536,8 +536,8 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags (Held in Yard A)',
-      status: 'On Hold',
+      remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags',
+      status: 'Open',
       currentVersion: 2,
       amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
@@ -963,8 +963,8 @@ export class SaudaErpMockService {
       ],
     },
     {
-      id: 'SAU-2026-0005',
-      saudaNo: 'SAU-2026-0005',
+      id: 'SAU-2026-0008',
+      saudaNo: 'SAU-2026-0008',
       saudaDate: '2026-11-20',
       dueDate: '2027-02-20',
       saudaType: 'Forward',
@@ -6344,7 +6344,7 @@ export class SaudaErpMockService {
     return this.saudasSubject.value.filter(
       (s) =>
         s.saudaType === 'Purchase' &&
-        (s.status === 'On Hold' || s.status === 'Partly Sold') &&
+        s.status !== 'Voided' &&
         (s.heldQuantityMt === undefined || s.heldQuantityMt > 0),
     );
   }
@@ -6357,36 +6357,19 @@ export class SaudaErpMockService {
       if (sauda.status === 'Voided') {
         return sauda;
       }
-      if (sauda.saudaType === 'Purchase') {
-        const currentHeld =
-          sauda.heldQuantityMt !== undefined
-            ? sauda.heldQuantityMt
-            : sauda.quantityMt;
-        let pStatus: SaudaStatus = 'On Hold';
-        if (currentHeld === 0) {
-          pStatus = 'Sold';
-        } else if (currentHeld < sauda.quantityMt) {
-          pStatus = 'Partly Sold';
-        }
-        return {
-          ...sauda,
-          heldQuantityMt: currentHeld,
-          soldQuantityMt:
-            sauda.soldQuantityMt !== undefined
-              ? sauda.soldQuantityMt
-              : sauda.quantityMt - currentHeld,
-          status: pStatus,
-        };
+      if (sauda.saudaType === 'Forward') {
+        // Forward deals remain 'On Hold' until executed into 'Open'
+        return sauda;
       }
       if (sauda.saudaType === 'Brokerage' || sauda.saudaType === 'Direct Sale') {
-        return { ...sauda, status: 'Completed' as SaudaStatus };
+        return { ...sauda, status: (sauda.status === 'Completed' ? 'Completed' : 'Open') as SaudaStatus };
       }
       const dispatched = trucks
         .filter((t) => t.saudaId === sauda.id && t.status !== 'Removed')
         .reduce((sum, t) => sum + Number(t.loadedQtyMt || 0), 0);
 
       let status: SaudaStatus = 'Open';
-      if (dispatched >= sauda.quantityMt) {
+      if (sauda.quantityMt > 0 && dispatched >= sauda.quantityMt) {
         status = 'Completed';
       } else if (dispatched > 0) {
         status = 'Partial';

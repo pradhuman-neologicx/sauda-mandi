@@ -228,7 +228,7 @@ export class SaudaManagementComponent implements OnInit {
           this.buyerOptions = this.allPartyOptions;
 
           this.heldPurchaseSaudas = saudas.filter(
-            (s) => s.saudaType === 'Purchase' && s.status === 'On Hold',
+            (s) => s.saudaType === 'Purchase' && s.status !== 'Voided',
           );
 
           this.buildInventoryCommodityOptions(
