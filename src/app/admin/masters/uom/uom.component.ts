@@ -56,7 +56,6 @@ export class UomComponent implements OnInit {
   ngOnInit(): void {
     this.pkgForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
-      bagQuantity: [50, [Validators.required, Validators.min(0.1)]],
     });
 
     this.erpService.packagingUoms$
@@ -119,7 +118,7 @@ export class UomComponent implements OnInit {
     this.isPkgEdit = false;
     this.selectedPkgUom = null;
     this.formError = '';
-    this.pkgForm.reset({ name: '', bagQuantity: 50 });
+    this.pkgForm.reset({ name: '' });
     this.isPkgModalOpen = true;
   }
 
@@ -127,7 +126,7 @@ export class UomComponent implements OnInit {
     this.isPkgEdit = true;
     this.selectedPkgUom = uom;
     this.formError = '';
-    this.pkgForm.reset({ name: uom.name, bagQuantity: uom.bagQuantity ?? 50 });
+    this.pkgForm.reset({ name: uom.name });
     this.isPkgModalOpen = true;
   }
 
@@ -140,14 +139,14 @@ export class UomComponent implements OnInit {
     this.formError = '';
     if (this.pkgForm.invalid) {
       this.pkgForm.markAllAsTouched();
-      this.formError = 'Please enter a valid Packaging UOM name and bag quantity (min 0.1 Kg).';
+      this.formError = 'Please enter a valid Packaging UOM name.';
       return;
     }
-    const { name, bagQuantity } = this.pkgForm.value;
+    const { name } = this.pkgForm.value;
     const res =
       this.isPkgEdit && this.selectedPkgUom
-        ? this.erpService.updatePackagingUom(this.selectedPkgUom.id, name, Number(bagQuantity))
-        : this.erpService.createPackagingUom(name, Number(bagQuantity));
+        ? this.erpService.updatePackagingUom(this.selectedPkgUom.id, name)
+        : this.erpService.createPackagingUom(name);
 
     if (!res.ok) {
       this.formError = res.message;

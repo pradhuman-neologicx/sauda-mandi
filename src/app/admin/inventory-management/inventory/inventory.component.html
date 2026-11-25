@@ -187,7 +187,6 @@
             <th>Commodity / Product</th>
             <th>Packaging UOM</th>
             <th class="text-end">Available Quantity</th>
-            <th class="text-end">Total Weight (MT)</th>
             <th>Stock Status</th>
             <th class="text-center">Action</th>
           </tr>
@@ -235,19 +234,13 @@
               <span class="badge-uom">{{ getPackagingDisplay(item.packagingUom) }}</span>
             </td>
             <td class="text-end">
-              <span class="fw-bold" [class.text-muted]="item.availableUnits === 0"
-                [class.text-dark]="item.availableUnits > 0">
-                {{ item.availableUnits | number }}
-              </span>
-            </td>
-            <td class="text-end">
               <span class="fw-bold" [class.text-muted]="item.availableWeightMt === 0"
                 [class.text-dark]="item.availableWeightMt > 0">
                 {{ item.availableWeightMt | number: '1.2-3' }} MT
               </span>
             </td>
             <td>
-              @if (item.availableUnits > 0 && item.availableWeightMt > 0) {
+              @if (item.availableWeightMt > 0) {
               <span class="badge-erp badge-green">
                 <i class="fa-solid fa-circle-check me-1"></i>Available Stock
               </span>
@@ -267,7 +260,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="9" class="erp-table-empty">
+            <td colspan="8" class="erp-table-empty">
               <i class="fa-solid fa-boxes-stacked"></i>
               <p>No inventory balance records match your filter criteria.</p>
               @if (showStockReset) {
@@ -882,12 +875,11 @@
               <div class="callout-label">Live Available Stock:</div>
               @if (liveSelectedStock) {
               <div class="callout-val text-dark">
-                <strong>{{ liveSelectedStock.availableUnits | number }} {{ liveSelectedStock.packagingUom }}s</strong>
-                &bull; {{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT
+                <strong>{{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT</strong>
               </div>
               } @else {
               <div class="callout-val text-muted">
-                <em>No existing stock record in selected warehouse (Empty lot / 0 units).</em>
+                <em>No existing stock record in selected warehouse (0 MT).</em>
               </div>
               }
             </div>
@@ -920,26 +912,18 @@
           <!-- Packaging UOM -->
           <div class="field-group">
             <label class="erp-label">Packaging UOM *</label>
-            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom"
-              (ngModelChange)="onAdjPackagingOrQuantityChange(true)">
+            <select class="erp-input" [(ngModel)]="createAdjForm.packagingUom">
               @for (u of packagingUomRecords; track u.id) {
               <option [value]="u.name">
-                {{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }}/bag)
+                {{ u.name }}
               </option>
               }
             </select>
           </div>
 
-          <!-- Quantity (Units) -->
+          <!-- Quantity (MT) -->
           <div class="field-group">
-            <label class="erp-label">Quantity (Units / Bags) *</label>
-            <input type="number" min="1" class="erp-input" [(ngModel)]="createAdjForm.quantity"
-              (ngModelChange)="onAdjPackagingOrQuantityChange(true)" placeholder="e.g. 50" />
-          </div>
-
-          <!-- Total Weight (MT) -->
-          <div class="field-group span-2">
-            <label class="erp-label">Total Weight (MT) *</label>
+            <label class="erp-label">Quantity (MT) *</label>
             <input type="number" step="0.001" min="0.001" class="erp-input" [(ngModel)]="createAdjForm.totalWeightMt"
               (ngModelChange)="updateAdjCalculations()" placeholder="e.g. 2.500" />
           </div>
@@ -1065,12 +1049,12 @@
           <div class="review-item">
             <span class="label">Requested Quantity:</span>
             <span class="val fw-bold text-dark">
-              {{ selectedAdj.quantity | number }} {{ selectedAdj.packagingUom }}s
+              {{ selectedAdj.totalWeightMt | number: '1.2-3' }} MT
             </span>
           </div>
           <div class="review-item">
-            <span class="label">Total Weight:</span>
-            <span class="val fw-bold text-dark">{{ selectedAdj.totalWeightMt | number: '1.2-3' }} MT</span>
+            <span class="label">Packaging UOM:</span>
+            <span class="val fw-bold text-dark">{{ getPackagingDisplay(selectedAdj.packagingUom) }}</span>
           </div>
 
           <div class="review-item">

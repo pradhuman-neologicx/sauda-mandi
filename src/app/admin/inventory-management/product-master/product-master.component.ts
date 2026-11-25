@@ -105,7 +105,7 @@ export class ProductMasterComponent implements OnInit {
           .filter((p) => p.isActive)
           .map((p) => ({
             ...p,
-            displayLabel: `${p.name} (${p.bagQuantity} ${p.unit || 'Kg'}/bag)`,
+            displayLabel: p.name,
           }));
         this.activeSubCategories = this.subCategories.filter((sc) => sc.isActive);
         this.applyFilters();

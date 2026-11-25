@@ -499,7 +499,7 @@
             <label>Packaging UOM <span class="req">*</span></label>
             <select formControlName="packagingUom" class="erp-input" (change)="onPackagingUomChanged(idx)">
               @for (u of dynamicPackagingUoms; track u.id) {
-              <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }})</option>
+              <option [value]="u.name">{{ u.name }}</option>
               }
               @if (!hasDynamicPkg(row.get('packagingUom')?.value)) {
               <option [value]="row.get('packagingUom')?.value">{{ row.get('packagingUom')?.value }}</option>

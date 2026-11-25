@@ -112,23 +112,10 @@ export class InventoryComponent implements OnInit {
     const pkg = this.packagingUomRecords.find(
       (p) => p.name.toLowerCase() === (name || '').toLowerCase(),
     );
-    if (pkg && pkg.bagQuantity) {
-      return `${pkg.name} (${pkg.bagQuantity} ${pkg.unit || 'Kg'})`;
-    }
-    return name;
+    return pkg?.name || name;
   }
 
   onAdjPackagingOrQuantityChange(recomputeWeight: boolean = false): void {
-    const pkg = this.packagingUomRecords.find(
-      (p) => p.name.toLowerCase() === this.createAdjForm.packagingUom.toLowerCase(),
-    );
-    const qty = Number(this.createAdjForm.quantity);
-    const bagQty = pkg?.bagQuantity || 50;
-    if (recomputeWeight && qty > 0) {
-      this.createAdjForm.totalWeightMt = Number(((qty * bagQty) / 1000).toFixed(3));
-    } else if (qty > 0 && !this.createAdjForm.totalWeightMt) {
-      this.createAdjForm.totalWeightMt = Number(((qty * bagQty) / 1000).toFixed(3));
-    }
     this.updateAdjCalculations();
   }
 
@@ -624,8 +611,8 @@ export class InventoryComponent implements OnInit {
       );
     }
 
-    const qty = Number(form.quantity);
     const wt = Number(form.totalWeightMt);
+    const qty = Number(form.quantity) || (wt > 0 ? Math.max(1, Math.round((wt * 1000) / 50)) : 0);
     if (!qty || qty <= 0 || !wt || wt <= 0) {
       this.computedAverageWeightKg = 0;
     } else {
@@ -641,12 +628,12 @@ export class InventoryComponent implements OnInit {
       this.createAdjError = 'Party, Warehouse and Commodity are mandatory.';
       return;
     }
-    const qty = Number(form.quantity);
     const wt = Number(form.totalWeightMt);
-    if (!qty || qty <= 0 || !wt || wt <= 0) {
-      this.createAdjError = 'Quantity (Units) and Total Weight (MT) must be greater than zero.';
+    if (!wt || wt <= 0) {
+      this.createAdjError = 'Quantity (MT) must be greater than zero.';
       return;
     }
+    const qty = Number(form.quantity) || (wt > 0 ? Math.max(1, Math.round((wt * 1000) / 50)) : 1);
     if (!form.reason?.trim()) {
       this.createAdjError = 'Reason for adjustment is mandatory.';
       return;

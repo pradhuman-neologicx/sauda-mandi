@@ -639,7 +639,7 @@
             <label>Packaging UOM <span class="req">*</span></label>
             <select formControlName="packagingUom" class="erp-input">
               @for (u of dynamicPackagingUoms; track u.id) {
-              <option [value]="u.name">{{ u.name }} ({{ u.bagQuantity }} {{ u.unit || 'Kg' }})</option>
+              <option [value]="u.name">{{ u.name }}</option>
               }
             </select>
           </div>

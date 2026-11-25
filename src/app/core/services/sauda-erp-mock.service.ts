@@ -331,7 +331,7 @@ export interface InvProductRecord {
 export interface PackagingUomRecord {
   id: string;
   name: string;
-  bagQuantity: number;
+  bagQuantity?: number;
   unit?: string;
   isActive: boolean;
   createdAt: string;
@@ -4538,12 +4538,12 @@ export class SaudaErpMockService {
       };
     }
 
-    const qty = Number(payload.quantity);
     const weight = Number(payload.totalWeightMt);
-    if (!qty || qty <= 0 || !weight || weight <= 0) {
+    const qty = Number(payload.quantity) || (weight > 0 ? Math.max(1, Math.round((weight * 1000) / 50)) : 1);
+    if (!weight || weight <= 0) {
       return {
         ok: false,
-        message: 'Quantity (units) and Total Weight (MT) must be greater than zero.',
+        message: 'Quantity (MT) must be greater than zero.',
       };
     }
 
@@ -4575,22 +4575,7 @@ export class SaudaErpMockService {
       const availableUnits = existing ? existing.availableUnits : 0;
       const availableWeight = existing ? existing.availableWeightMt : 0;
 
-      const qtyExceeded = qty > availableUnits;
-      const weightExceeded = weight > availableWeight;
-
-      if (qtyExceeded && weightExceeded) {
-        return {
-          ok: false,
-          message: `Requested quantity (${qty} ${payload.packagingUom}) exceeds available (${availableUnits} ${payload.packagingUom}) AND requested weight (${weight} MT) exceeds available (${availableWeight} MT) in ${warehouseName}.`,
-        };
-      }
-      if (qtyExceeded) {
-        return {
-          ok: false,
-          message: `Requested quantity (${qty} ${payload.packagingUom}) exceeds available stock (${availableUnits} ${payload.packagingUom}) in ${warehouseName}.`,
-        };
-      }
-      if (weightExceeded) {
+      if (weight > availableWeight) {
         return {
           ok: false,
           message: `Requested weight (${weight} MT) exceeds available weight (${availableWeight} MT) in ${warehouseName}.`,
@@ -4701,10 +4686,10 @@ export class SaudaErpMockService {
         };
       }
       const existing = inventoryList[existingIdx];
-      if (adj.quantity > existing.availableUnits || adj.totalWeightMt > existing.availableWeightMt) {
+      if (adj.totalWeightMt > existing.availableWeightMt) {
         return {
           ok: false,
-          message: `Approval blocked: Current stock (${existing.availableUnits} ${existing.packagingUom}, ${existing.availableWeightMt} MT) is insufficient for requested decrease. Request remains Pending Approval.`,
+          message: `Approval blocked: Current stock (${existing.availableWeightMt} MT) is insufficient for requested decrease. Request remains Pending Approval.`,
         };
       }
     }
@@ -5766,7 +5751,7 @@ export class SaudaErpMockService {
 
   // ── Packaging UOM Operations ──
 
-  createPackagingUom(name: string, bagQuantity: number = 50, unit: string = 'Kg'): ActionResult {
+  createPackagingUom(name: string, bagQuantity?: number, unit?: string): ActionResult {
     const trimmed = (name || '').trim();
     if (trimmed.length < 2) {
       return { ok: false, message: 'Packaging UOM name must be at least 2 characters.' };
@@ -5783,8 +5768,8 @@ export class SaudaErpMockService {
     const record: PackagingUomRecord = {
       id: `PUOM-${String(nextNum).padStart(3, '0')}`,
       name: trimmed,
-      bagQuantity: Number(bagQuantity) || 50,
-      unit: unit || 'Kg',
+      bagQuantity: bagQuantity !== undefined ? Number(bagQuantity) : undefined,
+      unit: unit || undefined,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -5793,7 +5778,7 @@ export class SaudaErpMockService {
     return { ok: true, message: `Packaging UOM "${trimmed}" created successfully.` };
   }
 
-  updatePackagingUom(id: string, name: string, bagQuantity?: number, unit: string = 'Kg'): ActionResult {
+  updatePackagingUom(id: string, name: string, bagQuantity?: number, unit?: string): ActionResult {
     const existing = this.packagingUomsSubject.value.find((u) => u.id === id);
     if (!existing) return { ok: false, message: 'Packaging UOM not found.' };
     const trimmed = (name || '').trim();
@@ -5814,8 +5799,8 @@ export class SaudaErpMockService {
           ? {
               ...u,
               name: trimmed,
-              bagQuantity: bagQuantity !== undefined ? Number(bagQuantity) : (u.bagQuantity ?? 50),
-              unit: unit || u.unit || 'Kg',
+              bagQuantity: bagQuantity !== undefined ? Number(bagQuantity) : u.bagQuantity,
+              unit: unit !== undefined ? unit : u.unit,
               updatedAt: now,
             }
           : u,

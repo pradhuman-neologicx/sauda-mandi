@@ -58,7 +58,6 @@
           <tr>
             <th style="width: 80px">S.No.</th>
             <th>Packaging UOM Name</th>
-            <th class="text-end">Quantity in 1 Unit</th>
             <th>Created Date</th>
             <th class="text-center" style="width: 140px">Status</th>
             <th class="text-center" style="width: 150px">Actions</th>
@@ -67,7 +66,7 @@
         <tbody>
           @if (filteredPackagingUoms.length === 0) {
           <tr>
-            <td colspan="6" class="empty-state">
+            <td colspan="5" class="empty-state">
               <i class="fa-solid fa-box-open mb-2"></i>
               <div>No Packaging UOM records found.</div>
             </td>
@@ -88,9 +87,6 @@
           <tr [class.inactive-row]="!uom.isActive">
             <td class="num">{{ (page - 1) * itemsPerPageCount + i + 1 }}</td>
             <td class="fw-semibold text-dark">{{ uom.name }}</td>
-            <td class="text-end num fw-semibold">
-              {{ uom.bagQuantity }} {{ uom.unit || 'Kg' }}
-            </td>
             <td class="num">{{ uom.createdAt }}</td>
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="uom.isActive ? 'is-active' : 'is-inactive'"
@@ -151,19 +147,10 @@
         <div class="alert-erp alert-danger-erp mb-3">{{ formError }}</div>
         }
 
-        <div class="field-group mb-3">
+        <div class="field-group">
           <label>Packaging UOM Name <span class="req">*</span></label>
           <input type="text" formControlName="name" class="erp-input"
-            placeholder="e.g. 50 Kg bag, PP Bori, Jute Sack, Crate" />
-        </div>
-
-        <div class="field-group">
-          <label>Quantity in 1 Unit / Capacity (Kg) <span class="req">*</span></label>
-          <input type="number" min="0.1" step="0.1" formControlName="bagQuantity" class="erp-input"
-            placeholder="e.g. 50" />
-          <div class="form-hint text-muted mt-1" style="font-size: 12px;">
-            Standard quantity or weight capacity contained in 1 unit/package (in Kg)
-          </div>
+            placeholder="e.g. Bag, PP Bori, Jute Sack, Crate, Box" />
         </div>
       </div>
 
