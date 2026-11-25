@@ -129,12 +129,17 @@ export interface TruckEntryRecord {
   saudaId: string;
   saudaNo: string;
   saudaType: SaudaType;
+  partyName?: string;
   warehouse?: string;
+  warehouseId?: string;
+  godownName?: string;
+  chamberName?: string;
+  stackNumber?: string;
   vehicleNo: string;
-  driverName: string;
-  driverPhone: string;
-  transporterName: string;
-  lrNo: string;
+  driverName?: string;
+  driverPhone?: string;
+  transporterName?: string;
+  lrNo?: string;
   commodityItems: CommodityLineItem[];
   commodities: string;
   loadedQtyMt: number;
@@ -143,6 +148,7 @@ export interface TruckEntryRecord {
   dispatchDate: string;
   expectedArrivalDate: string;
   status: TruckStatus;
+  isFinalSubmit?: boolean;
   remarks: string;
   currentVersion: number;
   createdBy: string;
@@ -508,23 +514,14 @@ export class SaudaErpMockService {
         {
           commodity: 'Bajra',
           packagingUom: 'Bag',
-          packagingQty: 150,
-          weightUom: 'Quintal',
-          actualWeight: 30,
-          rate: 3000,
-          lineTotal: 90000,
-        },
-        {
-          commodity: 'Jowar',
-          packagingUom: 'Bag',
           packagingQty: 100,
-          weightUom: 'Quintal',
-          actualWeight: 20,
-          rate: 3000,
-          lineTotal: 60000,
+          weightUom: 'MT',
+          actualWeight: 5,
+          rate: 30,
+          lineTotal: 150000,
         },
       ],
-      commodity: 'Bajra, Jowar',
+      commodity: 'Bajra',
       quantityMt: 5,
       heldQuantityMt: 5,
       soldQuantityMt: 0,
@@ -537,7 +534,7 @@ export class SaudaErpMockService {
       buyerCreditStartDate: '',
       buyerDueDate: '',
       remarks: 'Cleaned Shree Anna millet lots, standard 50kg bags',
-      status: 'Open',
+      status: 'Completed',
       currentVersion: 2,
       amendmentStatus: 'None',
       createdBy: 'Sauda Admin',
@@ -732,10 +729,10 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Yellow Field Maize purchase, awaiting truck placement',
-      status: 'Open',
+      remarks: 'Yellow Field Maize purchase lot (5 Ton booked)',
+      status: 'Partial',
       currentVersion: 1,
-      amendmentStatus: 'Pending Approval',
+      amendmentStatus: 'None',
       pendingAmendment: {
         id: 'AMD-2026-0001',
         saudaId: 'SAU-2026-0004',
@@ -1013,53 +1010,109 @@ export class SaudaErpMockService {
         },
       ],
     },
+    {
+      id: 'SAU-2026-0009',
+      saudaNo: 'SAU-2026-0009',
+      saudaDate: '2026-11-10',
+      saudaType: 'Sales',
+      clientFirm: 'Desert Fresh Traders',
+      sellerName: 'Desert Fresh Traders',
+      buyerName: 'Marwar Agro Retailers',
+      partyName: 'Marwar Agro Retailers',
+      warehouseId: 'WH-001',
+      warehouseName: 'Desert Mandi Yard A',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
+      commodityItems: [
+        {
+          commodity: 'Wheat',
+          packagingUom: 'Bag',
+          packagingQty: 100,
+          weightUom: 'MT',
+          actualWeight: 5,
+          rate: 26,
+          lineTotal: 130000,
+        },
+      ],
+      commodity: 'Wheat',
+      quantityMt: 5,
+      totalAmountInr: 130000,
+      sellerCreditPeriodDays: null,
+      sellerCreditStartDate: '',
+      sellerDueDate: '',
+      buyerCreditPeriodDays: 10,
+      buyerCreditStartDate: '2026-11-10',
+      buyerDueDate: '2026-11-20',
+      remarks: 'Sales wholesale contract (5 Ton total, multiple outward trucks scheduled)',
+      status: 'Partial',
+      currentVersion: 1,
+      amendmentStatus: 'None',
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-10 10:00',
+      updatedAt: '2026-11-10 10:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-10 10:00',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: 'Sales deal booked with Marwar Agro Retailers',
+          changes: [
+            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (5 Ton)' },
+            { field: 'Total Amount', oldValue: '-', newValue: '₹1,30,000' },
+          ],
+        },
+      ],
+    },
   ];
 
   private readonly initialTrucks: TruckEntryRecord[] = [
+    // ── INWARD (Purchase) Deal 1: SAU-2026-0001 (5 Ton total: 1 Ton + 3 Ton + 1 Ton = 5 Ton Completed) ──
     {
       id: 'TRK-2026-0001',
       entryNo: 'TRK-2026-0001',
       saudaId: 'SAU-2026-0001',
       saudaNo: 'SAU-2026-0001',
       saudaType: 'Purchase',
+      partyName: 'Sharma Grain Traders',
       warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
       vehicleNo: 'RJ07-GA-1234',
-      driverName: 'Ramesh Choudhary',
-      driverPhone: '9829011223',
-      transporterName: 'Marwar Roadways',
-      lrNo: 'LR-88412',
       commodityItems: [
         {
           commodity: 'Bajra',
           packagingUom: 'Bag',
-          packagingQty: 40,
-          weightUom: 'Quintal',
-          actualWeight: 8,
+          packagingQty: 20,
+          weightUom: 'MT',
+          actualWeight: 1.0,
         },
       ],
       commodities: 'Bajra',
-      loadedQtyMt: 0.8,
-      freightRatePerMt: 1150,
+      loadedQtyMt: 1.0,
+      freightRatePerMt: 1100,
       advancePaid: 0,
-      dispatchDate: '2026-11-05',
-      expectedArrivalDate: '2026-11-07',
-      status: 'In Transit',
-      remarks: '',
+      dispatchDate: '2026-11-04',
+      expectedArrivalDate: '2026-11-04',
+      status: 'Delivered',
+      remarks: '1st inward truck lot (1 Ton received)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
-      createdAt: '2026-11-05 15:10',
-      updatedAt: '2026-11-05 15:10',
+      createdAt: '2026-11-04 14:00',
+      updatedAt: '2026-11-04 14:00',
       revisions: [
         {
           version: 1,
-          changedAt: '2026-11-05 15:10',
+          changedAt: '2026-11-04 14:00',
           changedBy: 'Sauda Admin',
           action: 'Created',
           reason: 'Initial truck entry linked to SAU-2026-0001',
           changes: [
             { field: 'Truck Number', oldValue: '-', newValue: 'RJ07-GA-1234' },
-            { field: 'Warehouse', oldValue: '-', newValue: 'Desert Mandi Yard A' },
-            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (8 Quintal)' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.00 MT' },
           ],
         },
       ],
@@ -1070,66 +1123,44 @@ export class SaudaErpMockService {
       saudaId: 'SAU-2026-0001',
       saudaNo: 'SAU-2026-0001',
       saudaType: 'Purchase',
+      partyName: 'Sharma Grain Traders',
       warehouse: 'Desert Mandi Yard A',
-      vehicleNo: 'RJ07-GA-1234',
-      driverName: 'Suresh Gurjar',
-      driverPhone: '9828144556',
-      transporterName: 'Kota Freight Carriers',
-      lrNo: 'LR-88445',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 102',
+      vehicleNo: 'RJ19-EA-5566',
       commodityItems: [
         {
           commodity: 'Bajra',
           packagingUom: 'Bag',
-          packagingQty: 50,
-          weightUom: 'Quintal',
-          actualWeight: 10,
-        },
-        {
-          commodity: 'Jowar',
-          packagingUom: 'Bag',
-          packagingQty: 50,
-          weightUom: 'Quintal',
-          actualWeight: 10,
+          packagingQty: 60,
+          weightUom: 'MT',
+          actualWeight: 3.0,
         },
       ],
-      commodities: 'Bajra, Jowar',
-      loadedQtyMt: 4.2,
-      freightRatePerMt: 1200,
-      advancePaid: 1000,
+      commodities: 'Bajra',
+      loadedQtyMt: 3.0,
+      freightRatePerMt: 1100,
+      advancePaid: 0,
       dispatchDate: '2026-11-06',
-      expectedArrivalDate: '2026-11-08',
-      status: 'Loaded',
-      remarks: 'Second dispatch lot',
-      currentVersion: 2,
+      expectedArrivalDate: '2026-11-06',
+      status: 'Delivered',
+      remarks: '2nd inward truck lot (3 Ton received)',
+      currentVersion: 1,
       createdBy: 'Sauda Admin',
-      createdAt: '2026-11-06 09:20',
-      updatedAt: '2026-11-06 17:45',
+      createdAt: '2026-11-06 11:30',
+      updatedAt: '2026-11-06 11:30',
       revisions: [
         {
           version: 1,
-          changedAt: '2026-11-06 09:20',
+          changedAt: '2026-11-06 11:30',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Scheduled second truck for SAU-2026-0001',
+          reason: 'Second truck entry linked to SAU-2026-0001',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Bajra' },
-            { field: 'Warehouse', oldValue: '-', newValue: 'Desert Mandi Yard A' },
-            { field: 'Weight (MT)', oldValue: '-', newValue: '1 MT' },
-          ],
-        },
-        {
-          version: 2,
-          changedAt: '2026-11-06 17:45',
-          changedBy: 'Sauda Admin',
-          action: 'Updated',
-          reason: 'Added Jowar bags and updated weighment',
-          changes: [
-            {
-              field: 'Commodities',
-              oldValue: 'Bajra',
-              newValue: 'Bajra, Jowar',
-            },
-            { field: 'Weight (MT)', oldValue: '1 MT', newValue: '2 MT' },
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ19-EA-5566' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '3.00 MT' },
           ],
         },
       ],
@@ -1137,95 +1168,98 @@ export class SaudaErpMockService {
     {
       id: 'TRK-2026-0003',
       entryNo: 'TRK-2026-0003',
-      saudaId: 'SAU-2026-0002',
-      saudaNo: 'SAU-2026-0002',
-      saudaType: 'Sales',
-      warehouse: 'Fresh Terminal Cold Hub',
-      vehicleNo: 'RJ14-AB-5678',
-      driverName: 'Vikram Singh',
-      driverPhone: '9755099881',
-      transporterName: 'Malwa Logistics',
-      lrNo: 'LR-88491',
-      commodityItems: [
-        {
-          commodity: 'Wheat',
-          packagingUom: 'Bag',
-          packagingQty: 100,
-          weightUom: 'Quintal',
-          actualWeight: 50,
-        },
-      ],
-      commodities: 'Wheat',
-      loadedQtyMt: 5,
-      freightRatePerMt: 1350,
-      advancePaid: 3000,
-      dispatchDate: '2026-11-07',
-      expectedArrivalDate: '2026-11-09',
-      status: 'Delivered',
-      remarks: 'Full contract delivered',
-      currentVersion: 1,
-      createdBy: 'Sauda Admin',
-      createdAt: '2026-11-07 12:30',
-      updatedAt: '2026-11-09 16:00',
-      revisions: [
-        {
-          version: 1,
-          changedAt: '2026-11-07 12:30',
-          changedBy: 'Sauda Admin',
-          action: 'Created',
-          reason: 'Full lot dispatch for City Wholesale Market',
-          changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (50 Quintal)' },
-            { field: 'Warehouse', oldValue: '-', newValue: 'Fresh Terminal Cold Hub' },
-            { field: 'Status', oldValue: '-', newValue: 'Delivered' },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'TRK-2026-0004',
-      entryNo: 'TRK-2026-0004',
-      saudaId: 'SAU-2026-0003',
-      saudaNo: 'SAU-2026-0003',
-      saudaType: 'Direct Sale',
-      warehouse: 'Rajasthan Agro Godown 4',
-      vehicleNo: 'RJ20-GB-9104',
-      driverName: 'Dinesh Jat',
-      driverPhone: '9928377611',
-      transporterName: 'Bundi Agro Transport',
-      lrNo: 'LR-88510',
+      saudaId: 'SAU-2026-0001',
+      saudaNo: 'SAU-2026-0001',
+      saudaType: 'Purchase',
+      partyName: 'Sharma Grain Traders',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 103',
+      vehicleNo: 'RJ14-XY-9900',
       commodityItems: [
         {
           commodity: 'Bajra',
           packagingUom: 'Bag',
-          packagingQty: 80,
-          weightUom: 'Quintal',
-          actualWeight: 40,
+          packagingQty: 20,
+          weightUom: 'MT',
+          actualWeight: 1.0,
         },
       ],
       commodities: 'Bajra',
-      loadedQtyMt: 4,
-      freightRatePerMt: 980,
-      advancePaid: 1500,
+      loadedQtyMt: 1.0,
+      freightRatePerMt: 1100,
+      advancePaid: 0,
       dispatchDate: '2026-11-08',
-      expectedArrivalDate: '2026-11-10',
-      status: 'In Transit',
-      remarks: 'Tarpaulin sealed, ready for gate pass',
+      expectedArrivalDate: '2026-11-08',
+      status: 'Delivered',
+      isFinalSubmit: true,
+      remarks: '3rd and final inward truck (1 Ton received, deal completed 5/5 Ton)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
-      createdAt: '2026-11-08 18:10',
-      updatedAt: '2026-11-08 18:10',
+      createdAt: '2026-11-08 16:00',
+      updatedAt: '2026-11-08 16:00',
       revisions: [
         {
           version: 1,
-          changedAt: '2026-11-08 18:10',
+          changedAt: '2026-11-08 16:00',
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Direct Sale Bajra loading completed',
+          reason: 'Final truck entry for SAU-2026-0001 (Completed)',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Bajra (40 Quintal)' },
-            { field: 'Warehouse', oldValue: '-', newValue: 'Rajasthan Agro Godown 4' },
-            { field: 'Status', oldValue: '-', newValue: 'In Transit' },
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ14-XY-9900' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.00 MT' },
+          ],
+        },
+      ],
+    },
+
+    // ── INWARD (Purchase) Deal 2: SAU-2026-0004 (5 Ton total: 1.5 + 1.5 = 3 Ton in, 2 Ton Remaining!) ──
+    {
+      id: 'TRK-2026-0004',
+      entryNo: 'TRK-2026-0004',
+      saudaId: 'SAU-2026-0004',
+      saudaNo: 'SAU-2026-0004',
+      saudaType: 'Purchase',
+      partyName: 'Om Traders',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
+      vehicleNo: 'RJ07-PB-2211',
+      commodityItems: [
+        {
+          commodity: 'Maize',
+          packagingUom: 'Bag',
+          packagingQty: 30,
+          weightUom: 'MT',
+          actualWeight: 1.5,
+        },
+      ],
+      commodities: 'Maize',
+      loadedQtyMt: 1.5,
+      freightRatePerMt: 1100,
+      advancePaid: 0,
+      dispatchDate: '2026-11-09',
+      expectedArrivalDate: '2026-11-09',
+      status: 'Delivered',
+      remarks: '1st inward maize truck (1.5 Ton received)',
+      currentVersion: 1,
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-09 10:30',
+      updatedAt: '2026-11-09 10:30',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-09 10:30',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: '1st truck entry for SAU-2026-0004',
+          changes: [
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ07-PB-2211' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.50 MT' },
           ],
         },
       ],
@@ -1233,91 +1267,292 @@ export class SaudaErpMockService {
     {
       id: 'TRK-2026-0005',
       entryNo: 'TRK-2026-0005',
-      saudaId: 'SAU-2026-0006',
-      saudaNo: 'SAU-2026-0006',
+      saudaId: 'SAU-2026-0004',
+      saudaNo: 'SAU-2026-0004',
       saudaType: 'Purchase',
+      partyName: 'Om Traders',
       warehouse: 'Desert Mandi Yard A',
-      vehicleNo: 'RJ07-GB-4321',
-      driverName: 'Mukesh Yadav',
-      driverPhone: '9829033445',
-      transporterName: 'Marwar Roadways',
-      lrNo: 'LR-88540',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 102',
+      vehicleNo: 'RJ07-PB-3344',
       commodityItems: [
         {
-          commodity: 'Bajra',
+          commodity: 'Maize',
           packagingUom: 'Bag',
-          packagingQty: 150,
-          weightUom: 'Quintal',
-          actualWeight: 40,
+          packagingQty: 30,
+          weightUom: 'MT',
+          actualWeight: 1.5,
         },
       ],
-      commodities: 'Bajra',
-      loadedQtyMt: 4,
+      commodities: 'Maize',
+      loadedQtyMt: 1.5,
       freightRatePerMt: 1100,
-      advancePaid: 2000,
-      dispatchDate: '2026-11-10',
-      expectedArrivalDate: '2026-11-12',
+      advancePaid: 0,
+      dispatchDate: '2026-11-11',
+      expectedArrivalDate: '2026-11-11',
       status: 'Delivered',
-      remarks: 'Full contract delivered to Desert Mandi Yard A',
+      remarks: '2nd inward maize truck (1.5 Ton received, 2 Ton still pending)',
       currentVersion: 1,
-      createdBy: 'Amit Patel',
-      createdAt: '2026-11-10 12:00',
-      updatedAt: '2026-11-12 16:00',
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-11 15:45',
+      updatedAt: '2026-11-11 15:45',
       revisions: [
         {
           version: 1,
-          changedAt: '2026-11-10 12:00',
-          changedBy: 'Amit Patel',
+          changedAt: '2026-11-11 15:45',
+          changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Initial truck dispatch for SAU-2026-0006',
+          reason: '2nd truck entry for SAU-2026-0004',
           changes: [
-            { field: 'Status', oldValue: '-', newValue: 'Delivered' },
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ07-PB-3344' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.50 MT' },
+          ],
+        },
+      ],
+    },
+
+    // ── OUTWARD (Sales) Deal 3: SAU-2026-0002 (5 Ton total: 1 Ton + 3 Ton + 1 Ton = 5 Ton Completed) ──
+    {
+      id: 'TRK-2026-0006',
+      entryNo: 'TRK-2026-0006',
+      saudaId: 'SAU-2026-0002',
+      saudaNo: 'SAU-2026-0002',
+      saudaType: 'Sales',
+      partyName: 'City Wholesale Market',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
+      vehicleNo: 'RJ14-AB-1111',
+      commodityItems: [
+        {
+          commodity: 'Wheat',
+          packagingUom: 'Bag',
+          packagingQty: 20,
+          weightUom: 'MT',
+          actualWeight: 1.0,
+        },
+      ],
+      commodities: 'Wheat',
+      loadedQtyMt: 1.0,
+      freightRatePerMt: 1200,
+      advancePaid: 0,
+      dispatchDate: '2026-11-05',
+      expectedArrivalDate: '2026-11-05',
+      status: 'Delivered',
+      remarks: '1st outward wheat dispatch (1 Ton)',
+      currentVersion: 1,
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-05 16:30',
+      updatedAt: '2026-11-05 16:30',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-05 16:30',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: '1st dispatch for SAU-2026-0002',
+          changes: [
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ14-AB-1111' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.00 MT' },
           ],
         },
       ],
     },
     {
-      id: 'TRK-2026-0006',
-      entryNo: 'TRK-2026-0006',
-      saudaId: 'SAU-2026-0007',
-      saudaNo: 'SAU-2026-0007',
-      saudaType: 'Purchase',
+      id: 'TRK-2026-0007',
+      entryNo: 'TRK-2026-0007',
+      saudaId: 'SAU-2026-0002',
+      saudaNo: 'SAU-2026-0002',
+      saudaType: 'Sales',
+      partyName: 'City Wholesale Market',
       warehouse: 'Desert Mandi Yard A',
-      vehicleNo: 'RJ07-GC-5678',
-      driverName: 'Kailash Meena',
-      driverPhone: '9829044556',
-      transporterName: 'Kota Freight Carriers',
-      lrNo: 'LR-88555',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 102',
+      vehicleNo: 'RJ14-AB-2222',
       commodityItems: [
         {
-          commodity: 'Jowar',
+          commodity: 'Wheat',
           packagingUom: 'Bag',
-          packagingQty: 100,
-          weightUom: 'Quintal',
-          actualWeight: 40,
+          packagingQty: 60,
+          weightUom: 'MT',
+          actualWeight: 3.0,
         },
       ],
-      commodities: 'Jowar',
-      loadedQtyMt: 4,
-      freightRatePerMt: 1100,
-      advancePaid: 2000,
-      dispatchDate: '2026-11-11',
-      expectedArrivalDate: '2026-11-13',
+      commodities: 'Wheat',
+      loadedQtyMt: 3.0,
+      freightRatePerMt: 1200,
+      advancePaid: 0,
+      dispatchDate: '2026-11-07',
+      expectedArrivalDate: '2026-11-07',
       status: 'Delivered',
-      remarks: 'Full contract delivered to Desert Mandi Yard A',
+      remarks: '2nd outward wheat dispatch (3 Ton)',
       currentVersion: 1,
-      createdBy: 'Amit Patel',
-      createdAt: '2026-11-11 13:00',
-      updatedAt: '2026-11-13 17:00',
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-07 14:15',
+      updatedAt: '2026-11-07 14:15',
       revisions: [
         {
           version: 1,
-          changedAt: '2026-11-11 13:00',
-          changedBy: 'Amit Patel',
+          changedAt: '2026-11-07 14:15',
+          changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: 'Initial truck dispatch for SAU-2026-0007',
+          reason: '2nd dispatch for SAU-2026-0002',
           changes: [
-            { field: 'Status', oldValue: '-', newValue: 'Delivered' },
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ14-AB-2222' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '3.00 MT' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TRK-2026-0008',
+      entryNo: 'TRK-2026-0008',
+      saudaId: 'SAU-2026-0002',
+      saudaNo: 'SAU-2026-0002',
+      saudaType: 'Sales',
+      partyName: 'City Wholesale Market',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 103',
+      vehicleNo: 'RJ14-AB-3333',
+      commodityItems: [
+        {
+          commodity: 'Wheat',
+          packagingUom: 'Bag',
+          packagingQty: 20,
+          weightUom: 'MT',
+          actualWeight: 1.0,
+        },
+      ],
+      commodities: 'Wheat',
+      loadedQtyMt: 1.0,
+      freightRatePerMt: 1200,
+      advancePaid: 0,
+      dispatchDate: '2026-11-09',
+      expectedArrivalDate: '2026-11-09',
+      status: 'Delivered',
+      isFinalSubmit: true,
+      remarks: '3rd and final outward wheat dispatch (1 Ton, deal completed 5/5 Ton)',
+      currentVersion: 1,
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-09 17:00',
+      updatedAt: '2026-11-09 17:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-09 17:00',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: 'Final dispatch for SAU-2026-0002 (Completed)',
+          changes: [
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ14-AB-3333' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.00 MT' },
+          ],
+        },
+      ],
+    },
+
+    // ── OUTWARD (Sales) Deal 4: SAU-2026-0009 (5 Ton total: 1.5 + 1.5 = 3 Ton out, 2 Ton Remaining!) ──
+    {
+      id: 'TRK-2026-0009',
+      entryNo: 'TRK-2026-0009',
+      saudaId: 'SAU-2026-0009',
+      saudaNo: 'SAU-2026-0009',
+      saudaType: 'Sales',
+      partyName: 'Marwar Agro Retailers',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 101',
+      vehicleNo: 'RJ20-GB-4455',
+      commodityItems: [
+        {
+          commodity: 'Wheat',
+          packagingUom: 'Bag',
+          packagingQty: 30,
+          weightUom: 'MT',
+          actualWeight: 1.5,
+        },
+      ],
+      commodities: 'Wheat',
+      loadedQtyMt: 1.5,
+      freightRatePerMt: 1150,
+      advancePaid: 0,
+      dispatchDate: '2026-11-10',
+      expectedArrivalDate: '2026-11-10',
+      status: 'Delivered',
+      remarks: '1st outward wheat dispatch to Marwar Agro Retailers (1.5 Ton)',
+      currentVersion: 1,
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-10 11:00',
+      updatedAt: '2026-11-10 11:00',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-10 11:00',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: '1st dispatch for SAU-2026-0009',
+          changes: [
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ20-GB-4455' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.50 MT' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TRK-2026-0010',
+      entryNo: 'TRK-2026-0010',
+      saudaId: 'SAU-2026-0009',
+      saudaNo: 'SAU-2026-0009',
+      saudaType: 'Sales',
+      partyName: 'Marwar Agro Retailers',
+      warehouse: 'Desert Mandi Yard A',
+      warehouseId: 'WH-001',
+      godownName: 'Godown 1 (North Block)',
+      chamberName: 'Chamber 1',
+      stackNumber: 'Stack No. 102',
+      vehicleNo: 'RJ20-GB-6677',
+      commodityItems: [
+        {
+          commodity: 'Wheat',
+          packagingUom: 'Bag',
+          packagingQty: 30,
+          weightUom: 'MT',
+          actualWeight: 1.5,
+        },
+      ],
+      commodities: 'Wheat',
+      loadedQtyMt: 1.5,
+      freightRatePerMt: 1150,
+      advancePaid: 0,
+      dispatchDate: '2026-11-12',
+      expectedArrivalDate: '2026-11-12',
+      status: 'Delivered',
+      remarks: '2nd outward wheat dispatch (1.5 Ton, 2 Ton still pending)',
+      currentVersion: 1,
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-12 16:30',
+      updatedAt: '2026-11-12 16:30',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-12 16:30',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: '2nd dispatch for SAU-2026-0009',
+          changes: [
+            { field: 'Truck Number', oldValue: '-', newValue: 'RJ20-GB-6677' },
+            { field: 'Loaded Weight', oldValue: '-', newValue: '1.50 MT' },
           ],
         },
       ],
@@ -3568,7 +3803,7 @@ export class SaudaErpMockService {
 
     const loadedQtyMt = this.computeTotalWeightMt(payload.commodityItems);
     const remaining = this.getRemainingQtyMt(payload.saudaId);
-    if (loadedQtyMt > remaining) {
+    if (!payload.isFinalSubmit && loadedQtyMt > remaining) {
       return {
         ok: false,
         message: `Total truck weight (${loadedQtyMt} MT) exceeds remaining Sauda balance (${remaining} MT).`,
@@ -3608,6 +3843,7 @@ export class SaudaErpMockService {
       entryNo,
       saudaNo: sauda.saudaNo,
       saudaType: sauda.saudaType,
+      partyName: payload.partyName || sauda.partyName,
       commodities,
       loadedQtyMt,
       vehicleNo: payload.vehicleNo.trim().toUpperCase(),
@@ -3621,7 +3857,9 @@ export class SaudaErpMockService {
           changedAt: now,
           changedBy: 'Sauda Admin',
           action: 'Created',
-          reason: `Truck entry created against ${sauda.saudaNo}`,
+          reason: payload.isFinalSubmit
+            ? `Final truck entry created against ${sauda.saudaNo} (Sauda Completed)`
+            : `Truck entry created against ${sauda.saudaNo}`,
           changes: [
             {
               field: 'Truck Number',
@@ -3642,11 +3880,56 @@ export class SaudaErpMockService {
       ],
     };
 
+    if (payload.isFinalSubmit) {
+      const priorLoaded = this.trucksSubject.value
+        .filter((t) => t.saudaId === sauda.id && t.status !== 'Removed')
+        .reduce((sum, t) => sum + Number(t.loadedQtyMt || 0), 0);
+      const totalActualLoadedMt = Number((priorLoaded + loadedQtyMt).toFixed(3));
+      const prevQty = sauda.quantityMt || 1;
+      const unitRate = sauda.totalAmountInr / prevQty;
+      const newTotalAmount = Math.round(totalActualLoadedMt * unitRate);
+
+      const updatedSauda: SaudaRecord = {
+        ...sauda,
+        quantityMt: totalActualLoadedMt,
+        heldQuantityMt: sauda.saudaType === 'Purchase' ? totalActualLoadedMt : sauda.heldQuantityMt,
+        totalAmountInr: newTotalAmount,
+        status: 'Completed',
+        updatedAt: now,
+        revisions: [
+          ...sauda.revisions,
+          {
+            version: sauda.currentVersion + 1,
+            changedAt: now,
+            changedBy: 'Sauda Admin',
+            action: 'Updated',
+            reason: `Sauda finalized via Final Truck Entry. Quantity adjusted from ${sauda.quantityMt} MT to actual fulfilled ${totalActualLoadedMt} MT and marked Completed.`,
+            changes: [
+              { field: 'Quantity', oldValue: `${sauda.quantityMt} MT`, newValue: `${totalActualLoadedMt} MT` },
+              { field: 'Total Amount', oldValue: `₹${sauda.totalAmountInr.toLocaleString('en-IN')}`, newValue: `₹${newTotalAmount.toLocaleString('en-IN')}` },
+              { field: 'Status', oldValue: sauda.status, newValue: 'Completed' },
+            ],
+          },
+        ],
+        currentVersion: sauda.currentVersion + 1,
+      };
+
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((s) => (s.id === sauda.id ? updatedSauda : s)),
+      );
+    }
+
     this.trucksSubject.next([newTruck, ...this.trucksSubject.value]);
     this.syncInventoryForTruck(null, newTruck);
     this.recomputeAllSaudaStatuses();
 
-    return { ok: true, message: `Truck entry ${entryNo} created successfully.` };
+    return {
+      ok: true,
+      message: payload.isFinalSubmit
+        ? `Truck entry ${entryNo} saved. Sauda ${sauda.saudaNo} marked Completed with final quantity.`
+        : `Truck entry ${entryNo} created successfully.`,
+      recordId: entryNo,
+    };
   }
 
   updateTruck(
@@ -3751,7 +4034,7 @@ export class SaudaErpMockService {
 
     const loadedQtyMt = this.computeTotalWeightMt(payload.commodityItems);
     const remaining = this.getRemainingQtyMt(payload.saudaId, id);
-    if (loadedQtyMt > remaining) {
+    if (!payload.isFinalSubmit && loadedQtyMt > remaining) {
       return {
         ok: false,
         message: `Total truck weight (${loadedQtyMt} MT) exceeds available Sauda balance (${remaining} MT).`,
@@ -3808,8 +4091,6 @@ export class SaudaErpMockService {
       `${existing.loadedQtyMt} MT`,
       `${loadedQtyMt} MT`,
     );
-    this.pushDiff(changes, 'Driver Name', existing.driverName, payload.driverName);
-    this.pushDiff(changes, 'Transporter', existing.transporterName, payload.transporterName);
     this.pushDiff(changes, 'Status', existing.status, payload.status);
     this.pushDiff(changes, 'Remarks', existing.remarks, payload.remarks);
 
@@ -3845,6 +4126,45 @@ export class SaudaErpMockService {
       ],
     };
 
+    if (payload.isFinalSubmit) {
+      const priorLoaded = this.trucksSubject.value
+        .filter((t) => t.saudaId === sauda.id && t.id !== id && t.status !== 'Removed')
+        .reduce((sum, t) => sum + Number(t.loadedQtyMt || 0), 0);
+      const totalActualLoadedMt = Number((priorLoaded + loadedQtyMt).toFixed(3));
+      const prevQty = sauda.quantityMt || 1;
+      const unitRate = sauda.totalAmountInr / prevQty;
+      const newTotalAmount = Math.round(totalActualLoadedMt * unitRate);
+
+      const updatedSauda: SaudaRecord = {
+        ...sauda,
+        quantityMt: totalActualLoadedMt,
+        heldQuantityMt: sauda.saudaType === 'Purchase' ? totalActualLoadedMt : sauda.heldQuantityMt,
+        totalAmountInr: newTotalAmount,
+        status: 'Completed',
+        updatedAt: now,
+        revisions: [
+          ...sauda.revisions,
+          {
+            version: sauda.currentVersion + 1,
+            changedAt: now,
+            changedBy: 'Sauda Admin',
+            action: 'Updated',
+            reason: `Sauda finalized via Final Truck Entry edit. Quantity adjusted from ${sauda.quantityMt} MT to actual fulfilled ${totalActualLoadedMt} MT and marked Completed.`,
+            changes: [
+              { field: 'Quantity', oldValue: `${sauda.quantityMt} MT`, newValue: `${totalActualLoadedMt} MT` },
+              { field: 'Total Amount', oldValue: `₹${sauda.totalAmountInr.toLocaleString('en-IN')}`, newValue: `₹${newTotalAmount.toLocaleString('en-IN')}` },
+              { field: 'Status', oldValue: sauda.status, newValue: 'Completed' },
+            ],
+          },
+        ],
+        currentVersion: sauda.currentVersion + 1,
+      };
+
+      this.saudasSubject.next(
+        this.saudasSubject.value.map((s) => (s.id === sauda.id ? updatedSauda : s)),
+      );
+    }
+
     this.trucksSubject.next(
       this.trucksSubject.value.map((t) => (t.id === id ? updatedTruck : t)),
     );
@@ -3854,6 +4174,7 @@ export class SaudaErpMockService {
     return {
       ok: true,
       message: `Truck entry ${existing.entryNo} updated (Revision v${nextVersion}).`,
+      recordId: existing.id,
     };
   }
 
@@ -6640,8 +6961,8 @@ export class SaudaErpMockService {
   private pushDiff(
     changes: RevisionDiff[],
     field: string,
-    oldVal: string,
-    newVal: string,
+    oldVal?: string | null,
+    newVal?: string | null,
   ): void {
     if ((oldVal || '') !== (newVal || '')) {
       changes.push({

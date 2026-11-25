@@ -14,7 +14,9 @@ import { NgxPaginationModule } from 'ngx-pagination';
 import { combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  ChamberConfig,
   CommodityLineItem,
+  GodownRecord,
   PackagingUom,
   PackagingUomRecord,
   SaudaErpMockService,
@@ -54,6 +56,17 @@ export class TruckManagementComponent implements OnInit {
   filteredTrucks: TruckEntryRecord[] = [];
   allSaudas: SaudaRecord[] = [];
   allWarehouses: WarehouseRecord[] = [];
+  godowns: GodownRecord[] = [];
+
+  // 4-Level Location Cascades for Form
+  availableGodowns: GodownRecord[] = [];
+  availableChambers: ChamberConfig[] = [];
+  availableStacks: string[] = [];
+
+  // Party & Sauda Linking Filter / Search
+  allPartyOptions: string[] = [];
+  selectedParty: string = '';
+  saudaSearchTerm: string = '';
 
   // Listing Filters (applied on Search click)
   searchTerm = '';
@@ -130,6 +143,150 @@ export class TruckManagementComponent implements OnInit {
   selectedSaudaRemainingMt: number = 0;
   formTotalWeightMt: number = 0;
 
+  // Post-Save Visibility Modal State
+  showSaveSuccessModal = false;
+  saveSuccessData: {
+    entryNo: string;
+    vehicleNo: string;
+    loadedQtyMt: number;
+    saudaNo: string;
+    saudaId: string;
+    partyName: string;
+    totalSaudaQtyMt: number;
+    dispatchedSoFarMt: number;
+    remainingBalanceMt: number;
+    isFinal: boolean;
+    saudaStatus: string;
+  } | null = null;
+
+  get selectedTruckSauda(): SaudaRecord | undefined {
+    return this.selectedTruck
+      ? this.getSaudaById(this.selectedTruck.saudaId)
+      : undefined;
+  }
+
+  getSaudaFulfilledQty(saudaId: string): number {
+    return Number(
+      this.allTrucks
+        .filter((t) => t.saudaId === saudaId && t.status !== 'Removed')
+        .reduce((sum, t) => sum + Number(t.loadedQtyMt || 0), 0)
+        .toFixed(3),
+    );
+  }
+
+  getSaudaRemainingQty(saudaId: string): number {
+    const s = this.getSaudaById(saudaId);
+    if (!s) return 0;
+    return Math.max(
+      0,
+      Number((s.quantityMt - this.getSaudaFulfilledQty(saudaId)).toFixed(3)),
+    );
+  }
+
+  closeSuccessModalAndGoToListing(): void {
+    this.showSaveSuccessModal = false;
+    this.saveSuccessData = null;
+    this.viewMode = 'listing';
+  }
+
+  closeSuccessModalAndViewTruck(): void {
+    const id = this.saveSuccessData?.entryNo;
+    this.showSaveSuccessModal = false;
+    this.saveSuccessData = null;
+    if (id) {
+      const truck = this.allTrucks.find(
+        (t) => t.entryNo === id || t.id === id,
+      );
+      if (truck) {
+        this.openDetailsView(truck);
+        return;
+      }
+    }
+    this.viewMode = 'listing';
+  }
+
+  closeSuccessModalAndAddNext(): void {
+    const saudaId = this.saveSuccessData?.saudaId;
+    this.showSaveSuccessModal = false;
+    this.saveSuccessData = null;
+    if (saudaId) {
+      this.openCreateForm(saudaId);
+    } else {
+      this.openCreateForm();
+    }
+  }
+
+  // ── Live Quantity Tracking Getters ──
+  get totalSaudaQtyMt(): number {
+    return this.selectedLinkedSauda?.quantityMt || 0;
+  }
+
+  get dispatchedSoFarMt(): number {
+    if (!this.selectedLinkedSauda) return 0;
+    return Number(
+      this.allTrucks
+        .filter(
+          (t) =>
+            t.saudaId === this.selectedLinkedSauda?.id &&
+            t.status !== 'Removed' &&
+            (!this.isEditMode || t.id !== this.selectedTruck?.id),
+        )
+        .reduce((sum, t) => sum + Number(t.loadedQtyMt || 0), 0)
+        .toFixed(3),
+    );
+  }
+
+  get remainingBalanceMt(): number {
+    return Number(
+      Math.max(0, this.totalSaudaQtyMt - this.dispatchedSoFarMt).toFixed(3),
+    );
+  }
+
+  get currentTruckWeightMt(): number {
+    return this.formTotalWeightMt;
+  }
+
+  get projectedTotalMt(): number {
+    return Number(
+      (this.dispatchedSoFarMt + this.currentTruckWeightMt).toFixed(3),
+    );
+  }
+
+  get filteredSaudasForParty(): SaudaRecord[] {
+    let list = this.allSaudas.filter((s) => {
+      if (
+        s.status === 'Voided' ||
+        s.saudaType === 'Brokerage' ||
+        s.saudaType === 'Forward'
+      )
+        return false;
+      if (this.isEditMode && s.id === this.selectedTruck?.saudaId) return true;
+      if (s.status === 'Completed') return false;
+      return true;
+    });
+
+    if (this.selectedParty) {
+      const p = this.selectedParty.trim().toLowerCase();
+      list = list.filter(
+        (s) =>
+          (s.partyName && s.partyName.trim().toLowerCase() === p) ||
+          (s.sellerName && s.sellerName.trim().toLowerCase() === p) ||
+          (s.buyerName && s.buyerName.trim().toLowerCase() === p),
+      );
+    }
+
+    if (this.saudaSearchTerm.trim()) {
+      const q = this.saudaSearchTerm.trim().toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.saudaNo.toLowerCase().includes(q) ||
+          s.commodity.toLowerCase().includes(q) ||
+          s.partyName.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }
+
   ngOnInit(): void {
     this.initForms();
 
@@ -138,13 +295,16 @@ export class TruckManagementComponent implements OnInit {
       this.erpService.saudas$,
       this.erpService.warehouses$,
       this.erpService.packagingUoms$,
+      this.erpService.godowns$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([trucks, saudas, warehouses, pkgs]) => {
+      .subscribe(([trucks, saudas, warehouses, pkgs, godowns]) => {
         this.allTrucks = trucks;
         this.allSaudas = saudas;
         this.allWarehouses = warehouses.filter((w) => w.isActive);
         this.dynamicPackagingUoms = (pkgs || []).filter((p) => p.isActive);
+        this.godowns = godowns || [];
+        this.updatePartyOptions();
         this.applyFilters();
         if (this.selectedTruck) {
           this.selectedTruck =
@@ -167,11 +327,33 @@ export class TruckManagementComponent implements OnInit {
       });
   }
 
+  updatePartyOptions(): void {
+    const set = new Set<string>();
+    for (const s of this.allSaudas) {
+      if (
+        s.status !== 'Voided' &&
+        s.saudaType !== 'Brokerage' &&
+        s.saudaType !== 'Forward'
+      ) {
+        if (s.partyName) set.add(s.partyName.trim());
+        if (s.sellerName) set.add(s.sellerName.trim());
+        if (s.buyerName) set.add(s.buyerName.trim());
+      }
+    }
+    this.allPartyOptions = Array.from(set)
+      .filter((p) => p.length > 0)
+      .sort();
+  }
+
   private initForms(): void {
     const today = new Date().toISOString().slice(0, 10);
     this.truckForm = this.fb.group({
       saudaId: ['', Validators.required],
       warehouse: ['', Validators.required],
+      warehouseId: [''],
+      godownName: [''],
+      chamberName: [''],
+      stackNumber: [''],
       dispatchDate: [today, Validators.required],
       vehicleNo: [
         '',
@@ -182,12 +364,6 @@ export class TruckManagementComponent implements OnInit {
           ),
         ],
       ],
-      status: ['In Transit', Validators.required],
-      driverName: [''],
-      driverPhone: ['', [Validators.pattern(/^([6-9]\d{9})?$/)]],
-      transporterName: [''],
-      lrNo: [''],
-      expectedArrivalDate: [''],
       commodityItems: this.fb.array([this.createCommodityRow()]),
       remarks: [''],
       revisionReason: [''],
@@ -215,27 +391,17 @@ export class TruckManagementComponent implements OnInit {
   }
 
   private createCommodityRow(item?: CommodityLineItem): FormGroup {
-    const defaultPkg =
-      item?.packagingUom || (this.dynamicPackagingUoms[0]?.name || 'Bag');
     let initialWeight: number | null = null;
-    if (item) {
-      if (item.actualWeight && item.weightUom) {
-        if (item.weightUom === 'KG') initialWeight = Number((item.actualWeight / 1000).toFixed(3));
-        else if (item.weightUom === 'Quintal') initialWeight = Number((item.actualWeight / 10).toFixed(3));
-        else initialWeight = Number(item.actualWeight);
-      } else if (item.packagingQty) {
-        const bagKg = this.getPackagingCapacity(defaultPkg);
-        initialWeight = Number(((item.packagingQty * bagKg) / 1000).toFixed(3));
-      }
+    if (item && item.actualWeight != null) {
+      if (item.weightUom === 'KG') initialWeight = Number((item.actualWeight / 1000).toFixed(3));
+      else if (item.weightUom === 'Quintal') initialWeight = Number((item.actualWeight / 10).toFixed(3));
+      else initialWeight = Number(item.actualWeight);
     }
 
     const row = this.fb.group({
       commodity: [item?.commodity || '', Validators.required],
-      packagingUom: [defaultPkg, Validators.required],
-      packagingQty: [
-        item?.packagingQty ?? null,
-        [Validators.required, Validators.min(1)],
-      ],
+      packagingUom: ['Bag'],
+      packagingQty: [1],
       weightUom: ['MT'],
       actualWeight: [
         initialWeight,
@@ -244,32 +410,14 @@ export class TruckManagementComponent implements OnInit {
     });
 
     row
-      .get('packagingUom')
+      .get('actualWeight')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.recomputeTruckRowWeight(row);
-      });
-
-    row
-      .get('packagingQty')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.recomputeTruckRowWeight(row);
+        this.updateFormCalculations();
       });
 
     return row;
   }
-
-  recomputeTruckRowWeight(row: FormGroup | AbstractControl): void {
-    const pkgName = row.get('packagingUom')?.value;
-    const qty = Number(row.get('packagingQty')?.value) || 0;
-    const bagKg = this.getPackagingCapacity(pkgName);
-    const weightMt = qty > 0 ? Number(((qty * bagKg) / 1000).toFixed(3)) : 0;
-    row.get('actualWeight')?.setValue(weightMt > 0 ? weightMt : null, { emitEvent: false });
-    row.get('weightUom')?.setValue('MT', { emitEvent: false });
-    this.updateFormCalculations();
-  }
-
 
   addCommodityRow(): void {
     const first = this.selectedSaudaCommodities[0];
@@ -280,7 +428,7 @@ export class TruckManagementComponent implements OnInit {
               commodity: '',
               packagingUom: first.packagingUom,
               packagingQty: 0,
-              weightUom: first.weightUom,
+              weightUom: 'MT',
               actualWeight: 0,
             }
           : undefined,
@@ -296,27 +444,104 @@ export class TruckManagementComponent implements OnInit {
     }
   }
 
+  onPartyChanged(): void {
+    const currentSaudaId = this.truckForm.get('saudaId')?.value;
+    if (currentSaudaId) {
+      const s = this.getSaudaById(currentSaudaId);
+      if (
+        s &&
+        this.selectedParty &&
+        s.partyName !== this.selectedParty &&
+        s.sellerName !== this.selectedParty &&
+        s.buyerName !== this.selectedParty
+      ) {
+        this.truckForm.patchValue({ saudaId: '' });
+      }
+    }
+  }
+
   private onLinkedSaudaChanged(saudaId: string): void {
-    if (!saudaId || this.isEditMode) return;
+    if (!saudaId) {
+      this.selectedLinkedSauda = undefined;
+      this.selectedSaudaCommodities = [];
+      this.commodityRows.clear();
+      this.commodityRows.push(this.createCommodityRow());
+      this.updateFormCalculations();
+      return;
+    }
     const sauda = this.getSaudaById(saudaId);
     if (!sauda) return;
-    if (sauda.saudaType === 'Purchase' || sauda.saudaType === 'Sales') {
-      this.targetSaudaType = sauda.saudaType;
+    this.selectedLinkedSauda = sauda;
+    if (!this.selectedParty) {
+      this.selectedParty = sauda.partyName;
     }
-    const first = sauda.commodityItems[0];
-    if (first) {
+    this.targetSaudaType = sauda.saudaType as 'Purchase' | 'Sales';
+    this.selectedSaudaCommodities = sauda.commodityItems || [];
+
+    if (!this.isEditMode) {
       this.commodityRows.clear();
-      this.commodityRows.push(
-        this.createCommodityRow({
-          commodity: first.commodity,
-          packagingUom: first.packagingUom,
-          packagingQty: 1,
-          weightUom: first.weightUom,
-          actualWeight: 100,
-        }),
-      );
+      const remaining = this.erpService.getRemainingQtyMt(sauda.id);
+      for (const ci of sauda.commodityItems) {
+        this.commodityRows.push(
+          this.createCommodityRow({
+            commodity: ci.commodity,
+            packagingUom: 'Bag',
+            packagingQty: 1,
+            weightUom: 'MT',
+            actualWeight: remaining > 0 ? remaining : ci.actualWeight,
+          }),
+        );
+      }
+      if (this.commodityRows.length === 0) {
+        this.commodityRows.push(this.createCommodityRow());
+      }
     }
     this.updateFormCalculations();
+  }
+
+  onWarehouseChanged(): void {
+    const whName = this.truckForm.get('warehouse')?.value;
+    const wh = this.allWarehouses.find(
+      (w) => w.name === whName || w.id === whName,
+    );
+    this.truckForm.patchValue({
+      warehouseId: wh?.id || '',
+      godownName: '',
+      chamberName: '',
+      stackNumber: '',
+    });
+    if (wh) {
+      this.availableGodowns = this.godowns.filter(
+        (g) =>
+          g.warehouseId === wh.id ||
+          g.warehouseName.toLowerCase() === wh.name.toLowerCase(),
+      );
+    } else {
+      this.availableGodowns = [];
+    }
+    this.availableChambers = [];
+    this.availableStacks = [];
+    this.updateFormCalculations();
+  }
+
+  onGodownChanged(): void {
+    const gdName = this.truckForm.get('godownName')?.value;
+    const gd = this.availableGodowns.find((g) => g.name === gdName);
+    this.truckForm.patchValue({
+      chamberName: '',
+      stackNumber: '',
+    });
+    this.availableChambers = gd?.chambers || [];
+    this.availableStacks = [];
+  }
+
+  onChamberChanged(): void {
+    const chName = this.truckForm.get('chamberName')?.value;
+    const ch = this.availableChambers.find((c) => c.name === chName);
+    this.truckForm.patchValue({
+      stackNumber: '',
+    });
+    this.availableStacks = ch?.stackNumbers || [];
   }
 
   // ── Search, Filters & Pagination ──
@@ -576,6 +801,11 @@ export class TruckManagementComponent implements OnInit {
     this.isEditMode = false;
     this.selectedTruck = null;
     this.formError = '';
+    this.selectedParty = '';
+    this.saudaSearchTerm = '';
+    this.availableGodowns = [];
+    this.availableChambers = [];
+    this.availableStacks = [];
 
     let targetSauda: SaudaRecord | undefined;
     if (preselectedSaudaId) {
@@ -583,10 +813,11 @@ export class TruckManagementComponent implements OnInit {
       if (
         targetSauda &&
         (targetSauda.saudaType === 'Brokerage' ||
-          targetSauda.saudaType === 'Direct Sale')
+          targetSauda.saudaType === 'Direct Sale' ||
+          targetSauda.saudaType === 'Forward')
       ) {
         this.notificationService.show(
-          'Direct Sale Saudas are not eligible for truck fulfilment (BR-TF-12).',
+          'Selected Sauda type is not eligible for truck fulfilment.',
           'error',
           4000,
         );
@@ -596,6 +827,7 @@ export class TruckManagementComponent implements OnInit {
 
     if (targetSauda) {
       this.targetSaudaType = targetSauda.saudaType as 'Purchase' | 'Sales';
+      this.selectedParty = targetSauda.partyName;
     } else if (forceType) {
       this.targetSaudaType = forceType;
     } else {
@@ -606,38 +838,52 @@ export class TruckManagementComponent implements OnInit {
       targetSauda = this.allSaudas.find(
         (s) =>
           s.status !== 'Voided' &&
+          s.status !== 'On Hold' &&
           s.saudaType === this.targetSaudaType &&
           this.erpService.getRemainingQtyMt(s.id) > 0,
+      );
+      if (targetSauda) {
+        this.selectedParty = targetSauda.partyName;
+      }
+    }
+
+    const defaultWhRec = this.allWarehouses[0];
+    const defaultWh = defaultWhRec?.name || '';
+    if (defaultWhRec) {
+      this.availableGodowns = this.godowns.filter(
+        (g) =>
+          g.warehouseId === defaultWhRec.id ||
+          g.warehouseName.toLowerCase() === defaultWhRec.name.toLowerCase(),
       );
     }
 
     this.commodityRows.clear();
-    const firstItem = targetSauda?.commodityItems[0];
-    this.commodityRows.push(
-      this.createCommodityRow(
-        firstItem
-          ? {
-              commodity: firstItem.commodity,
-              packagingUom: firstItem.packagingUom,
-              packagingQty: 1,
-              weightUom: firstItem.weightUom,
-              actualWeight: 100,
-            }
-          : undefined,
-      ),
-    );
+    if (targetSauda && targetSauda.commodityItems.length > 0) {
+      const remaining = this.erpService.getRemainingQtyMt(targetSauda.id);
+      for (const ci of targetSauda.commodityItems) {
+        this.commodityRows.push(
+          this.createCommodityRow({
+            commodity: ci.commodity,
+            packagingUom: 'Bag',
+            packagingQty: 1,
+            weightUom: 'MT',
+            actualWeight: remaining > 0 ? remaining : ci.actualWeight,
+          }),
+        );
+      }
+    } else {
+      this.commodityRows.push(this.createCommodityRow());
+    }
 
     this.truckForm.reset({
       saudaId: targetSauda?.id || '',
-      warehouse: this.allWarehouses[0]?.name || '',
+      warehouse: defaultWh,
+      warehouseId: defaultWhRec?.id || '',
+      godownName: '',
+      chamberName: '',
+      stackNumber: '',
       dispatchDate: today,
       vehicleNo: '',
-      status: 'In Transit',
-      driverName: '',
-      driverPhone: '',
-      transporterName: '',
-      lrNo: '',
-      expectedArrivalDate: '',
       remarks: '',
       revisionReason: '',
     });
@@ -661,7 +907,30 @@ export class TruckManagementComponent implements OnInit {
     this.isEditMode = true;
     this.selectedTruck = truck;
     this.targetSaudaType = truck.saudaType === 'Sales' ? 'Sales' : 'Purchase';
+    this.selectedParty = truck.partyName || '';
+    this.saudaSearchTerm = '';
     this.formError = '';
+
+    const wh = this.allWarehouses.find(
+      (w) => w.name === truck.warehouse || w.id === truck.warehouseId,
+    );
+    if (wh) {
+      this.availableGodowns = this.godowns.filter(
+        (g) =>
+          g.warehouseId === wh.id ||
+          g.warehouseName.toLowerCase() === wh.name.toLowerCase(),
+      );
+      const gd = this.availableGodowns.find((g) => g.name === truck.godownName);
+      this.availableChambers = gd?.chambers || [];
+      const ch = this.availableChambers.find(
+        (c) => c.name === truck.chamberName,
+      );
+      this.availableStacks = ch?.stackNumbers || [];
+    } else {
+      this.availableGodowns = [];
+      this.availableChambers = [];
+      this.availableStacks = [];
+    }
 
     this.commodityRows.clear();
     for (const item of truck.commodityItems) {
@@ -674,14 +943,12 @@ export class TruckManagementComponent implements OnInit {
     this.truckForm.patchValue({
       saudaId: truck.saudaId,
       warehouse: truck.warehouse || '',
+      warehouseId: truck.warehouseId || '',
+      godownName: truck.godownName || '',
+      chamberName: truck.chamberName || '',
+      stackNumber: truck.stackNumber || '',
       dispatchDate: truck.dispatchDate,
       vehicleNo: truck.vehicleNo,
-      status: truck.status,
-      driverName: truck.driverName,
-      driverPhone: truck.driverPhone,
-      transporterName: truck.transporterName,
-      lrNo: truck.lrNo,
-      expectedArrivalDate: truck.expectedArrivalDate,
       remarks: truck.remarks,
       revisionReason: '',
     });
@@ -694,33 +961,57 @@ export class TruckManagementComponent implements OnInit {
     this.viewMode = 'form';
   }
 
-  submitTruckForm(): void {
+  submitTruckForm(isFinal: boolean = false): void {
     this.formError = '';
     if (this.truckForm.invalid) {
       this.truckForm.markAllAsTouched();
-      this.formError = 'Please complete all required fields cleanly.';
+      this.formError =
+        'Please complete all required fields (Sauda, Warehouse, Truck Number, Date, Commodity & Quantity in Ton).';
       return;
     }
 
     const v = this.truckForm.getRawValue();
+    const sauda = this.selectedLinkedSauda;
+    const currentTotal = this.formTotalWeightMt;
+
+    if (!isFinal && sauda) {
+      const remaining = this.erpService.getRemainingQtyMt(
+        sauda.id,
+        this.isEditMode ? this.selectedTruck?.id : undefined,
+      );
+      if (currentTotal > remaining) {
+        this.formError = `Current truck weight (${currentTotal} MT) exceeds remaining Sauda balance (${remaining} MT). If this completes the deal, click "Final Submit & Complete Sauda".`;
+        return;
+      }
+    }
+
+    if (isFinal && sauda) {
+      const confirmed = window.confirm(
+        `Are you sure you want to Final Submit?\n\nThis will adjust Sauda ${sauda.saudaNo} to the actual total fulfilled quantity of ${this.projectedTotalMt} MT (Original was ${this.totalSaudaQtyMt} MT) and mark the Sauda as Completed.`,
+      );
+      if (!confirmed) return;
+    }
+
     const payload = {
       saudaId: v.saudaId,
+      partyName: this.selectedParty || sauda?.partyName,
       warehouse: (v.warehouse || '').trim(),
+      warehouseId: v.warehouseId || '',
+      godownName: (v.godownName || '').trim(),
+      chamberName: (v.chamberName || '').trim(),
+      stackNumber: (v.stackNumber || '').trim(),
       dispatchDate: v.dispatchDate,
-      expectedArrivalDate: v.expectedArrivalDate || v.dispatchDate,
+      expectedArrivalDate: v.dispatchDate,
       vehicleNo: v.vehicleNo.trim().toUpperCase(),
-      status: v.status as TruckStatus,
-      driverName: (v.driverName || '').trim(),
-      driverPhone: (v.driverPhone || '').trim(),
-      transporterName: (v.transporterName || '').trim(),
-      lrNo: (v.lrNo || '').trim().toUpperCase(),
+      status: (isFinal ? 'Delivered' : 'In Transit') as TruckStatus,
       freightRatePerMt: this.selectedTruck?.freightRatePerMt || 1100,
       advancePaid: this.selectedTruck?.advancePaid || 0,
+      isFinalSubmit: isFinal,
       commodityItems: (v.commodityItems || []).map((c: any) => ({
         commodity: c.commodity,
-        packagingUom: c.packagingUom,
-        packagingQty: Number(c.packagingQty),
-        weightUom: c.weightUom,
+        packagingUom: 'Bag',
+        packagingQty: 1,
+        weightUom: 'MT' as WeightUom,
         actualWeight: Number(c.actualWeight),
       })),
       remarks: (v.remarks || '').trim(),

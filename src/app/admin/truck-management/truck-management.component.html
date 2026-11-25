@@ -126,6 +126,7 @@
             <th>Sauda Number</th>
             <th>Sauda Type</th>
             <th>Commodities</th>
+            <th class="text-end">Weight (Ton)</th>
             <th class="text-center">Record</th>
             <th class="text-center">Action</th>
           </tr>
@@ -133,7 +134,7 @@
         <tbody>
           @if (filteredTrucks.length === 0) {
           <tr>
-            <td colspan="9" class="empty-state">
+            <td colspan="10" class="empty-state">
               <i class="fa-solid fa-truck mb-2"></i>
               <div>No truck entries match your search or filters.</div>
             </td>
@@ -166,6 +167,7 @@
               </span>
             </td>
             <td>{{ truck.commodities }}</td>
+            <td class="text-end fw-bold text-dark">{{ truck.loadedQtyMt | number: '1.2-3' }} Ton</td>
             <td class="text-center">
               <span class="status-badge" [ngClass]="getRecordBadgeClass(truck.status)">
                 {{ truck.status === 'Removed' ? 'Removed' : 'Active' }}
@@ -268,6 +270,47 @@
       </div>
     </div>
 
+    <!-- Live Quantity Tracking Banner in Details -->
+    @if (selectedTruckSauda) {
+    <div class="live-tracker-panel mt-3">
+      <div class="tracker-header">
+        <span class="tracker-title">
+          <i class="fa-solid fa-chart-line text-primary me-2"></i>Linked Sauda Quantity Tracking ({{ selectedTruckSauda.saudaNo }})
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="tracker-sub">{{ selectedTruckSauda.commodity }}</span>
+          <span class="status-badge" [ngClass]="selectedTruckSauda.status === 'Completed' ? 'badge-green' : 'badge-amber'">
+            Sauda Status: {{ selectedTruckSauda.status }}
+          </span>
+        </div>
+      </div>
+      <div class="tracker-grid tracker-grid-4">
+        <div class="tracker-card">
+          <div class="tracker-card-label">Total Deal Qty</div>
+          <div class="tracker-card-val text-dark">{{ selectedTruckSauda.quantityMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-sub">Contracted Deal</div>
+        </div>
+        <div class="tracker-card">
+          <div class="tracker-card-label">Fulfilled In/Out</div>
+          <div class="tracker-card-val text-info">{{ getSaudaFulfilledQty(selectedTruckSauda.id) | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-sub">All Trucks to date</div>
+        </div>
+        <div class="tracker-card">
+          <div class="tracker-card-label">Remaining Balance</div>
+          <div class="tracker-card-val" [class.text-warning]="getSaudaRemainingQty(selectedTruckSauda.id) > 0" [class.text-success]="getSaudaRemainingQty(selectedTruckSauda.id) === 0">
+            {{ getSaudaRemainingQty(selectedTruckSauda.id) | number: '1.2-3' }} <span class="unit">Ton</span>
+          </div>
+          <div class="tracker-card-sub">{{ getSaudaRemainingQty(selectedTruckSauda.id) === 0 ? 'Fulfilled (0 MT left)' : 'Pending Delivery' }}</div>
+        </div>
+        <div class="tracker-card current-load-card">
+          <div class="tracker-card-label">This Truck Load</div>
+          <div class="tracker-card-val text-primary">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-sub">Recorded in this entry</div>
+        </div>
+      </div>
+    </div>
+    }
+
     @if (selectedTruck.removalInfo) {
     <div class="alert-erp alert-danger-erp mt-3">
       <strong>Removed on {{ selectedTruck.removalInfo.removedAt }}</strong> by
@@ -317,15 +360,24 @@
             <td>{{ selectedTruck.dispatchDate }}</td>
           </tr>
           <tr>
-            <td>Warehouse</td>
-            <td class="fw-semibold text-dark">{{ selectedTruck.warehouse || '—' }}</td>
+            <td>Warehouse Location</td>
+            <td class="fw-semibold text-dark">
+              {{ selectedTruck.warehouse || '—' }}
+              @if (selectedTruck.godownName) { &bull; Godown: {{ selectedTruck.godownName }} }
+              @if (selectedTruck.chamberName) { &bull; Chamber: {{ selectedTruck.chamberName }} }
+              @if (selectedTruck.stackNumber) { &bull; Stack: {{ selectedTruck.stackNumber }} }
+            </td>
+          </tr>
+          <tr>
+            <td>Party</td>
+            <td class="fw-semibold text-dark">{{ selectedTruck.partyName || '—' }}</td>
           </tr>
           <tr>
             <td>Linked Sauda</td>
             <td class="fw-semibold text-primary">{{ selectedTruck.saudaNo }}</td>
           </tr>
           <tr>
-            <td>Record</td>
+            <td>Record Status</td>
             <td>
               <span class="status-badge" [ngClass]="getRecordBadgeClass(selectedTruck.status)">
                 {{ selectedTruck.status === 'Removed' ? 'Removed' : 'Active' }}
@@ -333,24 +385,8 @@
             </td>
           </tr>
           <tr>
-            <td>Transit Status</td>
-            <td>{{ selectedTruck.status }}</td>
-          </tr>
-          <tr>
-            <td>Transporter / Driver</td>
-            <td>
-              {{ selectedTruck.transporterName || '—' }}
-              @if (selectedTruck.driverName) {
-              &bull; {{ selectedTruck.driverName }}
-              @if (selectedTruck.driverPhone) {
-              ({{ selectedTruck.driverPhone }})
-              }
-              }
-            </td>
-          </tr>
-          <tr>
             <td>Total Loaded Weight</td>
-            <td class="fw-semibold">{{ selectedTruck.loadedQtyMt | number: '1.0-3' }} MT</td>
+            <td class="fw-semibold">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} Ton</td>
           </tr>
           <tr>
             <td>Remarks</td>
@@ -368,18 +404,14 @@
         <thead>
           <tr>
             <th>Commodity</th>
-            <th>Packaging UOM</th>
-            <th class="text-end">Packaging Quantity</th>
-            <th class="text-end">MT</th>
+            <th class="text-end">Quantity (Ton)</th>
           </tr>
         </thead>
         <tbody>
           @for (item of selectedTruck.commodityItems; track item.commodity) {
           <tr>
             <td class="fw-semibold text-dark">{{ item.commodity }}</td>
-            <td>{{ item.packagingUom }}</td>
-            <td class="text-end num">{{ item.packagingQty | number }}</td>
-            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} MT</td>
+            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} Ton</td>
           </tr>
           }
         </tbody>
@@ -440,7 +472,7 @@
       <h1 class="erp-title">
         {{
         isEditMode
-        ? 'Edit Truck Fulfilment — ' + selectedTruck?.entryNo
+        ? 'Edit Truck Entry — ' + selectedTruck?.entryNo
         : selectedLinkedSauda?.saudaType === 'Sales'
         ? 'Record Truck Dispatch (Sales Outward)'
         : 'Record Truck Receipt (Purchase Inward)'
@@ -462,37 +494,18 @@
     </button>
   </div>
 
-  <form [formGroup]="truckForm" (ngSubmit)="submitTruckForm()" class="sauda-form-stack">
+  <form [formGroup]="truckForm" class="sauda-form-stack">
     @if (formError) {
     <div class="alert-erp alert-danger-erp">
       <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ formError }}
     </div>
     }
 
-    <!-- Operation Switcher: Inward Receipt vs Outward Dispatch -->
-    @if (!isEditMode) {
-    <div class="fulfilment-type-switcher">
-      <span class="switcher-label">Operation Type:</span>
-      <div class="switcher-buttons">
-        <button type="button" class="switcher-btn" [class.active-inward]="targetSaudaType === 'Purchase'"
-          (click)="setFulfilmentType('Purchase')">
-          <i class="fa-solid fa-arrow-down me-2"></i>
-          <span>Inward Receipt (Purchase Sauda)</span>
-        </button>
-        <button type="button" class="switcher-btn" [class.active-outward]="targetSaudaType === 'Sales'"
-          (click)="setFulfilmentType('Sales')">
-          <i class="fa-solid fa-arrow-up me-2"></i>
-          <span>Outward Dispatch (Sales Sauda)</span>
-        </button>
-      </div>
-    </div>
-    }
-
-    <!-- Section 1: Truck Entry Info (Entry No auto-generated on save) -->
+    <!-- Section 1: Party & Linked Sauda Selection -->
     <div class="erp-card section-card">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h2 class="section-card-title mb-0">
-          {{ selectedLinkedSauda?.saudaType === 'Sales' ? 'Outward Dispatch Details' : 'Inward Receipt Details' }}
+          <i class="fa-solid fa-link me-2 text-primary"></i>Party &amp; Linked Sauda Selection
         </h2>
         @if (selectedLinkedSauda) {
         <span class="type-pill"
@@ -504,202 +517,248 @@
         }
       </div>
 
-      <div class="form-grid-3">
+      <div class="form-grid-2">
+        <!-- Step 1: Select Party -->
         <div class="field-group">
-          <label>Linked Sauda <span class="req">*</span></label>
-          <select formControlName="saudaId" class="erp-input">
-            <option value="">Select active Sauda...</option>
-            @for (s of eligibleSaudasForForm; track s.id) {
-            <option [value]="s.id">
-              {{ s.saudaNo }} ({{ s.saudaType === 'Purchase' ? 'Purchase' : 'Sales' }} — {{ s.partyName }})
-            </option>
+          <label>Select Party</label>
+          <select class="erp-input" [(ngModel)]="selectedParty" (ngModelChange)="onPartyChanged()" [ngModelOptions]="{standalone: true}">
+            <option value="">All Parties (Select to filter saudas)</option>
+            @for (p of allPartyOptions; track p) {
+            <option [value]="p">{{ p }}</option>
             }
           </select>
-          @if (selectedLinkedSauda) {
-          <span class="field-hint text-primary fw-semibold">
-            Contract: {{ selectedLinkedSauda.saudaNo }} &bull; Remaining: {{ selectedSaudaRemainingMt | number: '1.0-3'
-            }} MT
-            &bull; {{ selectedLinkedSauda.saudaType === 'Purchase' ? 'Seller' : 'Buyer' }}: {{
-            selectedLinkedSauda.partyName }}
+          <span class="field-hint text-muted">
+            Selecting a party filters their active Purchase/Sales Saudas below.
           </span>
+        </div>
+
+        <!-- Step 2: Search & Select Linked Sauda -->
+        <div class="field-group">
+          <label>Linked Sauda <span class="req">*</span></label>
+          <div class="sauda-picker-container">
+            <input type="text" class="erp-input mb-1 search-filter-sm" [(ngModel)]="saudaSearchTerm" [ngModelOptions]="{standalone: true}"
+              placeholder="🔍 Search Sauda by No., Commodity or Party..." />
+            <select formControlName="saudaId" class="erp-input select-highlight">
+              <option value="">Select Linked Sauda...</option>
+              @for (s of filteredSaudasForParty; track s.id) {
+              <option [value]="s.id">
+                {{ s.saudaNo }} &bull; {{ s.saudaType }} &bull; {{ s.commodity }} &bull; {{ s.quantityMt }} Ton ({{ s.partyName }})
+              </option>
+              }
+            </select>
+          </div>
+          @if (truckForm.get('saudaId')?.touched && truckForm.get('saudaId')?.invalid) {
+          <span class="field-err">Linked Sauda is required.</span>
           }
+        </div>
+      </div>
+
+      <!-- Live Quantity Tracking Bar -->
+      @if (selectedLinkedSauda) {
+      <div class="live-tracker-panel mt-3">
+        <div class="tracker-header">
+          <span class="tracker-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Live Sauda Quantity Tracking</span>
+          <span class="tracker-sub">Sauda {{ selectedLinkedSauda.saudaNo }} &bull; {{ selectedLinkedSauda.commodity }}</span>
+        </div>
+        <div class="tracker-grid">
+          <div class="tracker-card">
+            <div class="tracker-card-label">Total Sauda Qty</div>
+            <div class="tracker-card-val text-dark">{{ totalSaudaQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-sub">Contracted Deal</div>
+          </div>
+          <div class="tracker-card">
+            <div class="tracker-card-label">Fulfilled So Far</div>
+            <div class="tracker-card-val text-info">{{ dispatchedSoFarMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-sub">Previous Trucks</div>
+          </div>
+          <div class="tracker-card">
+            <div class="tracker-card-label">Remaining Balance</div>
+            <div class="tracker-card-val" [class.text-warning]="remainingBalanceMt > 0" [class.text-success]="remainingBalanceMt === 0">
+              {{ remainingBalanceMt | number: '1.2-3' }} <span class="unit">Ton</span>
+            </div>
+            <div class="tracker-card-sub">Pending to deliver</div>
+          </div>
+          <div class="tracker-card current-load-card">
+            <div class="tracker-card-label">This Truck Load</div>
+            <div class="tracker-card-val text-primary">{{ currentTruckWeightMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-sub">Current Entry</div>
+          </div>
+          <div class="tracker-card projected-card">
+            <div class="tracker-card-label">Projected Total</div>
+            <div class="tracker-card-val" [ngClass]="projectedTotalMt > totalSaudaQtyMt ? 'text-danger' : 'text-success'">
+              {{ projectedTotalMt | number: '1.2-3' }} <span class="unit">Ton</span>
+            </div>
+            <div class="tracker-card-sub">After this truck</div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Section 2: Truck Details -->
+    <div class="erp-card section-card">
+      <h2 class="section-card-title mb-3">
+        <i class="fa-solid fa-truck me-2 text-primary"></i>Truck Details
+      </h2>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Truck Entry Date <span class="req">*</span></label>
+          <input type="date" formControlName="dispatchDate" class="erp-input" />
         </div>
 
         <div class="field-group">
-          <label>
-            {{ selectedLinkedSauda?.saudaType === 'Sales' ? 'Dispatching Warehouse' : 'Receiving Warehouse' }}
-            <span class="req">*</span>
-          </label>
-          <select formControlName="warehouse" class="erp-input">
+          <label>Truck Number (Vehicle No.) <span class="req">*</span></label>
+          <input type="text" formControlName="vehicleNo" class="erp-input text-uppercase fw-bold"
+            placeholder="e.g. RJ07-GA-1234" />
+          @if (truckForm.get('vehicleNo')?.touched && truckForm.get('vehicleNo')?.invalid) {
+          <span class="field-err">Valid vehicle number required (e.g. RJ07-GA-1234).</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: 4-Level Storage Location -->
+    <div class="erp-card section-card">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <h2 class="section-card-title mb-0">
+            <i class="fa-solid fa-sitemap me-2 text-primary"></i>Storage Location
+          </h2>
+          <p class="text-xs text-muted mb-0">Warehouse &gt; Godown &gt; Chamber &gt; Stack Number</p>
+        </div>
+      </div>
+
+      <div class="form-grid-4">
+        <!-- Level 1: Warehouse -->
+        <div class="field-group">
+          <label>Warehouse <span class="req">*</span></label>
+          <select formControlName="warehouse" class="erp-input" (change)="onWarehouseChanged()">
             <option value="">Select Warehouse...</option>
             @for (w of allWarehouses; track w.id) {
             <option [value]="w.name">{{ w.name }} ({{ w.city }})</option>
             }
           </select>
-          @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse) {
-          <div class="stock-indicator-pill"
-            [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'stock-ok' : 'stock-warn'">
-            <i class="fa-solid"
-              [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'fa-circle-check text-success' : 'fa-triangle-exclamation text-danger'"></i>
-            <span>Warehouse Stock: <strong>{{ availableWarehouseStockMt | number: '1.0-3' }} MT</strong></span>
-            @if (availableWarehouseStockMt < formTotalWeightMt) { <span class="text-danger fw-bold">
-              (Insufficient)</span>
-              }
-          </div>
+          @if (truckForm.get('warehouse')?.touched && truckForm.get('warehouse')?.invalid) {
+          <span class="field-err">Warehouse is required.</span>
           }
         </div>
 
+        <!-- Level 2: Godown -->
         <div class="field-group">
-          <label>
-            {{ selectedLinkedSauda?.saudaType === 'Sales' ? 'Dispatch Date' : 'Receipt Date' }}
-            <span class="req">*</span>
-          </label>
-          <input type="date" formControlName="dispatchDate" class="erp-input" />
-        </div>
-      </div>
-
-      <div class="form-grid-3 mt-3">
-        <div class="field-group">
-          <label>Truck Number <span class="req">*</span></label>
-          <input type="text" formControlName="vehicleNo" class="erp-input text-uppercase"
-            placeholder="e.g. RJ07-GA-1234" />
-          @if (truckForm.get('vehicleNo')?.touched && truckForm.get('vehicleNo')?.invalid) {
-          <span class="field-err">Valid vehicle format required (e.g. RJ07-GA-1234).</span>
-          }
-        </div>
-
-        <div class="field-group">
-          <label>Transit Status <span class="req">*</span></label>
-          <select formControlName="status" class="erp-input">
-            @for (st of activeTruckStatuses; track st) {
-            <option [value]="st">{{ st }}</option>
+          <label>Godown</label>
+          <select formControlName="godownName" class="erp-input" (change)="onGodownChanged()" [disabled]="availableGodowns.length === 0">
+            <option value="">Select Godown (Optional)</option>
+            @for (gd of availableGodowns; track gd.id) {
+            <option [value]="gd.name">{{ gd.name }}</option>
             }
           </select>
         </div>
 
+        <!-- Level 3: Chamber -->
         <div class="field-group">
-          <label>Transporter Name</label>
-          <input type="text" formControlName="transporterName" class="erp-input"
-            placeholder="Optional transporter name" />
+          <label>Chamber</label>
+          <select formControlName="chamberName" class="erp-input" (change)="onChamberChanged()" [disabled]="availableChambers.length === 0">
+            <option value="">Select Chamber (Optional)</option>
+            @for (ch of availableChambers; track ch.id) {
+            <option [value]="ch.name">{{ ch.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Level 4: Stack Number -->
+        <div class="field-group">
+          <label>Stack Number</label>
+          <select formControlName="stackNumber" class="erp-input" [disabled]="availableStacks.length === 0">
+            <option value="">Select Stack (Optional)</option>
+            @for (st of availableStacks; track st) {
+            <option [value]="st">{{ st }}</option>
+            }
+          </select>
         </div>
       </div>
 
-      <div class="form-grid-3 mt-3">
-        <div class="field-group">
-          <label>Driver Name</label>
-          <input type="text" formControlName="driverName" class="erp-input" placeholder="Optional driver name" />
-        </div>
-
-        <div class="field-group">
-          <label>Driver Mobile (10-digit)</label>
-          <input type="text" maxlength="10" formControlName="driverPhone" class="erp-input"
-            placeholder="Optional 10-digit mobile" />
-          @if (truckForm.get('driverPhone')?.touched && truckForm.get('driverPhone')?.invalid) {
-          <span class="field-err">Enter a valid 10-digit Indian mobile number.</span>
-          }
-        </div>
-        <div class="field-group">
-          <label>Expected Arrival Date</label>
-          <input type="date" formControlName="expectedArrivalDate" class="erp-input" />
-        </div>
+      @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse) {
+      <div class="stock-indicator-pill mt-2"
+        [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'stock-ok' : 'stock-warn'">
+        <i class="fa-solid"
+          [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'fa-circle-check text-success' : 'fa-triangle-exclamation text-danger'"></i>
+        <span>Warehouse Stock: <strong>{{ availableWarehouseStockMt | number: '1.2-3' }} Ton</strong></span>
+        @if (availableWarehouseStockMt < formTotalWeightMt) {
+        <span class="text-danger fw-bold ms-1">(Insufficient for dispatch)</span>
+        }
       </div>
-
-
+      }
     </div>
 
-    <!-- Section 2: Commodity Details -->
+    <!-- Section 4: Commodity Details -->
     <div class="erp-card section-card">
       <div class="section-head-row">
-        <h2 class="section-card-title mb-0">Commodity Details</h2>
+        <div>
+          <h2 class="section-card-title mb-0">
+            <i class="fa-solid fa-boxes-stacked me-2 text-primary"></i>Commodity Details
+          </h2>
+          <span class="text-muted small">Enter loaded quantity directly in Ton.</span>
+        </div>
         <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addCommodityRow()">
           <i class="fa-solid fa-plus me-1"></i> Add Commodity
         </button>
       </div>
 
-      <div formArrayName="commodityItems" class="commodity-rows-stack">
+      <div formArrayName="commodityItems" class="commodity-rows-stack mt-3">
         @for (row of commodityRows.controls; track $index; let idx = $index) {
-        <div [formGroupName]="idx" class="commodity-row-box">
-          <div class="field-group">
+        <div [formGroupName]="idx" class="commodity-row-box-simple">
+          <div class="field-group flex-2">
             <label>Commodity <span class="req">*</span></label>
             <select formControlName="commodity" class="erp-input">
-              <option value="">Select</option>
+              <option value="">Select Commodity</option>
               @for (c of selectedSaudaCommodities; track c.commodity) {
               <option [value]="c.commodity">{{ c.commodity }}</option>
               }
-            </select>
-            @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse && row.get('commodity')?.value) {
-            <span class="field-hint text-muted">
-              Stock in {{ selectedWarehouse }}: <strong>{{ getWarehouseStockForItem(row.get('commodity')?.value) |
-                number: '1.0-3' }} MT</strong>
-            </span>
-            }
-          </div>
-
-          <div class="field-group">
-            <label>Packaging UOM <span class="req">*</span></label>
-            <select formControlName="packagingUom" class="erp-input">
-              @for (u of dynamicPackagingUoms; track u.id) {
-              <option [value]="u.name">{{ u.name }}</option>
+              @if (selectedSaudaCommodities.length === 0) {
+              <option [value]="row.get('commodity')?.value">{{ row.get('commodity')?.value || 'Select' }}</option>
               }
             </select>
           </div>
 
-          <div class="field-group">
-            <label>Packaging Qty <span class="req">*</span></label>
-            <input type="number" min="1" formControlName="packagingQty" class="erp-input" placeholder="0" />
-          </div>
-
-          <div class="field-group">
-            <label>MT<span class="req">*</span></label>
-            <input type="number" step="0.001" formControlName="actualWeight" class="erp-input readonly-input"
-              placeholder="0.000 MT" readonly title="Auto-calculated from Packaging UOM and Qty" />
+          <div class="field-group flex-1">
+            <label>Quantity (Ton) <span class="req">*</span></label>
+            <input type="number" step="0.001" min="0.001" formControlName="actualWeight" class="erp-input fw-semibold"
+              placeholder="e.g. 20.000" />
           </div>
 
           <div class="remove-btn-wrap">
             <button type="button" class="btn-remove-row" [disabled]="commodityRows.length <= 1"
-              (click)="removeCommodityRow(idx)">
-              Remove
+              (click)="removeCommodityRow(idx)" title="Remove row">
+              <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
         </div>
         }
       </div>
 
-      <div class="helper-note-box mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span>
-          Only commodities present in the linked Sauda can be selected. Total loaded weight must
-          stay within the remaining Sauda balance.
+      <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+        <span class="text-muted small">
+          Total weight for this truck:
         </span>
-        <strong class="text-primary">
-          Entry Total: {{ formTotalWeightMt | number: '1.0-3' }} MT /
-          {{ selectedSaudaRemainingMt | number: '1.0-3' }} MT available
+        <strong class="text-primary fs-6">
+          This Truck: {{ currentTruckWeightMt | number: '1.2-3' }} Ton &bull; Projected Total: {{ projectedTotalMt | number: '1.2-3' }} Ton / {{ totalSaudaQtyMt | number: '1.2-3' }} Ton
         </strong>
       </div>
 
-      @if (selectedLinkedSauda && formTotalWeightMt > selectedSaudaRemainingMt) {
-      <div class="alert-erp alert-danger-erp mt-2">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        Loaded weight ({{ formTotalWeightMt | number: '1.0-3' }} MT) exceeds remaining Sauda
-        balance ({{ selectedSaudaRemainingMt | number: '1.0-3' }} MT).
-      </div>
-      }
-
-      @if (selectedLinkedSauda?.saudaType === 'Sales' && selectedWarehouse && formTotalWeightMt >
-      availableWarehouseStockMt) {
-      <div class="alert-erp alert-danger-erp mt-2">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        Insufficient Warehouse Stock: Selected warehouse ({{ selectedWarehouse }}) only has
-        <strong>{{ availableWarehouseStockMt | number: '1.0-3' }} MT</strong> available, but dispatch quantity is
-        <strong>{{ formTotalWeightMt | number: '1.0-3' }} MT</strong> (BR-TF-10, EX-06).
+      @if (selectedLinkedSauda && currentTruckWeightMt > remainingBalanceMt && !isEditMode) {
+      <div class="alert-erp alert-warning-erp mt-2">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        This truck load ({{ currentTruckWeightMt | number: '1.2-3' }} Ton) exceeds the remaining balance ({{ remainingBalanceMt | number: '1.2-3' }} Ton).
+        If this is the final delivery, use <strong>"Final Submit &amp; Complete Sauda"</strong> below to adjust the contract.
       </div>
       }
     </div>
 
-    <!-- Section 3: Remarks & Save -->
+    <!-- Section 5: Remarks & Action Buttons -->
     <div class="erp-card section-card">
       <div class="field-group">
-        <label>Remarks</label>
-        <textarea rows="3" formControlName="remarks" class="erp-input" placeholder="Optional remarks"></textarea>
+        <label>Remarks (Optional)</label>
+        <textarea rows="2" formControlName="remarks" class="erp-input" placeholder="e.g. Driver notes, quality grade remarks..."></textarea>
       </div>
 
       @if (isEditMode) {
@@ -715,16 +774,23 @@
       </div>
       }
 
-      <div class="form-actions-left mt-4">
-        <button type="submit" class="btn-erp-primary">
-          {{
-          isEditMode
-          ? 'Update Truck Fulfilment'
-          : selectedLinkedSauda?.saudaType === 'Sales'
-          ? 'Record Truck Dispatch'
-          : 'Record Truck Receipt'
-          }}
-        </button>
+      <div class="form-actions-split mt-4">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <!-- Button 1: Normal Submit (more trucks coming) -->
+          <button type="button" class="btn-erp-outline" (click)="submitTruckForm(false)"
+            [disabled]="truckForm.invalid">
+            <i class="fa-solid fa-floppy-disk me-1"></i>
+            <span>Save Truck Entry (More Trucks Pending)</span>
+          </button>
+
+          <!-- Button 2: Final Submit (deal completed) -->
+          <button type="button" class="btn-erp-primary" (click)="submitTruckForm(true)"
+            [disabled]="truckForm.invalid">
+            <i class="fa-solid fa-circle-check me-1"></i>
+            <span>Final Submit &amp; Complete Sauda</span>
+          </button>
+        </div>
+
         <button type="button" class="btn-erp-ghost" (click)="backToListing()">
           Cancel
         </button>
@@ -797,6 +863,104 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: POST-SAVE QUANTITY VISIBILITY MODAL                         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+@if (showSaveSuccessModal && saveSuccessData) {
+<div class="modal-backdrop-erp" (click)="closeSuccessModalAndGoToListing()">
+  <div class="modal-panel modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-erp bg-light border-bottom">
+      <div class="d-flex align-items-center gap-2">
+        <div class="success-icon-badge">
+          <i class="fa-solid fa-circle-check text-success fs-3"></i>
+        </div>
+        <div>
+          <h3 class="modal-title-erp mb-0">
+            {{ saveSuccessData.isFinal ? 'Sauda Completed & Finalized!' : 'Truck Entry Saved Successfully!' }}
+          </h3>
+          <p class="modal-sub-erp mb-0 text-muted">
+            Entry No: <strong class="text-dark">{{ saveSuccessData.entryNo }}</strong> &bull; Truck: <strong class="text-dark">{{ saveSuccessData.vehicleNo }}</strong> ({{ saveSuccessData.loadedQtyMt | number: '1.2-3' }} Ton)
+          </p>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="closeSuccessModalAndGoToListing()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-erp p-3">
+      <!-- Deal Header -->
+      <div class="deal-summary-strip mb-3 p-2 rounded bg-light border d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-xs text-muted">Linked Deal:</span>
+          <div class="fw-bold text-dark">{{ saveSuccessData.saudaNo }} &bull; {{ saveSuccessData.partyName }}</div>
+        </div>
+        <div>
+          <span class="status-badge" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'badge-green' : 'badge-amber'">
+            {{ saveSuccessData.saudaStatus }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Live Visibility Cards -->
+      <div class="visibility-stat-grid mb-3">
+        <div class="vis-stat-card">
+          <div class="vis-stat-label">Total Sauda Qty</div>
+          <div class="vis-stat-val text-dark">{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="vis-stat-sub">Original Deal</div>
+        </div>
+
+        <div class="vis-stat-card highlight-fulfilled">
+          <div class="vis-stat-label">Fulfilled So Far</div>
+          <div class="vis-stat-val text-primary">{{ saveSuccessData.dispatchedSoFarMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="vis-stat-sub">Delivered Total</div>
+        </div>
+
+        <div class="vis-stat-card" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'highlight-zero' : 'highlight-remain'">
+          <div class="vis-stat-label">Remaining Balance</div>
+          <div class="vis-stat-val" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'text-success' : 'text-warning'">
+            {{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }} <span class="unit">Ton</span>
+          </div>
+          <div class="vis-stat-sub">
+            {{ saveSuccessData.remainingBalanceMt === 0 ? 'Fully Fulfilled' : 'Pending to deliver' }}
+          </div>
+        </div>
+      </div>
+
+      @if (saveSuccessData.remainingBalanceMt > 0 && !saveSuccessData.isFinal) {
+      <div class="alert-erp alert-info-erp mb-0 text-sm">
+        <i class="fa-solid fa-circle-info me-2"></i>
+        Abhi is saude mein <strong>{{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }} Ton</strong> maal aana/jaana baaki hai. Aap agla truck turant add kar sakte hain ya listing par ja sakte hain.
+      </div>
+      } @else {
+      <div class="alert-erp alert-success-erp mb-0 text-sm">
+        <i class="fa-solid fa-circle-check me-2"></i>
+        Yeh sauda <strong>{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }} Ton</strong> par poori tarah fulfill aur complete ho chuka hai!
+      </div>
+      }
+    </div>
+
+    <div class="modal-footer-erp d-flex justify-content-between flex-wrap gap-2">
+      <div>
+        @if (saveSuccessData.remainingBalanceMt > 0 && !saveSuccessData.isFinal) {
+        <button type="button" class="btn-erp-primary" (click)="closeSuccessModalAndAddNext()">
+          <i class="fa-solid fa-plus me-1"></i> Add Next Truck for this Sauda
+        </button>
+        }
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn-erp-outline" (click)="closeSuccessModalAndViewTruck()">
+          View Truck Details
+        </button>
+        <button type="button" class="btn-erp-ghost" (click)="closeSuccessModalAndGoToListing()">
+          Go to Truck Listing
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 }
