@@ -90,7 +90,7 @@ export class SaudaManagementComponent implements OnInit {
   tableSize: number | 'all' = 10;
   tableSizes: (number | 'all')[] = [10, 25, 50, 'all'];
 
-  readonly saudaTypes: SaudaType[] = ['Brokerage', 'Purchase', 'Sales'];
+  readonly saudaTypes: SaudaType[] = ['Brokerage', 'Purchase', 'Sales', 'Forward'];
   readonly billingModes: BrokerageBillingMode[] = [
     'PS-1: Split',
     'PS-2: Buyer pays all',
@@ -135,6 +135,7 @@ export class SaudaManagementComponent implements OnInit {
   purchaseCount: number = 0;
   salesCount: number = 0;
   brokerageCount: number = 0;
+  forwardCount: number = 0;
   firmFilterOptions: string[] = [];
 
   itemsPerPageCount: number = 10;
@@ -263,13 +264,14 @@ export class SaudaManagementComponent implements OnInit {
     this.saudaForm = this.fb.group({
       saudaType: ['Brokerage', Validators.required],
       saudaDate: [today, Validators.required],
+      dueDate: [''],
       clientFirm: ['', Validators.required],
       warehouseId: [''],
       warehouseName: [''],
       godownName: [''],
       chamberName: [''],
       stackNumber: [''],
-      brokerageBillingMode: ['PS-1: Split', Validators.required],
+      brokerageBillingMode: ['PS-1: Split'],
       linkedPurchaseSaudaId: [''],
       linkedPurchaseSaudaNo: [''],
       sellerName: ['', Validators.required],
@@ -277,14 +279,11 @@ export class SaudaManagementComponent implements OnInit {
       expectedDeliveryDate: [''],
       commodityItems: this.fb.array([this.createCommodityRow()]),
       truckReceiptDate: [today],
-      truckVehicleNo: [
-        '',
-        [Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/)],
-      ],
-      truckStatus: ['In Transit', Validators.required],
+      truckVehicleNo: [''],
+      truckStatus: ['In Transit'],
       truckTransporterName: [''],
       truckDriverName: [''],
-      truckDriverPhone: ['', [Validators.pattern(/^([6-9]\d{9})?$/)]],
+      truckDriverPhone: [''],
       truckExpectedArrivalDate: [''],
       totalAmountInr: [null],
       buyerBrokerageAmount: [null, Validators.min(0)],
@@ -399,6 +398,8 @@ export class SaudaManagementComponent implements OnInit {
         if (item.weightUom === 'KG') initialWeight = Number((item.actualWeight / 1000).toFixed(3));
         else if (item.weightUom === 'Quintal') initialWeight = Number((item.actualWeight / 10).toFixed(3));
         else initialWeight = Number(item.actualWeight);
+      } else if (item.actualWeight) {
+        initialWeight = Number(item.actualWeight);
       } else if (item.packagingQty) {
         const bagKg = this.getPackagingCapacity(defaultPkg);
         initialWeight = Number(((item.packagingQty * bagKg) / 1000).toFixed(3));
@@ -407,38 +408,32 @@ export class SaudaManagementComponent implements OnInit {
 
     const row = this.fb.group({
       commodity: [item?.commodity || '', Validators.required],
-      packagingUom: [defaultPkg, Validators.required],
-      packagingQty: [
-        item?.packagingQty ?? null,
-        [Validators.required, Validators.min(1)],
-      ],
-      weightUom: ['MT'],
       actualWeight: [
         initialWeight,
         [Validators.required, Validators.min(0.001)],
       ],
       rate: [
         item?.rate ?? null,
+        [Validators.required, Validators.min(0.01)],
       ],
+      buyerBrokerage: [item?.buyerBrokerage ?? null, Validators.min(0)],
+      sellerBrokerage: [item?.sellerBrokerage ?? null, Validators.min(0)],
+      packagingUom: [defaultPkg],
+      packagingQty: [item?.packagingQty ?? null],
+      weightUom: ['MT'],
       lineTotal: [{ value: item?.lineTotal ?? null, disabled: true }],
     });
 
     if (initialWeight && item?.rate) {
+      const calculated = Number((initialWeight * 1000 * item.rate).toFixed(2));
       row.patchValue(
-        { lineTotal: Number((initialWeight * item.rate).toFixed(2)) },
+        { lineTotal: item?.lineTotal || calculated },
         { emitEvent: false },
       );
     }
 
     row
-      .get('packagingUom')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.recomputeRowWeightAndTotal(row);
-      });
-
-    row
-      .get('packagingQty')
+      .get('actualWeight')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.recomputeRowWeightAndTotal(row);
@@ -448,10 +443,20 @@ export class SaudaManagementComponent implements OnInit {
       .get('rate')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        const wt = Number(row.get('actualWeight')?.value) || 0;
-        const rate = Number(row.get('rate')?.value) || 0;
-        const total = Number((wt * rate).toFixed(2));
-        row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
+        this.recomputeRowWeightAndTotal(row);
+      });
+
+    row
+      .get('buyerBrokerage')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.recomputeTotalAmountFromLines();
+      });
+
+    row
+      .get('sellerBrokerage')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         this.recomputeTotalAmountFromLines();
       });
 
@@ -459,24 +464,11 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   recomputeRowWeightAndTotal(row: FormGroup | AbstractControl): void {
-    const pkgName = row.get('packagingUom')?.value;
-    const qty = Number(row.get('packagingQty')?.value) || 0;
-    const bagKg = this.getPackagingCapacity(pkgName);
-
-    // Rule BR-SA-12, BR-SA-13: Auto-calculate Total Weight in Metric Tons (MT)
-    const weightMt = qty > 0 ? Number(((qty * bagKg) / 1000).toFixed(3)) : 0;
-    row.get('actualWeight')?.setValue(weightMt > 0 ? weightMt : null, { emitEvent: false });
-    row.get('weightUom')?.setValue('MT', { emitEvent: false });
-
-    const isPurchase = this.saudaForm?.get('saudaType')?.value === 'Purchase';
-    if (!isPurchase) {
-      const rate = Number(row.get('rate')?.value) || 0;
-      const total = Number((weightMt * rate).toFixed(2));
-      row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
-    } else {
-      row.get('rate')?.setValue(null, { emitEvent: false });
-      row.get('lineTotal')?.setValue(null, { emitEvent: false });
-    }
+    const qtyTon = Number(row.get('actualWeight')?.value) || 0;
+    const rateKg = Number(row.get('rate')?.value) || 0;
+    // 1 Ton = 1000 Kg -> total = qtyTon * 1000 * rateKg
+    const total = qtyTon > 0 && rateKg > 0 ? Number((qtyTon * 1000 * rateKg).toFixed(2)) : 0;
+    row.get('lineTotal')?.setValue(total > 0 ? total : null, { emitEvent: false });
     this.recomputeTotalAmountFromLines();
   }
 
@@ -486,13 +478,20 @@ export class SaudaManagementComponent implements OnInit {
 
   private recomputeTotalAmountFromLines(): void {
     let sum = 0;
+    let bBrokerage = 0;
+    let sBrokerage = 0;
     for (const ctrl of this.commodityRows.controls) {
       const lineTotal = Number(ctrl.get('lineTotal')?.value) || 0;
       sum += lineTotal;
+      bBrokerage += Number(ctrl.get('buyerBrokerage')?.value) || 0;
+      sBrokerage += Number(ctrl.get('sellerBrokerage')?.value) || 0;
     }
-    if (sum > 0) {
-      this.saudaForm.patchValue({ totalAmountInr: sum }, { emitEvent: false });
-    }
+    this.saudaForm.patchValue({
+      totalAmountInr: sum > 0 ? sum : null,
+      buyerBrokerageAmount: bBrokerage > 0 ? bBrokerage : null,
+      sellerBrokerageAmount: sBrokerage > 0 ? sBrokerage : null,
+      totalBrokerageAmount: (bBrokerage + sBrokerage) > 0 ? (bBrokerage + sBrokerage) : null,
+    }, { emitEvent: false });
   }
 
   private recomputeBrokerageAmounts(): void {
@@ -744,6 +743,7 @@ export class SaudaManagementComponent implements OnInit {
   private updatePartyValidators(type: SaudaType): void {
     const sellerCtrl = this.saudaForm.get('sellerName');
     const buyerCtrl = this.saudaForm.get('buyerName');
+    const dueDateCtrl = this.saudaForm.get('dueDate');
     const remarksCtrl = this.saudaForm.get('remarks');
     const totalAmountCtrl = this.saudaForm.get('totalAmountInr');
     const linkedSaudaCtrl = this.saudaForm.get('linkedPurchaseSaudaId');
@@ -752,70 +752,40 @@ export class SaudaManagementComponent implements OnInit {
     const truckVehicleCtrl = this.saudaForm.get('truckVehicleNo');
     const truckDateCtrl = this.saudaForm.get('truckReceiptDate');
 
+    // Storage and truck are NOT required at Sauda Creation stage
+    whCtrl?.clearValidators();
+    truckVehicleCtrl?.clearValidators();
+    truckDateCtrl?.clearValidators();
+    linkedSaudaCtrl?.clearValidators();
+    billingModeCtrl?.clearValidators();
+    totalAmountCtrl?.clearValidators();
+
     if (type === 'Purchase') {
-      // BR-SA-04, BR-SA-16, BR-SA-23
       sellerCtrl?.setValidators([Validators.required]);
       buyerCtrl?.clearValidators();
       buyerCtrl?.setValue('', { emitEvent: false });
-      remarksCtrl?.setValidators([Validators.required]);
-      totalAmountCtrl?.clearValidators();
-      linkedSaudaCtrl?.clearValidators();
-      billingModeCtrl?.clearValidators();
-
-      whCtrl?.setValidators([Validators.required]);
-      if (!whCtrl?.value && this.warehouses.length > 0) {
-        whCtrl?.setValue(this.warehouses[0].id, { emitEvent: false });
-        this.saudaForm.get('warehouseName')?.setValue(this.warehouses[0].name, { emitEvent: false });
-        this.filteredGodowns = this.godowns.filter((g) => g.warehouseId === this.warehouses[0].id);
-      }
-      truckVehicleCtrl?.setValidators([
-        Validators.required,
-        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
-      ]);
-      truckDateCtrl?.setValidators([Validators.required]);
+      dueDateCtrl?.clearValidators();
+      dueDateCtrl?.setValue('', { emitEvent: false });
     } else if (type === 'Sales') {
-      // BR-SA-05, EX-09, EX-11
       buyerCtrl?.setValidators([Validators.required]);
       sellerCtrl?.clearValidators();
-      remarksCtrl?.clearValidators();
-      totalAmountCtrl?.clearValidators();
-      linkedSaudaCtrl?.setValidators([Validators.required]);
-      billingModeCtrl?.setValidators([Validators.required]);
-
-      whCtrl?.setValidators([Validators.required]);
-      truckVehicleCtrl?.clearValidators();
-      truckVehicleCtrl?.setValidators([
-        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
-      ]);
-      truckDateCtrl?.clearValidators();
-    } else {
-      // Brokerage: BR-SA-03, BR-SA-10
+      sellerCtrl?.setValue('', { emitEvent: false });
+      dueDateCtrl?.clearValidators();
+      dueDateCtrl?.setValue('', { emitEvent: false });
+    } else if (type === 'Brokerage') {
       sellerCtrl?.setValidators([Validators.required]);
       buyerCtrl?.setValidators([Validators.required]);
-      remarksCtrl?.clearValidators();
-      totalAmountCtrl?.clearValidators();
-      linkedSaudaCtrl?.clearValidators();
-      billingModeCtrl?.setValidators([Validators.required]);
-
-      // Storage location not required for Brokerage
-      whCtrl?.clearValidators();
-      whCtrl?.setValue('', { emitEvent: false });
-      this.saudaForm.get('warehouseName')?.setValue('', { emitEvent: false });
-      this.saudaForm.get('godownName')?.setValue('', { emitEvent: false });
-      this.saudaForm.get('chamberName')?.setValue('', { emitEvent: false });
-      this.saudaForm.get('stackNumber')?.setValue('', { emitEvent: false });
-      this.filteredGodowns = [];
-      this.availableChambers = [];
-      this.availableStacks = [];
-
-      truckVehicleCtrl?.clearValidators();
-      truckVehicleCtrl?.setValidators([
-        Validators.pattern(/^[A-Za-z]{2}[-\s]?\d{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?\d{4}$/),
-      ]);
-      truckDateCtrl?.clearValidators();
+      dueDateCtrl?.clearValidators();
+      dueDateCtrl?.setValue('', { emitEvent: false });
+    } else if (type === 'Forward') {
+      dueDateCtrl?.setValidators([Validators.required]);
+      sellerCtrl?.setValidators([Validators.required]);
+      buyerCtrl?.clearValidators();
     }
+
     sellerCtrl?.updateValueAndValidity({ emitEvent: false });
     buyerCtrl?.updateValueAndValidity({ emitEvent: false });
+    dueDateCtrl?.updateValueAndValidity({ emitEvent: false });
     remarksCtrl?.updateValueAndValidity({ emitEvent: false });
     totalAmountCtrl?.updateValueAndValidity({ emitEvent: false });
     linkedSaudaCtrl?.updateValueAndValidity({ emitEvent: false });
@@ -826,11 +796,7 @@ export class SaudaManagementComponent implements OnInit {
 
     if (this.commodityRows) {
       for (const ctrl of this.commodityRows.controls) {
-        const rateCtrl = ctrl.get('rate');
-        rateCtrl?.clearValidators();
-        rateCtrl?.setValue(null, { emitEvent: false });
-        ctrl.get('lineTotal')?.setValue(null, { emitEvent: false });
-        rateCtrl?.updateValueAndValidity({ emitEvent: false });
+        this.recomputeRowWeightAndTotal(ctrl);
       }
     }
   }
@@ -932,6 +898,9 @@ export class SaudaManagementComponent implements OnInit {
     ).length;
     this.brokerageCount = this.activeSaudasList.filter(
       (s) => s.saudaType === 'Direct Sale' || s.saudaType === 'Brokerage',
+    ).length;
+    this.forwardCount = this.activeSaudasList.filter(
+      (s) => s.saudaType === 'Forward',
     ).length;
 
     const names = new Set<string>();
@@ -1066,6 +1035,7 @@ export class SaudaManagementComponent implements OnInit {
     this.saudaForm.patchValue({
       saudaType: initialType,
       saudaDate: sauda.saudaDate,
+      dueDate: sauda.dueDate || '',
       clientFirm: sauda.clientFirm,
       warehouseId: sauda.warehouseId || this.warehouses[0]?.id || '',
       warehouseName: sauda.warehouseName || this.warehouses[0]?.name || '',
@@ -1145,6 +1115,18 @@ export class SaudaManagementComponent implements OnInit {
 
     const v = this.saudaForm.getRawValue();
 
+    if (v.saudaType === 'Forward' && !v.dueDate) {
+      this.formError = 'Due Date is mandatory for Forward Saudas.';
+      this.notificationService.show(this.formError, 'error', 3500);
+      return;
+    }
+
+    if (v.saudaType === 'Brokerage' && (!v.sellerName || !v.buyerName)) {
+      this.formError = 'Both Seller and Buyer parties must be selected for Brokerage deals.';
+      this.notificationService.show(this.formError, 'error', 3500);
+      return;
+    }
+
     // Check party duplication: same party cannot be both Seller and Buyer in one deal
     if (
       v.sellerName &&
@@ -1157,45 +1139,33 @@ export class SaudaManagementComponent implements OnInit {
       return;
     }
 
-    if (v.saudaType !== 'Brokerage' && !v.warehouseId) {
-      this.formError = 'Storage Warehouse is required for Purchase and Sales Saudas.';
-      this.notificationService.show(this.formError, 'error', 3500);
-      return;
-    }
-
-    const selectedWh = v.warehouseId
-      ? this.warehouses.find((w) => w.id === v.warehouseId)
-      : undefined;
-
     const payload = {
       saudaType: v.saudaType as SaudaType,
       saudaDate: v.saudaDate,
+      dueDate: v.saudaType === 'Forward' ? v.dueDate : undefined,
       clientFirm: v.clientFirm,
-      warehouseId: v.saudaType === 'Brokerage' ? undefined : v.warehouseId,
-      warehouseName:
-        v.saudaType === 'Brokerage'
-          ? undefined
-          : (selectedWh?.name || v.warehouseName || ''),
-      godownName: v.saudaType === 'Brokerage' ? undefined : (v.godownName || undefined),
-      chamberName: v.saudaType === 'Brokerage' ? undefined : (v.chamberName || undefined),
-      stackNumber: v.saudaType === 'Brokerage' ? undefined : (v.stackNumber || undefined),
-      brokerageBillingMode: v.brokerageBillingMode || undefined,
-      linkedPurchaseSaudaId: v.linkedPurchaseSaudaId || undefined,
-      linkedPurchaseSaudaNo: v.linkedPurchaseSaudaNo || undefined,
+      warehouseId: undefined,
+      warehouseName: undefined,
+      godownName: undefined,
+      chamberName: undefined,
+      stackNumber: undefined,
+      brokerageBillingMode: undefined,
+      linkedPurchaseSaudaId: undefined,
+      linkedPurchaseSaudaNo: undefined,
       sellerName: (v.sellerName || '').trim(),
       buyerName: (v.buyerName || '').trim(),
       expectedDeliveryDate: v.expectedDeliveryDate || '',
       commodityItems: (this.saudaForm.getRawValue().commodityItems || []).map((c: any) => ({
         commodity: c.commodity,
-        packagingUom: c.packagingUom,
-        packagingQty: Number(c.packagingQty),
-        weightUom: 'MT',
-        actualWeight: Number(c.actualWeight),
-        rate: v.saudaType === 'Purchase' ? undefined : (Number(c.rate) || undefined),
-        lineTotal:
-          v.saudaType === 'Purchase'
-            ? undefined
-            : Number((Number(c.actualWeight) * (Number(c.rate) || 0)).toFixed(2)),
+        packagingUom: c.packagingUom || 'Bag',
+        packagingQty: Number(c.packagingQty) || 0,
+        weightUom: 'MT' as WeightUom,
+        actualWeight: Number(c.actualWeight) || 0,
+        rate: Number(c.rate) || 0,
+        ratePerKg: Number(c.rate) || 0,
+        buyerBrokerage: Number(c.buyerBrokerage) || undefined,
+        sellerBrokerage: Number(c.sellerBrokerage) || undefined,
+        lineTotal: Number((Number(c.actualWeight) * 1000 * (Number(c.rate) || 0)).toFixed(2)),
       })),
       totalAmountInr: Number(v.totalAmountInr) || 0,
       buyerBrokerageAmount:
@@ -1207,20 +1177,15 @@ export class SaudaManagementComponent implements OnInit {
           ? Number(v.sellerBrokerageAmount)
           : undefined,
       totalBrokerageAmount:
-        (Number(v.buyerBrokerageAmount) || 0) +
-          (Number(v.sellerBrokerageAmount) || 0) || undefined,
-      sellerCreditPeriodDays:
-        v.sellerCreditPeriodDays !== null && v.sellerCreditPeriodDays !== ''
-          ? Number(v.sellerCreditPeriodDays)
-          : null,
-      sellerCreditStartDate: v.sellerCreditStartDate || '',
-      sellerDueDate: v.sellerDueDate || '',
-      buyerCreditPeriodDays:
-        v.buyerCreditPeriodDays !== null && v.buyerCreditPeriodDays !== ''
-          ? Number(v.buyerCreditPeriodDays)
-          : null,
-      buyerCreditStartDate: v.buyerCreditStartDate || '',
-      buyerDueDate: v.buyerDueDate || '',
+        Number(v.totalBrokerageAmount) ||
+        ((Number(v.buyerBrokerageAmount) || 0) + (Number(v.sellerBrokerageAmount) || 0)) ||
+        undefined,
+      sellerCreditPeriodDays: null,
+      sellerCreditStartDate: '',
+      sellerDueDate: '',
+      buyerCreditPeriodDays: null,
+      buyerCreditStartDate: '',
+      buyerDueDate: '',
       remarks: (v.remarks || '').trim(),
     };
 
@@ -1247,41 +1212,42 @@ export class SaudaManagementComponent implements OnInit {
         this.notificationService.show(result.message, 'error', 3500);
         return;
       }
-
-      // If truck number is entered, record initial truck entry
-      if (v.truckVehicleNo && v.truckVehicleNo.trim()) {
-        const createdSauda = result.recordId
-          ? this.erpService.getSaudasSnapshot().find((s) => s.id === result.recordId)
-          : this.erpService.getSaudasSnapshot()[0];
-        if (createdSauda) {
-          const truckWh =
-            selectedWh?.name ||
-            v.warehouseName ||
-            (v.saudaType === 'Brokerage' ? 'Direct Delivery' : 'Main Mandi Yard');
-          const truckPayload = {
-            saudaId: createdSauda.id,
-            warehouse: truckWh,
-            dispatchDate: v.truckReceiptDate || v.saudaDate,
-            expectedArrivalDate:
-              v.truckExpectedArrivalDate || v.truckReceiptDate || v.saudaDate,
-            vehicleNo: v.truckVehicleNo.trim().toUpperCase(),
-            status: (v.truckStatus || 'In Transit') as TruckStatus,
-            driverName: (v.truckDriverName || '').trim(),
-            driverPhone: (v.truckDriverPhone || '').trim(),
-            transporterName: (v.truckTransporterName || '').trim(),
-            lrNo: '',
-            freightRatePerMt: 0,
-            advancePaid: 0,
-            commodityItems: payload.commodityItems,
-            remarks: `Initial truck entry linked to ${createdSauda.saudaNo}`,
-          };
-          this.erpService.createTruck(truckPayload);
-        }
-      }
-
-      this.notificationService.show(result.message, 'success', 3000);
+      this.notificationService.show(result.message, 'success', 3500);
       this.viewMode = 'listing';
     }
+  }
+
+  executeForwardSauda(sauda: SaudaRecord): void {
+    const res = this.erpService.executeForwardSauda(sauda.id);
+    if (!res.ok) {
+      this.notificationService.show(res.message, 'error', 3500);
+      return;
+    }
+    this.notificationService.show(res.message, 'success', 3500);
+    this.applyFilters();
+  }
+
+  get totalCommodityQuantityTon(): number {
+    if (!this.commodityRows) return 0;
+    return this.commodityRows.controls.reduce((sum, ctrl) => {
+      return sum + (Number(ctrl.get('actualWeight')?.value) || 0);
+    }, 0);
+  }
+
+  get totalCommodityValue(): number {
+    if (!this.commodityRows) return 0;
+    return this.commodityRows.controls.reduce((sum, ctrl) => {
+      return sum + (Number(ctrl.get('lineTotal')?.value) || 0);
+    }, 0);
+  }
+
+  get totalCommodityBrokerage(): number {
+    if (!this.commodityRows) return 0;
+    return this.commodityRows.controls.reduce((sum, ctrl) => {
+      const b = Number(ctrl.get('buyerBrokerage')?.value) || 0;
+      const s = Number(ctrl.get('sellerBrokerage')?.value) || 0;
+      return sum + b + s;
+    }, 0);
   }
 
   // ── Screen 3: Sauda Details ──
@@ -1472,7 +1438,7 @@ export class SaudaManagementComponent implements OnInit {
 
   getRecordBadgeClass(status: string): string {
     if (status === 'Voided') return 'badge-red';
-    if (status === 'On Hold') return 'badge-amber';
+    if (status === 'On Hold') return 'badge-purple';
     if (status === 'Completed') return 'badge-green';
     return 'badge-blue';
   }

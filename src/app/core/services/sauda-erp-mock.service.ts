@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-export type SaudaType = 'Brokerage' | 'Purchase' | 'Sales' | 'Direct Sale';
+export type SaudaType = 'Brokerage' | 'Purchase' | 'Sales' | 'Forward' | 'Direct Sale';
 export type SaudaStatus =
   | 'Open'
   | 'Partial'
@@ -41,11 +41,14 @@ export type WeightUom = 'KG' | 'Quintal' | 'MT';
 
 export interface CommodityLineItem {
   commodity: string;
-  packagingUom: PackagingUom;
-  packagingQty: number;
-  weightUom: WeightUom;
+  packagingUom?: PackagingUom;
+  packagingQty?: number;
+  weightUom?: WeightUom;
   actualWeight: number;
   rate?: number;
+  ratePerKg?: number;
+  buyerBrokerage?: number;
+  sellerBrokerage?: number;
   lineTotal?: number;
 }
 
@@ -83,6 +86,7 @@ export interface SaudaRecord {
   linkedSalesSaudaIds?: string[];
   totalAmountInr: number;
   expectedDeliveryDate?: string;
+  dueDate?: string;
   warehouseId?: string;
   warehouseName?: string;
   godownName?: string;
@@ -954,6 +958,57 @@ export class SaudaErpMockService {
           changes: [
             { field: 'Commodities', oldValue: '-', newValue: 'Jowar (40 Quintal)' },
             { field: 'Total Amount', oldValue: '-', newValue: '₹1,20,000' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'SAU-2026-0005',
+      saudaNo: 'SAU-2026-0005',
+      saudaDate: '2026-11-20',
+      dueDate: '2027-02-20',
+      saudaType: 'Forward',
+      clientFirm: 'Desert Fresh Traders',
+      sellerName: 'Kallash Agro Foods',
+      buyerName: 'Marwar Oil Mills',
+      partyName: 'Kallash Agro Foods / Marwar Oil Mills',
+      commodityItems: [
+        {
+          commodity: 'Ground Nut',
+          packagingUom: 'Bag',
+          packagingQty: 400,
+          weightUom: 'MT',
+          actualWeight: 20,
+          rate: 75,
+          lineTotal: 1500000,
+        },
+      ],
+      commodity: 'Ground Nut',
+      quantityMt: 20,
+      totalAmountInr: 1500000,
+      sellerCreditPeriodDays: null,
+      sellerCreditStartDate: '',
+      sellerDueDate: '',
+      buyerCreditPeriodDays: null,
+      buyerCreditStartDate: '',
+      buyerDueDate: '',
+      remarks: 'Forward contract booked for Feb 2027 execution at ₹75/kg',
+      status: 'On Hold',
+      currentVersion: 1,
+      amendmentStatus: 'None',
+      createdBy: 'Sauda Admin',
+      createdAt: '2026-11-20 11:30',
+      updatedAt: '2026-11-20 11:30',
+      revisions: [
+        {
+          version: 1,
+          changedAt: '2026-11-20 11:30',
+          changedBy: 'Sauda Admin',
+          action: 'Created',
+          reason: 'Forward contract booked',
+          changes: [
+            { field: 'Sauda Type', oldValue: '-', newValue: 'Forward' },
+            { field: 'Due Date', oldValue: '-', newValue: '2027-02-20' },
           ],
         },
       ],
@@ -2758,10 +2813,10 @@ export class SaudaErpMockService {
         };
       }
       seen.add(item.commodity);
-      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+      if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Packaging quantity and actual weight must be greater than zero.',
+          message: 'Quantity in Ton must be greater than zero.',
         };
       }
     }
@@ -2794,97 +2849,54 @@ export class SaudaErpMockService {
       payload.buyerName,
     );
 
-    // Business rules per Sauda Type (CTMS - Sauda Management Use Cases)
+    // Business rules per Sauda Type
     let status: SaudaStatus = 'Open';
     let heldQuantityMt: number | undefined = undefined;
     let soldQuantityMt: number | undefined = undefined;
 
     if (payload.saudaType === 'Purchase') {
-      // BR-SA-23: Remarks are mandatory on Purchase Sauda
-      if (!payload.remarks || payload.remarks.trim().length === 0) {
-        return {
-          ok: false,
-          message:
-            'Remarks are mandatory on a Purchase Sauda to record agreed reference terms (BR-SA-23).',
-        };
-      }
-      status = 'On Hold';
+      status = 'Open';
       heldQuantityMt = quantityMt;
       soldQuantityMt = 0;
     } else if (payload.saudaType === 'Sales') {
-      // BR-SA-05, EX-09: A Sales Sauda must be linked to at least one Purchase Sauda
-      if (!payload.linkedPurchaseSaudaId) {
-        return {
-          ok: false,
-          message:
-            'A Sales Sauda must be linked to a Purchase Sauda holding goods (BR-SA-05, EX-09).',
-        };
-      }
-      const linked = this.saudasSubject.value.find(
-        (s) => s.id === payload.linkedPurchaseSaudaId,
-      );
-      if (!linked) {
-        return { ok: false, message: 'Linked Purchase Sauda not found.' };
-      }
-      // AF-03 step 2: The Buyer cannot be the Seller of the linked Purchase Sauda
-      if (
-        payload.buyerName &&
-        linked.sellerName &&
-        payload.buyerName.trim().toLowerCase() ===
-          linked.sellerName.trim().toLowerCase()
-      ) {
-        return {
-          ok: false,
-          message:
-            'The Buyer cannot be the Seller of the linked Purchase Sauda (AF-03).',
-        };
-      }
-      // BR-SA-14, EX-08: Quantity sold must not exceed unsold held quantity of linked Purchase Sauda
-      const currentHeld =
-        linked.heldQuantityMt !== undefined
-          ? linked.heldQuantityMt
-          : linked.quantityMt;
-      if (quantityMt > currentHeld) {
-        return {
-          ok: false,
-          message: `Sales quantity (${quantityMt} MT) exceeds the unsold held quantity (${currentHeld} MT) of ${linked.saudaNo} (BR-SA-14, EX-08).`,
-        };
-      }
-      // EX-11: Payment scenario required
-      if (!payload.brokerageBillingMode) {
-        return {
-          ok: false,
-          message:
-            'A Payment Scenario (PS-1, PS-2, or PS-3) must be selected on a Sales Sauda (EX-11).',
-        };
-      }
-
-      // Update linked Purchase Sauda status and held quantity (BR-SA-15)
-      const remainingHeld = Math.max(
-        0,
-        Number((currentHeld - quantityMt).toFixed(3)),
-      );
-      const updatedSold = Number(
-        ((linked.soldQuantityMt || 0) + quantityMt).toFixed(3),
-      );
-      const updatedStatus: SaudaStatus =
-        remainingHeld === 0 ? 'Sold' : 'Partly Sold';
-
-      const updatedSaudas = this.saudasSubject.value.map((s) =>
-        s.id === linked.id
-          ? {
-              ...s,
-              heldQuantityMt: remainingHeld,
-              soldQuantityMt: updatedSold,
-              status: updatedStatus,
-            }
-          : s,
-      );
-      this.saudasSubject.next(updatedSaudas);
       status = 'Open';
+      if (payload.linkedPurchaseSaudaId) {
+        const linked = this.saudasSubject.value.find(
+          (s) => s.id === payload.linkedPurchaseSaudaId,
+        );
+        if (linked) {
+          const currentHeld =
+            linked.heldQuantityMt !== undefined
+              ? linked.heldQuantityMt
+              : linked.quantityMt;
+          const remainingHeld = Math.max(
+            0,
+            Number((currentHeld - quantityMt).toFixed(3)),
+          );
+          const updatedSold = Number(
+            ((linked.soldQuantityMt || 0) + quantityMt).toFixed(3),
+          );
+          const updatedStatus: SaudaStatus =
+            remainingHeld === 0 ? 'Sold' : 'Partly Sold';
+
+          const updatedSaudas = this.saudasSubject.value.map((s) =>
+            s.id === linked.id
+              ? {
+                  ...s,
+                  heldQuantityMt: remainingHeld,
+                  soldQuantityMt: updatedSold,
+                  status: updatedStatus,
+                }
+              : s,
+          );
+          this.saudasSubject.next(updatedSaudas);
+        }
+      }
+    } else if (payload.saudaType === 'Forward') {
+      status = 'On Hold';
     } else {
-      // Brokerage Sauda created with status Completed (AF-01 step 13)
-      status = 'Completed';
+      // Brokerage Sauda
+      status = 'Open';
     }
 
     const nextNum = this.saudasSubject.value.length + 1;
@@ -2979,10 +2991,10 @@ export class SaudaErpMockService {
         };
       }
       seen.add(item.commodity);
-      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+      if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Packaging quantity and actual weight must be greater than zero.',
+          message: 'Quantity in Ton must be greater than zero.',
         };
       }
     }
@@ -3124,10 +3136,10 @@ export class SaudaErpMockService {
         };
       }
       seen.add(item.commodity);
-      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+      if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Packaging quantity and actual weight must be greater than zero.',
+          message: 'Quantity in Ton must be greater than zero.',
         };
       }
     }
@@ -3383,8 +3395,29 @@ export class SaudaErpMockService {
     const b = (buyerName || '').trim();
     if (type === 'Purchase') return s || '—';
     if (type === 'Sales') return b || '—';
+    if (type === 'Brokerage') return s && b ? `${s} → ${b}` : s || b || '—';
+    if (type === 'Forward') return s && b ? `${s} / ${b}` : s || b || '—';
     if (s && b) return `${s} / ${b}`;
     return s || b || '—';
+  }
+
+  executeForwardSauda(id: string): ActionResult {
+    const saudas = this.saudasSubject.value;
+    const sauda = saudas.find((s) => s.id === id);
+    if (!sauda) {
+      return { ok: false, message: 'Forward Sauda not found.' };
+    }
+    const updated = saudas.map((s) =>
+      s.id === id
+        ? {
+            ...s,
+            status: 'Open' as SaudaStatus,
+            updatedAt: this.formatTimestamp(),
+          }
+        : s,
+    );
+    this.saudasSubject.next(updated);
+    return { ok: true, message: `Forward Sauda ${sauda.saudaNo} executed successfully and converted to normal deal.` };
   }
 
   voidSauda(id: string, reason: string): ActionResult {
@@ -3525,10 +3558,10 @@ export class SaudaErpMockService {
         };
       }
       seen.add(item.commodity);
-      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+      if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Packaging quantity and actual weight must be greater than zero.',
+          message: 'Quantity in Ton must be greater than zero.',
         };
       }
     }
@@ -3708,10 +3741,10 @@ export class SaudaErpMockService {
         };
       }
       seen.add(item.commodity);
-      if (Number(item.packagingQty) <= 0 || Number(item.actualWeight) <= 0) {
+      if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Packaging quantity and actual weight must be greater than zero.',
+          message: 'Quantity in Ton must be greater than zero.',
         };
       }
     }
