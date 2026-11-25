@@ -21,7 +21,7 @@ interface CommodityStockItem {
   commodity: string;
   totalQty: number;
   unit: string;
-  totalWeightKg: number;
+  totalWeightKg?: number;
   iconType: 'groundnut' | 'chana' | 'guar';
 }
 
@@ -30,7 +30,7 @@ interface WarehouseStockItem {
   city: string;
   totalQty: number;
   unit: string;
-  totalWeightKg: number;
+  totalWeightKg?: number;
 }
 
 interface RecentSaudaItem {
@@ -71,10 +71,7 @@ export class DashboardComponent implements OnInit {
   firmsList: string[] = ['All Firms'];
   selectedPeriod = 'November 2026';
   periodOptions: string[] = [
-    'This Month (01 Jan 2025 – 31 Jan 2025)',
-    'Last Month (01 Dec 2024 – 31 Dec 2024)',
-    'This Quarter (Q4 2024-25)',
-    'This Financial Year (2024-25)',
+    
   ];
 
   // Year & Multi-Month Filter State
@@ -260,23 +257,20 @@ export class DashboardComponent implements OnInit {
   commodityStockList: CommodityStockItem[] = [
     {
       commodity: 'Ground Nut',
-      totalQty: 780,
-      unit: 'Bags',
-      totalWeightKg: 31200,
+      totalQty: 31.2,
+      unit: 'MT',
       iconType: 'groundnut',
     },
     {
       commodity: 'Chana',
-      totalQty: 620,
-      unit: 'Bags',
-      totalWeightKg: 24800,
+      totalQty: 24.8,
+      unit: 'MT',
       iconType: 'chana',
     },
     {
       commodity: 'Guar',
-      totalQty: 450,
-      unit: 'Bags',
-      totalWeightKg: 18000,
+      totalQty: 18.0,
+      unit: 'MT',
       iconType: 'guar',
     },
   ];
@@ -286,23 +280,20 @@ export class DashboardComponent implements OnInit {
     {
       warehouse: 'Desert Mandi Yard A',
       city: 'Jodhpur',
-      totalQty: 850,
-      unit: 'Bags',
-      totalWeightKg: 34000,
+      totalQty: 34.0,
+      unit: 'MT',
     },
     {
       warehouse: 'Kota Grain Silo',
       city: 'Kota',
-      totalQty: 600,
-      unit: 'Bags',
-      totalWeightKg: 24000,
+      totalQty: 24.0,
+      unit: 'MT',
     },
     {
       warehouse: 'Rajasthan Agro Godown 4',
       city: 'Bikaner',
-      totalQty: 400,
-      unit: 'Bags',
-      totalWeightKg: 16000,
+      totalQty: 16.0,
+      unit: 'MT',
     },
   ];
 

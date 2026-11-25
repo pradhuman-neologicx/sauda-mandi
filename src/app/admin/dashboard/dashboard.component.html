@@ -496,10 +496,8 @@
         <table class="dash-clean-table">
           <thead>
             <tr>
-              <th style="width: 32%">Commodity</th>
-              <th class="text-center" style="width: 24%">Total Quantity</th>
-              <th class="text-center" style="width: 18%">Unit</th>
-              <th class="text-end" style="width: 26%">Total Weight</th>
+              <th style="width: 58%">Commodity</th>
+              <th class="text-end" style="width: 42%">Total Quantity</th>
             </tr>
           </thead>
           <tbody>
@@ -530,9 +528,7 @@
                   <span class="commodity-name">{{ item.commodity }}</span>
                 </div>
               </td>
-              <td class="text-center fw-semibold text-dark">{{ item.totalQty | number }}</td>
-              <td class="text-center text-secondary">{{ item.unit }}</td>
-              <td class="text-end fw-semibold text-dark">{{ item.totalWeightKg | number }} Kg</td>
+              <td class="text-end fw-semibold text-dark">{{ item.totalQty | number: '1.2-2' }} MT</td>
             </tr>
             }
           </tbody>
@@ -541,10 +537,8 @@
         <table class="dash-clean-table">
           <thead>
             <tr>
-              <th style="width: 38%">Warehouse</th>
-              <th class="text-center" style="width: 20%">Total Quantity</th>
-              <th class="text-center" style="width: 16%">Unit</th>
-              <th class="text-end" style="width: 26%">Total Weight</th>
+              <th style="width: 58%">Warehouse</th>
+              <th class="text-end" style="width: 42%">Total Quantity</th>
             </tr>
           </thead>
           <tbody>
@@ -559,9 +553,7 @@
                   </div>
                 </div>
               </td>
-              <td class="text-center fw-semibold text-dark">{{ wh.totalQty | number }}</td>
-              <td class="text-center text-secondary">{{ wh.unit }}</td>
-              <td class="text-end fw-semibold text-dark">{{ wh.totalWeightKg | number }} Kg</td>
+              <td class="text-end fw-semibold text-dark">{{ wh.totalQty | number: '1.2-2' }} MT</td>
             </tr>
             }
           </tbody>
