@@ -22,6 +22,42 @@ import {
 } from '../../../core/services/sauda-erp-mock.service';
 import { NotificationService } from '../../../core/services/notificationnew.service';
 
+export interface CommodityWarehouseLot {
+  warehouseId: string;
+  warehouseName: string;
+  isActiveWarehouse: boolean;
+  godownName?: string;
+  chamberName?: string;
+  stackNumber?: string;
+  partyName: string;
+  packagingUom: PackagingUom;
+  availableUnits: number;
+  availableWeightMt: number;
+  rawRecord: InventoryRecord;
+}
+
+export interface CommodityPartyShare {
+  partyName: string;
+  warehouses: string[];
+  totalUnits: number;
+  totalWeightMt: number;
+  percentage: number;
+}
+
+export interface CommodityGroupedRecord {
+  commodity: string;
+  productNames: string[];
+  parties: string[];
+  warehouses: string[];
+  locationsDisplay: string[];
+  packagingUoms: string[];
+  totalAvailableUnits: number;
+  totalAvailableWeightMt: number;
+  stockStatus: 'Available Stock' | 'Zero Stock';
+  lots: CommodityWarehouseLot[];
+  rawRecords: InventoryRecord[];
+}
+
 @Component({
   selector: 'app-inventory',
   standalone: true,
@@ -50,6 +86,14 @@ export class InventoryComponent implements OnInit {
   // Master Data
   inventoryList: InventoryRecord[] = [];
   filteredInventory: InventoryRecord[] = [];
+  filteredCommodities: CommodityGroupedRecord[] = [];
+
+  // Commodity View Detail Modal State
+  showCommodityModal = false;
+  selectedCommodityGroup: CommodityGroupedRecord | null = null;
+  selectedCommodityParties: CommodityPartyShare[] = [];
+  selectedCommodityMovements: StockMovementRecord[] = [];
+  commodityModalTab: 'warehouses' | 'parties' | 'history' = 'warehouses';
 
   stockAdjustments: StockAdjustmentRecord[] = [];
   filteredAdjustments: StockAdjustmentRecord[] = [];
@@ -293,9 +337,90 @@ export class InventoryComponent implements OnInit {
   totalUnitsByUomSummary: string = '0 Units';
   zeroStockCount: number = 0;
 
+  groupInventoryByCommodity(): void {
+    const map = new Map<string, CommodityGroupedRecord>();
+
+    for (const item of this.filteredInventory) {
+      const commKey = (item.commodity || 'Unknown').trim();
+      let group = map.get(commKey);
+      if (!group) {
+        group = {
+          commodity: commKey,
+          productNames: [],
+          parties: [],
+          warehouses: [],
+          locationsDisplay: [],
+          packagingUoms: [],
+          totalAvailableUnits: 0,
+          totalAvailableWeightMt: 0,
+          stockStatus: 'Zero Stock',
+          lots: [],
+          rawRecords: [],
+        };
+        map.set(commKey, group);
+      }
+
+      if (item.productName && !group.productNames.includes(item.productName)) {
+        group.productNames.push(item.productName);
+      }
+
+      const party = (item.partyName || item.clientFirm || '').trim();
+      if (party && !group.parties.includes(party)) {
+        group.parties.push(party);
+      }
+
+      if (item.warehouseName && !group.warehouses.includes(item.warehouseName)) {
+        group.warehouses.push(item.warehouseName);
+      }
+
+      let loc = item.warehouseName;
+      const subLocs = [item.godownName, item.chamberName, item.stackNumber].filter(Boolean);
+      if (subLocs.length > 0) {
+        loc += ` (${subLocs.join(', ')})`;
+      }
+      if (!group.locationsDisplay.includes(loc)) {
+        group.locationsDisplay.push(loc);
+      }
+
+      const uomDisplay = this.getPackagingDisplay(item.packagingUom);
+      if (uomDisplay && !group.packagingUoms.includes(uomDisplay)) {
+        group.packagingUoms.push(uomDisplay);
+      }
+
+      group.totalAvailableUnits += item.availableUnits || 0;
+      group.totalAvailableWeightMt = Number((group.totalAvailableWeightMt + (item.availableWeightMt || 0)).toFixed(3));
+
+      group.lots.push({
+        warehouseId: item.warehouseId,
+        warehouseName: item.warehouseName,
+        isActiveWarehouse: item.isActiveWarehouse,
+        godownName: item.godownName,
+        chamberName: item.chamberName,
+        stackNumber: item.stackNumber,
+        partyName: party,
+        packagingUom: item.packagingUom,
+        availableUnits: item.availableUnits,
+        availableWeightMt: item.availableWeightMt,
+        rawRecord: item,
+      });
+
+      group.rawRecords.push(item);
+    }
+
+    map.forEach((g) => {
+      g.stockStatus = g.totalAvailableWeightMt > 0 ? 'Available Stock' : 'Zero Stock';
+    });
+
+    this.filteredCommodities = Array.from(map.values()).sort((a, b) =>
+      a.commodity.localeCompare(b.commodity)
+    );
+  }
+
   updateStockKpis(): void {
+    this.groupInventoryByCommodity();
+
     this.stockPageSize = this.stockTableSize === 'all'
-      ? Math.max(this.filteredInventory.length, 1)
+      ? Math.max(this.filteredCommodities.length, 1)
       : this.stockTableSize;
 
     const unique = new Set(this.filteredInventory.map((i) => i.commodity.trim().toLowerCase()));
@@ -545,6 +670,63 @@ export class InventoryComponent implements OnInit {
     const ch = this.availableChambers.find((c) => c.id === chId);
     this.availableStacks = ch?.stackNumbers || [];
     this.createAdjForm.stackNumber = '';
+  }
+
+  // Commodity View Detail Modal (Aggregated Stock & History)
+  openCommodityDetailModal(group: CommodityGroupedRecord): void {
+    this.selectedCommodityGroup = group;
+    this.commodityModalTab = 'warehouses';
+
+    // Calculate Party Shares
+    const partyMap = new Map<string, { warehouses: Set<string>; units: number; weight: number }>();
+    for (const lot of group.lots) {
+      const p = lot.partyName || 'Unknown Party';
+      let entry = partyMap.get(p);
+      if (!entry) {
+        entry = { warehouses: new Set<string>(), units: 0, weight: 0 };
+        partyMap.set(p, entry);
+      }
+      entry.warehouses.add(lot.warehouseName);
+      entry.units += lot.availableUnits;
+      entry.weight = Number((entry.weight + lot.availableWeightMt).toFixed(3));
+    }
+
+    const totalWeight = group.totalAvailableWeightMt || 1;
+    this.selectedCommodityParties = Array.from(partyMap.entries()).map(([partyName, data]) => ({
+      partyName,
+      warehouses: Array.from(data.warehouses),
+      totalUnits: data.units,
+      totalWeightMt: data.weight,
+      percentage: group.totalAvailableWeightMt > 0 ? Number(((data.weight / totalWeight) * 100).toFixed(1)) : 0,
+    })).sort((a, b) => b.totalWeightMt - a.totalWeightMt);
+
+    // Get movement history for this commodity
+    const commLower = group.commodity.trim().toLowerCase();
+    this.selectedCommodityMovements = this.stockMovements.filter((m) =>
+      (m.commodity || '').trim().toLowerCase() === commLower
+    ).sort((a, b) => (b.movementDate || '').localeCompare(a.movementDate || ''));
+
+    this.showCommodityModal = true;
+  }
+
+  closeCommodityDetailModal(): void {
+    this.showCommodityModal = false;
+    this.selectedCommodityGroup = null;
+    this.selectedCommodityParties = [];
+    this.selectedCommodityMovements = [];
+  }
+
+  adjustLotFromModal(lot: CommodityWarehouseLot): void {
+    this.closeCommodityDetailModal();
+    this.openCreateAdjModal(lot.rawRecord);
+  }
+
+  adjustCommodityFromModal(): void {
+    if (this.selectedCommodityGroup && this.selectedCommodityGroup.rawRecords.length > 0) {
+      const raw = this.selectedCommodityGroup.rawRecords[0];
+      this.closeCommodityDetailModal();
+      this.openCreateAdjModal(raw);
+    }
   }
 
   // Create Adjustment Modal (UC-INV-04)

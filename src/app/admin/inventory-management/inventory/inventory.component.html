@@ -3,7 +3,7 @@
   <div class="erp-header">
     <div>
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Inventory Management</div>
-      <h1 class="erp-title">Warehouse Stock &amp; Inventory</h1>
+      <h1 class="erp-title">Product Inventory</h1>
       <p class="erp-subtitle">
         Physical inventory tracked by Firm + Warehouse + Commodity with Maker-Checker controls
       </p>
@@ -68,42 +68,16 @@
   <!-- TAB 1: CURRENT STOCK (UC-INV-01)                              -->
   <!-- ══════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'current-stock') {
-  <!-- KPI Cards -->
-  <div class="sauda-kpi-grid">
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Active Commodities</div>
-      <div class="sauda-kpi-val">{{ totalCommoditiesCount }}</div>
-    </div>
 
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Total Quantity (by UOM)</div>
-      <div class="sauda-kpi-val text-break-uom">{{ totalUnitsByUomSummary }}</div>
-
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Total Net Weight</div>
-      <div class="sauda-kpi-val">{{ totalStockWeightMt | number: '1.2-2' }} MT</div>
-
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Zero Stock SKUs</div>
-      <div class="sauda-kpi-val" [class.text-amber]="zeroStockCount > 0">
-        {{ zeroStockCount }}
-      </div>
-
-    </div>
-  </div>
 
   <!-- Current Stock Card -->
   <div class="erp-card">
     <div class="listing-card-top">
       <div class="listing-header-row">
         <div>
-          <h2 class="listing-card-title">Live Warehouse Balances</h2>
+          <h2 class="listing-card-title">Stock</h2>
           <p class="listing-card-sub">
-            Maintained separately for each Warehouse + Commodity + Firm combination
+            Commodity-wise consolidated stock holding across warehouses and parties
           </p>
         </div>
         <div class="table-size-selector">
@@ -182,20 +156,20 @@
         <thead>
           <tr>
             <th class="w-sno">S.No.</th>
-            <th>Warehouse &amp; Location</th>
-            <th>Party</th>
             <th>Commodity / Product</th>
+            <th>Party</th>
+            <th>Warehouse &amp; Location</th>
             <th>Packaging UOM</th>
             <th class="text-end">Available Quantity</th>
-            <th>Stock Status</th>
+            <th class="text-center">Stock Status</th>
             <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           @for (
-          item of filteredInventory
+          item of filteredCommodities
           | paginate: { itemsPerPage: stockPageSize, currentPage: stockPage, id: 'stock-pg' };
-          track item.id;
+          track item.commodity;
           let i = $index
           ) {
           <tr>
@@ -203,44 +177,59 @@
               {{ (stockPage - 1) * stockPageSize + i + 1 }}
             </td>
             <td>
-              <div class="fw-medium text-dark">{{ item.warehouseName }}</div>
-              @if (item.godownName || item.chamberName || item.stackNumber) {
-              <div class="wh-hierarchy-sub mt-1">
-                @if (item.godownName) {
-                <span class="badge-loc" title="Godown"><i class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ item.godownName }}</span>
-                }
-                @if (item.chamberName) {
-                <span class="badge-loc" title="Chamber"><i class="fa-solid fa-door-open me-1 text-purple"></i>{{ item.chamberName }}</span>
-                }
-                @if (item.stackNumber) {
-                <span class="badge-stack" title="Stack Number"><i class="fa-solid fa-layer-group me-1 text-teal"></i>{{ item.stackNumber }}</span>
-                }
+              <div class="fw-bold text-dark fs-14">{{ item.commodity }}</div>
+
+            </td>
+            <td>
+              @if (item.parties.length === 1) {
+              <span class="fw-semibold text-dark">
+                <i class="fa-solid fa-user-group me-1 text-primary"></i>{{ item.parties[0] }}
+              </span>
+              } @else if (item.parties.length > 1) {
+              <div class="d-flex align-items-center flex-wrap gap-1">
+                <span class="fw-semibold text-dark">
+                  <i class="fa-solid fa-user-group me-1 text-primary"></i>{{ item.parties[0] }}
+                </span>
+                <span class="badge-tag ms-1" [title]="item.parties.join(', ')">
+                  +{{ item.parties.length - 1 }} more
+                </span>
+              </div>
+              } @else {
+              <span class="text-muted">—</span>
+              }
+            </td>
+            <td>
+              @if (item.warehouses.length === 1) {
+              <div class="fw-medium text-dark">{{ item.locationsDisplay[0] }}</div>
+              } @else if (item.warehouses.length > 1) {
+              <div class="d-flex align-items-center flex-wrap gap-1">
+                <div class="fw-medium text-dark">{{ item.warehouses[0] }}</div>
+                <span class="badge-loc" [title]="item.locationsDisplay.join(' • ')">
+                  <i class="fa-solid fa-warehouse me-1 text-slate-500"></i>+{{ item.warehouses.length - 1 }} more
+                </span>
+              </div>
+              } @else {
+              <span class="text-muted">—</span>
+              }
+            </td>
+            <td>
+              @for (uom of item.packagingUoms; track uom) {
+              <span class="badge-uom me-1">{{ uom }}</span>
+              }
+            </td>
+            <td class="text-end text-nowrap">
+              <div class="fw-bold font-monospace" [class.text-muted]="item.totalAvailableWeightMt === 0"
+                [class.text-dark]="item.totalAvailableWeightMt > 0">
+                {{ item.totalAvailableWeightMt | number: '1.2-3' }} MT
+              </div>
+              @if (item.totalAvailableUnits > 0) {
+              <div class="text-xs text-muted font-monospace">
+                {{ item.totalAvailableUnits | number }} {{ item.packagingUoms[0] || 'Units' }}
               </div>
               }
-              @if (!item.isActiveWarehouse) {
-              <span class="badge-tag badge-tag-muted">Inactive Warehouse</span>
-              }
             </td>
-            <td>
-              <span class="fw-semibold text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{ item.partyName || item.clientFirm }}</span>
-            </td>
-            <td>
-              <div class="fw-semibold text-dark">{{ item.commodity }}</div>
-              @if (item.productName && item.productName !== item.commodity) {
-              <div class="text-xs text-muted">{{ item.productName }}</div>
-              }
-            </td>
-            <td>
-              <span class="badge-uom">{{ getPackagingDisplay(item.packagingUom) }}</span>
-            </td>
-            <td class="text-end">
-              <span class="fw-bold" [class.text-muted]="item.availableWeightMt === 0"
-                [class.text-dark]="item.availableWeightMt > 0">
-                {{ item.availableWeightMt | number: '1.2-3' }} MT
-              </span>
-            </td>
-            <td>
-              @if (item.availableWeightMt > 0) {
+            <td class="text-center text-nowrap">
+              @if (item.totalAvailableWeightMt > 0) {
               <span class="badge-erp badge-green">
                 <i class="fa-solid fa-circle-check me-1"></i>Available Stock
               </span>
@@ -250,12 +239,19 @@
               </span>
               }
             </td>
-            <td class="text-center">
-              <button type="button" class="btn-row-action" (click)="openCreateAdjModal(item)"
-                title="Create Stock Adjustment for this lot">
-                <i class="fa-solid fa-sliders me-1"></i>
-                <span>Adjust</span>
-              </button>
+            <td class="text-center text-nowrap">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <button type="button" class="btn-row-action btn-erp-view" (click)="openCommodityDetailModal(item)"
+                  title="View detailed warehouse & party breakdown and movement history">
+                  <i class="fa-solid fa-eye me-1"></i>
+                  <span>View</span>
+                </button>
+                <button type="button" class="btn-row-action" (click)="openCreateAdjModal(item.rawRecords[0])"
+                  title="Create Stock Adjustment for this commodity">
+                  <i class="fa-solid fa-sliders me-1"></i>
+                  <span>Adjust</span>
+                </button>
+              </div>
             </td>
           </tr>
           } @empty {
@@ -276,13 +272,13 @@
     </div>
 
     <!-- Pagination -->
-    @if (filteredInventory.length > 0) {
+    @if (filteredCommodities.length > 0) {
     <div class="table-footer">
       <div class="pagination-info">
         Showing {{ (stockPage - 1) * stockPageSize + 1 }} to
-        {{ stockTableSize === 'all' ? filteredInventory.length : Math.min(stockPage * stockPageSize,
-        filteredInventory.length) }}
-        of {{ filteredInventory.length }} entries
+        {{ stockTableSize === 'all' ? filteredCommodities.length : Math.min(stockPage * stockPageSize,
+        filteredCommodities.length) }}
+        of {{ filteredCommodities.length }} entries
       </div>
       <pagination-controls id="stock-pg" (pageChange)="stockPage = $event" [maxSize]="5" [responsive]="true"
         previousLabel="Prev" nextLabel="Next" class="my-pagination"></pagination-controls>
@@ -411,14 +407,18 @@
               <div class="fw-semibold text-dark">{{ adj.warehouseName }}</div>
               @if (adj.godownName || adj.chamberName || adj.stackNumber) {
               <div class="wh-hierarchy-sub mt-1">
-                @if (adj.godownName) { <span class="badge-loc"><i class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ adj.godownName }}</span> }
-                @if (adj.chamberName) { <span class="badge-loc"><i class="fa-solid fa-door-open me-1 text-purple"></i>{{ adj.chamberName }}</span> }
-                @if (adj.stackNumber) { <span class="badge-stack"><i class="fa-solid fa-layer-group me-1 text-teal"></i>{{ adj.stackNumber }}</span> }
+                @if (adj.godownName) { <span class="badge-loc"><i
+                    class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ adj.godownName }}</span> }
+                @if (adj.chamberName) { <span class="badge-loc"><i class="fa-solid fa-door-open me-1 text-purple"></i>{{
+                  adj.chamberName }}</span> }
+                @if (adj.stackNumber) { <span class="badge-stack"><i
+                    class="fa-solid fa-layer-group me-1 text-teal"></i>{{ adj.stackNumber }}</span> }
               </div>
               }
             </td>
             <td>
-              <span class="fw-semibold text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{ adj.partyName || adj.clientFirm }}</span>
+              <span class="fw-semibold text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{
+                adj.partyName || adj.clientFirm }}</span>
             </td>
             <td>
               <div class="fw-semibold text-dark">{{ adj.commodity }}</div>
@@ -516,25 +516,6 @@
   <!-- TAB 3: STOCK MOVEMENT HISTORY (UC-INV-06)                     -->
   <!-- ══════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'history') {
-  <!-- Movement KPI Cards -->
-  <div class="sauda-kpi-grid">
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Total Stock In (Inflow)</div>
-      <div class="sauda-kpi-val text-pos">{{ totalStockInKpi.weightMt | number: '1.2-2' }} MT</div>
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Total Stock Out (Outflow)</div>
-      <div class="sauda-kpi-val text-neg">{{ totalStockOutKpi.weightMt | number: '1.2-2' }} MT</div>
-    </div>
-
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Net Stock Movement</div>
-      <div class="sauda-kpi-val">
-        {{ netStockMovementKpi.weightMt >= 0 ? '+' : '' }}{{ netStockMovementKpi.weightMt | number: '1.2-2' }} MT
-      </div>
-    </div>
-  </div>
 
   <div class="erp-card">
     <div class="listing-card-top">
@@ -686,13 +667,17 @@
               <div class="text-xxs text-muted mt-1">{{ m.movementType }}</div>
             </td>
             <td>
-              <div class="fw-semibold text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{ m.partyName || m.clientFirm }}</div>
+              <div class="fw-semibold text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{ m.partyName
+                || m.clientFirm }}</div>
               <div class="text-xs text-muted">{{ m.warehouseName }}</div>
               @if (m.godownName || m.chamberName || m.stackNumber) {
               <div class="wh-hierarchy-sub mt-1">
-                @if (m.godownName) { <span class="badge-loc" title="Godown"><i class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ m.godownName }}</span> }
-                @if (m.chamberName) { <span class="badge-loc" title="Chamber"><i class="fa-solid fa-door-open me-1 text-purple"></i>{{ m.chamberName }}</span> }
-                @if (m.stackNumber) { <span class="badge-stack" title="Stack Number"><i class="fa-solid fa-layer-group me-1 text-teal"></i>{{ m.stackNumber }}</span> }
+                @if (m.godownName) { <span class="badge-loc" title="Godown"><i
+                    class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ m.godownName }}</span> }
+                @if (m.chamberName) { <span class="badge-loc" title="Chamber"><i
+                    class="fa-solid fa-door-open me-1 text-purple"></i>{{ m.chamberName }}</span> }
+                @if (m.stackNumber) { <span class="badge-stack" title="Stack Number"><i
+                    class="fa-solid fa-layer-group me-1 text-teal"></i>{{ m.stackNumber }}</span> }
               </div>
               }
             </td>
@@ -767,7 +752,7 @@
         <div>
           <h3 class="modal-title-erp">Create Stock Adjustment Request</h3>
           <p class="modal-sub-erp">
-            Adjust physical inventory for a single Firm, Warehouse and Commodity (UC-INV-04)
+            Adjust physical inventory for a single Firm, Warehouse and Commodity
           </p>
         </div>
         <button type="button" class="close-btn" (click)="closeCreateAdjModal()">
@@ -807,16 +792,32 @@
           </div>
 
           <!-- 4-Level Location Hierarchy: Warehouse -> Godown -> Chamber -> Stack -->
-          <div class="field-group span-2 bg-light p-3 rounded border">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fw-bold text-dark text-sm"><i class="fa-solid fa-sitemap me-1 text-primary"></i> 4-Level Storage Location</span>
-              <span class="text-xs text-muted">Warehouse &gt; Godown &gt; Chamber &gt; Stack</span>
+          <div class="location-hierarchy-box">
+            <div class="hierarchy-header">
+              <div class="d-flex align-items-center gap-2">
+                <div class="hierarchy-icon">
+                  <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div>
+                  <div class="hierarchy-title">4-Level Storage Location Hierarchy</div>
+                  <div class="hierarchy-subtitle">Warehouse &gt; Godown &gt; Chamber &gt; Stack</div>
+                </div>
+              </div>
+              @if (createAdjForm.warehouseId) {
+              <div class="hierarchy-pill">
+                <span class="pill-dot"></span> Active Selection
+              </div>
+              }
             </div>
-            <div class="row g-2">
+
+            <div class="hierarchy-grid">
               <!-- Level 1: Warehouse -->
-              <div class="col-md-3">
-                <label class="erp-label text-xs">Warehouse *</label>
-                <select class="erp-input form-select-sm" [(ngModel)]="createAdjForm.warehouseId"
+              <div class="hierarchy-field">
+                <label class="hierarchy-label">
+                  <span class="level-num">1</span>
+                  <span>Warehouse *</span>
+                </label>
+                <select class="erp-input" [(ngModel)]="createAdjForm.warehouseId"
                   (ngModelChange)="onWarehouseChange(); createAdjError = ''; updateAdjCalculations()">
                   <option value="" disabled>Select Warehouse</option>
                   @for (wh of warehouses; track wh.id) {
@@ -826,11 +827,17 @@
               </div>
 
               <!-- Level 2: Godown -->
-              <div class="col-md-3">
-                <label class="erp-label text-xs">Godown</label>
-                <select class="erp-input form-select-sm" [(ngModel)]="createAdjForm.godownId"
-                  (ngModelChange)="onGodownChange(); updateAdjCalculations()" [disabled]="availableGodowns.length === 0">
-                  <option value="">Select Godown (Optional)</option>
+              <div class="hierarchy-field">
+                <label class="hierarchy-label">
+                  <span class="level-num">2</span>
+                  <span>Godown</span>
+                  <span class="opt-tag">Optional</span>
+                </label>
+                <select class="erp-input" [(ngModel)]="createAdjForm.godownId"
+                  (ngModelChange)="onGodownChange(); updateAdjCalculations()"
+                  [disabled]="availableGodowns.length === 0">
+                  <option value="">{{ availableGodowns.length === 0 ? 'No Godowns Configured' : 'Select Godown
+                    (Optional)' }}</option>
                   @for (gd of availableGodowns; track gd.id) {
                   <option [value]="gd.id">{{ gd.name }}</option>
                   }
@@ -838,11 +845,17 @@
               </div>
 
               <!-- Level 3: Chamber -->
-              <div class="col-md-3">
-                <label class="erp-label text-xs">Chamber</label>
-                <select class="erp-input form-select-sm" [(ngModel)]="createAdjForm.chamberId"
-                  (ngModelChange)="onChamberChange(); updateAdjCalculations()" [disabled]="availableChambers.length === 0">
-                  <option value="">Select Chamber (Optional)</option>
+              <div class="hierarchy-field">
+                <label class="hierarchy-label">
+                  <span class="level-num">3</span>
+                  <span>Chamber</span>
+                  <span class="opt-tag">Optional</span>
+                </label>
+                <select class="erp-input" [(ngModel)]="createAdjForm.chamberId"
+                  (ngModelChange)="onChamberChange(); updateAdjCalculations()"
+                  [disabled]="availableChambers.length === 0">
+                  <option value="">{{ availableChambers.length === 0 ? 'No Chambers Configured' : 'Select Chamber
+                    (Optional)' }}</option>
                   @for (ch of availableChambers; track ch.id) {
                   <option [value]="ch.id">{{ ch.name }}</option>
                   }
@@ -850,11 +863,16 @@
               </div>
 
               <!-- Level 4: Stack Number -->
-              <div class="col-md-3">
-                <label class="erp-label text-xs">Stack Number</label>
-                <select class="erp-input form-select-sm" [(ngModel)]="createAdjForm.stackNumber"
+              <div class="hierarchy-field">
+                <label class="hierarchy-label">
+                  <span class="level-num">4</span>
+                  <span>Stack Number</span>
+                  <span class="opt-tag">Optional</span>
+                </label>
+                <select class="erp-input" [(ngModel)]="createAdjForm.stackNumber"
                   (ngModelChange)="updateAdjCalculations()" [disabled]="availableStacks.length === 0">
-                  <option value="">Select Stack (Optional)</option>
+                  <option value="">{{ availableStacks.length === 0 ? 'No Stacks Configured' : 'Select Stack (Optional)'
+                    }}</option>
                   @for (st of availableStacks; track st) {
                   <option [value]="st">{{ st }}</option>
                   }
@@ -870,16 +888,17 @@
           </div>
 
           <!-- Live Stock Info Callout -->
-          <div class="field-group span-2">
-            <div class="live-stock-callout">
-              <div class="callout-label">Live Available Stock:</div>
+          <div class="field-group">
+            <label class="erp-label">Live Stock in Location</label>
+            <div class="live-stock-callout" style="height: 38px;">
+              <div class="callout-label"><i class="fa-solid fa-boxes-stacked me-1 text-success"></i>Current Lot:</div>
               @if (liveSelectedStock) {
-              <div class="callout-val text-dark">
-                <strong>{{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT</strong>
+              <div class="callout-val text-dark fw-bold">
+                {{ liveSelectedStock.availableWeightMt | number: '1.2-3' }} MT
               </div>
               } @else {
-              <div class="callout-val text-muted">
-                <em>No existing stock record in selected warehouse (0 MT).</em>
+              <div class="callout-val text-muted fst-italic">
+                0.00 MT (No existing stock)
               </div>
               }
             </div>
@@ -1010,7 +1029,8 @@
 
           <div class="review-item">
             <span class="label">Party:</span>
-            <span class="val fw-semibold"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{ selectedAdj.partyName || selectedAdj.clientFirm }}</span>
+            <span class="val fw-semibold"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{
+              selectedAdj.partyName || selectedAdj.clientFirm }}</span>
           </div>
           <div class="review-item">
             <span class="label">Warehouse:</span>
@@ -1025,7 +1045,8 @@
           <div class="review-item span-2">
             <span class="label">Location Hierarchy:</span>
             <span class="val fw-semibold text-primary">
-              {{ selectedAdj.godownName || 'Godown' }} &bull; {{ selectedAdj.chamberName || 'Chamber' }} &bull; {{ selectedAdj.stackNumber || 'Stack' }}
+              {{ selectedAdj.godownName || 'Godown' }} &bull; {{ selectedAdj.chamberName || 'Chamber' }} &bull; {{
+              selectedAdj.stackNumber || 'Stack' }}
             </span>
           </div>
           }
@@ -1142,6 +1163,340 @@
         </button>
         }
         }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- MODAL: COMMODITY STOCK DETAIL & MOVEMENT HISTORY              -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  @if (showCommodityModal && selectedCommodityGroup) {
+  <div class="modal-backdrop-erp" (click)="closeCommodityDetailModal()">
+    <div class="modal-panel modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="modal-title-erp">Stock Details: {{ selectedCommodityGroup.commodity }}</h3>
+            @if (selectedCommodityGroup.totalAvailableWeightMt > 0) {
+            <span class="badge-erp badge-green">
+              <i class="fa-solid fa-circle-check me-1"></i>Available Stock
+            </span>
+            } @else {
+            <span class="badge-erp badge-gray">
+              <i class="fa-solid fa-circle-xmark me-1"></i>Zero Stock
+            </span>
+            }
+          </div>
+          <p class="modal-sub-erp">
+            Consolidated stock distribution across warehouses, party ownership breakdown &amp; In/Out movement logs
+          </p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeCommodityDetailModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp">
+        <!-- 4 Metric Cards -->
+        <div class="modal-metric-grid">
+          <div class="modal-metric-card">
+            <div class="metric-icon icon-green">
+              <i class="fa-solid fa-weight-hanging"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-val">{{ selectedCommodityGroup.totalAvailableWeightMt | number: '1.2-3' }} MT</div>
+              <div class="metric-lbl">Total Available Quantity</div>
+              <div class="metric-sub">{{ selectedCommodityGroup.totalAvailableUnits | number }} {{
+                selectedCommodityGroup.packagingUoms[0] || 'Units' }} in stock</div>
+            </div>
+          </div>
+
+          <div class="modal-metric-card">
+            <div class="metric-icon icon-blue">
+              <i class="fa-solid fa-box-archive"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-val">{{ selectedCommodityGroup.totalAvailableUnits | number }} {{
+                selectedCommodityGroup.packagingUoms[0] || 'Units' }}</div>
+              <div class="metric-lbl">Total Units in Stock</div>
+              <div class="metric-sub">Packaging: {{ selectedCommodityGroup.packagingUoms.join(', ') }}</div>
+            </div>
+          </div>
+
+          <div class="modal-metric-card">
+            <div class="metric-icon icon-purple">
+              <i class="fa-solid fa-warehouse"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-val">{{ selectedCommodityGroup.warehouses.length }} {{
+                selectedCommodityGroup.warehouses.length === 1 ? 'Warehouse' : 'Warehouses' }}</div>
+              <div class="metric-lbl">Storage Locations</div>
+              <div class="metric-sub text-truncate" [title]="selectedCommodityGroup.warehouses.join(', ')">
+                {{ selectedCommodityGroup.warehouses.join(', ') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-metric-card">
+            <div class="metric-icon icon-amber">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-val">{{ selectedCommodityParties.length }} {{ selectedCommodityParties.length === 1 ?
+                'Party' : 'Parties' }}</div>
+              <div class="metric-lbl">Stock Owners</div>
+              <div class="metric-sub text-truncate" [title]="selectedCommodityGroup.parties.join(', ')">
+                {{ selectedCommodityGroup.parties.join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub Tabs -->
+        <div class="modal-subtabs">
+          <button type="button" class="modal-subtab-btn" [class.active]="commodityModalTab === 'warehouses'"
+            (click)="commodityModalTab = 'warehouses'">
+            <i class="fa-solid fa-warehouse"></i>
+            <span>Warehouse &amp; Locations</span>
+            <span class="tab-badge">{{ selectedCommodityGroup.lots.length }}</span>
+          </button>
+          <button type="button" class="modal-subtab-btn" [class.active]="commodityModalTab === 'parties'"
+            (click)="commodityModalTab = 'parties'">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Party Ownership</span>
+            <span class="tab-badge">{{ selectedCommodityParties.length }}</span>
+          </button>
+          <button type="button" class="modal-subtab-btn" [class.active]="commodityModalTab === 'history'"
+            (click)="commodityModalTab = 'history'">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Movement History</span>
+            <span class="tab-badge">{{ selectedCommodityMovements.length }}</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Warehouse & Locations -->
+        @if (commodityModalTab === 'warehouses') {
+        <div class="table-responsive border rounded-3 bg-white modal-table-wrap">
+          <table class="erp-table mb-0">
+            <thead>
+              <tr>
+                <th class="w-sno">#</th>
+                <th>Warehouse &amp; Location</th>
+                <th>Party (Owner)</th>
+                <th>Packaging</th>
+                <th class="text-end">Available Stock</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (lot of selectedCommodityGroup.lots; track $index; let idx = $index) {
+              <tr>
+                <td class="w-sno text-muted">{{ idx + 1 }}</td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ lot.warehouseName }}</div>
+                  <div class="wh-hierarchy-sub mt-1">
+                    @if (lot.godownName) {
+                    <span class="badge-loc" title="Godown"><i class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{
+                      lot.godownName }}</span>
+                    }
+                    @if (lot.chamberName) {
+                    <span class="badge-loc" title="Chamber"><i class="fa-solid fa-door-open me-1 text-purple"></i>{{
+                      lot.chamberName }}</span>
+                    }
+                    @if (lot.stackNumber) {
+                    <span class="badge-stack" title="Stack Number"><i
+                        class="fa-solid fa-layer-group me-1 text-teal"></i>{{ lot.stackNumber }}</span>
+                    }
+                    @if (!lot.godownName && !lot.chamberName && !lot.stackNumber) {
+                    <span class="text-muted text-xs">General Yard</span>
+                    }
+                    @if (!lot.isActiveWarehouse) {
+                    <span class="badge-tag badge-tag-muted ms-1">Inactive</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark"><i class="fa-solid fa-user-group me-1 text-primary"></i>{{
+                    lot.partyName }}</span>
+                </td>
+                <td>
+                  <span class="badge-uom">{{ getPackagingDisplay(lot.packagingUom) }}</span>
+                </td>
+                <td class="text-end">
+                  <div class="fw-bold font-monospace" [class.text-dark]="lot.availableWeightMt > 0"
+                    [class.text-muted]="lot.availableWeightMt === 0">
+                    {{ lot.availableWeightMt | number: '1.2-3' }} MT
+                  </div>
+                  <div class="text-xs text-muted font-monospace">
+                    {{ lot.availableUnits | number }} {{ getPackagingDisplay(lot.packagingUom) }}
+                  </div>
+                </td>
+                <td class="text-center">
+                  @if (lot.availableWeightMt > 0) {
+                  <span class="badge-erp badge-green"><i class="fa-solid fa-circle-check me-1"></i>Available</span>
+                  } @else {
+                  <span class="badge-erp badge-gray"><i class="fa-solid fa-circle-xmark me-1"></i>Zero</span>
+                  }
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn-row-action" (click)="adjustLotFromModal(lot)"
+                    title="Adjust this specific lot">
+                    <i class="fa-solid fa-sliders me-1"></i>
+                    <span>Adjust</span>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+
+        <!-- Tab 2: Party Ownership -->
+        @if (commodityModalTab === 'parties') {
+        <div class="table-responsive border rounded-3 bg-white modal-table-wrap">
+          <table class="erp-table mb-0">
+            <thead>
+              <tr>
+                <th class="w-sno">#</th>
+                <th>Party Name / Firm</th>
+                <th>Stored In Warehouse(s)</th>
+                <th class="text-end">Units</th>
+                <th class="text-end">Available Weight</th>
+                <th class="text-center" style="width: 160px;">Stock Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (party of selectedCommodityParties; track party.partyName; let idx = $index) {
+              <tr>
+                <td class="w-sno text-muted">{{ idx + 1 }}</td>
+                <td>
+                  <div class="fw-bold text-dark">
+                    <i class="fa-solid fa-user-group me-2 text-primary"></i>{{ party.partyName }}
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    @for (w of party.warehouses; track w) {
+                    <span class="badge-loc"><i class="fa-solid fa-warehouse me-1 text-slate-500"></i>{{ w }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="text-end font-monospace fw-semibold">{{ party.totalUnits | number }}</td>
+                <td class="text-end font-monospace fw-bold text-dark">{{ party.totalWeightMt | number: '1.2-3' }} MT
+                </td>
+                <td class="text-center">
+                  <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 7px; background: #e2e8f0; border-radius: 4px;">
+                      <div class="progress-bar bg-primary" [style.width.%]="party.percentage"
+                        style="border-radius: 4px;"></div>
+                    </div>
+                    <span class="fw-bold fs-12 text-slate-700" style="min-width: 44px;">{{ party.percentage }}%</span>
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+
+        <!-- Tab 3: Movement History -->
+        @if (commodityModalTab === 'history') {
+        <div class="table-responsive border rounded-3 bg-white modal-table-wrap">
+          <table class="erp-table mb-0">
+            <thead>
+              <tr>
+                <th class="w-sno">#</th>
+                <th>Date</th>
+                <th>Movement No &amp; Type</th>
+                <th>Direction</th>
+                <th>Party / Owner</th>
+                <th>Warehouse &amp; Location</th>
+                <th>Reference / Truck</th>
+                <th class="text-end">Quantity (MT)</th>
+                <th class="text-end">Balance After</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (mov of selectedCommodityMovements; track mov.id; let idx = $index) {
+              <tr>
+                <td class="w-sno text-muted">{{ idx + 1 }}</td>
+                <td class="text-nowrap">
+                  <div class="fw-semibold text-dark">{{ mov.movementDate }}</div>
+                  @if (mov.recordedAt) {
+                  <div class="text-xs text-muted">{{ mov.recordedAt }}</div>
+                  }
+                </td>
+                <td>
+                  <div class="font-monospace fw-semibold text-dark">{{ mov.movementNo }}</div>
+                  <span class="badge-tag mt-1" [class.badge-tag-muted]="mov.movementType === 'Stock Adjustment'">
+                    {{ mov.movementType }}
+                  </span>
+                </td>
+                <td>
+                  @if (mov.movementDirection === 'Stock In') {
+                  <span class="badge-erp badge-green text-nowrap">
+                    <i class="fa-solid fa-arrow-down-long me-1"></i>Stock In
+                  </span>
+                  } @else {
+                  <span class="badge-erp badge-rose text-nowrap">
+                    <i class="fa-solid fa-arrow-up-long me-1"></i>Stock Out
+                  </span>
+                  }
+                </td>
+                <td>
+                  <span class="fw-medium text-dark">{{ mov.partyName || mov.clientFirm }}</span>
+                </td>
+                <td>
+                  <div class="fw-medium text-dark">{{ mov.warehouseName }}</div>
+                  @if (mov.godownName) {
+                  <div class="text-xs text-muted">{{ mov.godownName }}</div>
+                  }
+                </td>
+                <td>
+                  <div class="fw-semibold text-primary text-nowrap">{{ mov.sourceRef }}</div>
+                  @if (mov.truckNo) {
+                  <div class="text-xs text-muted text-nowrap"><i class="fa-solid fa-truck me-1"></i>{{ mov.truckNo }}
+                  </div>
+                  }
+                </td>
+                <td class="text-end font-monospace fw-bold text-nowrap"
+                  [class.text-success]="mov.movementDirection === 'Stock In'"
+                  [class.text-danger]="mov.movementDirection === 'Stock Out'">
+                  {{ mov.movementDirection === 'Stock In' ? '+' : '-' }}{{ mov.totalWeightMt | number: '1.2-3' }} MT
+                  <div class="text-xs text-muted fw-normal">{{ mov.quantity }} {{ getPackagingDisplay(mov.packagingUom)
+                    }}</div>
+                </td>
+                <td class="text-end font-monospace fw-semibold text-slate-700 text-nowrap">
+                  {{ mov.stockBalanceWeightMtAfter !== undefined ? (mov.stockBalanceWeightMtAfter | number: '1.2-3') + '
+                  MT' : '—' }}
+                </td>
+              </tr>
+              } @empty {
+              <tr>
+                <td colspan="9" class="erp-table-empty py-4">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <p class="mb-0">No historical movement records found for {{ selectedCommodityGroup.commodity }}.</p>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeCommodityDetailModal()">
+          Close
+        </button>
+        <button type="button" class="btn-erp-primary" (click)="adjustCommodityFromModal()">
+          <i class="fa-solid fa-sliders me-1"></i>
+          <span>Create Adjustment for {{ selectedCommodityGroup.commodity }}</span>
+        </button>
       </div>
     </div>
   </div>
