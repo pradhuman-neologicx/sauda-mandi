@@ -288,7 +288,7 @@
           </div>
           <div>
             <h3 class="modal-title-erp">Create Payment Entry</h3>
-            <p class="modal-sub-erp">Select Journal Adjustment Voucher &amp; Party to record payment</p>
+            <p class="modal-sub-erp">Select Junral Adjustment Voucher &amp; Party to record payment</p>
           </div>
         </div>
         <button type="button" class="close-btn" (click)="closeCreateModal()">
@@ -311,14 +311,14 @@
             </label>
             <select class="erp-input fw-semibold font-monospace" [(ngModel)]="entryForm.voucherDetails"
               (ngModelChange)="onJournalVoucherChange()">
-              <option value="">-- Select Journal Voucher --</option>
+              <option value="">-- Select Junral Voucher --</option>
               @for (jrn of journalVouchers; track jrn.id) {
               <option [value]="jrn.voucherNo">
                 {{ jrn.voucherNo }} &bull; Inv #{{ jrn.invoiceNo }} ({{ jrn.buyerName || jrn.sellerName }})
               </option>
               }
             </select>
-            <span class="field-hint">Select from Journal Adjustment Vouchers</span>
+            <span class="field-hint">Select from Junral Adjustment Vouchers</span>
           </div>
 
           <!-- PARTY (User Request 5: A/C ki jagah Party select) -->

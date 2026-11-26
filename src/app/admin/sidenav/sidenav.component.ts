@@ -125,7 +125,7 @@ export class SidenavComponent implements OnInit {
       {
         index: 6,
         icon: 'menu_book',
-        label: 'Journal Entries',
+        label: 'Junral Entries',
         route: '/admin/journal-entries',
       },
       {

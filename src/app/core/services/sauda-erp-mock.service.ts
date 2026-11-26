@@ -7183,7 +7183,7 @@ export class SaudaErpMockService {
     this.journalEntriesSubject.next([newEntry, ...this.journalEntriesSubject.value]);
     return {
       ok: true,
-      message: `Journal voucher ${voucherNo} successfully created and posted against Invoice ${payload.invoiceNo}.`,
+      message: `Junral voucher ${voucherNo} successfully created and posted against Invoice ${payload.invoiceNo}.`,
       record: newEntry,
     };
   }
