@@ -150,7 +150,7 @@
 
             <div class="deduction-controls">
               <div class="ctrl-group">
-                <span class="ctrl-label">Qty (Ton):</span>
+                <span class="ctrl-label">Qty (MT):</span>
                 <input type="number" class="ctrl-input-sm text-end bg-light fw-bold" [value]="dkQtyTon"
                   [readonly]="true" title="Auto-filled from Sauda (Read-only)">
               </div>
@@ -190,7 +190,7 @@
 
             <div class="deduction-controls">
               <div class="ctrl-group">
-                <span class="ctrl-label">Qty (Ton):</span>
+                <span class="ctrl-label">Qty (MT):</span>
                 <input type="number" class="ctrl-input-sm text-end bg-light fw-bold" [value]="mudatQtyTon"
                   [readonly]="true" title="Auto-filled from Sauda (Read-only)">
               </div>
@@ -230,7 +230,7 @@
 
             <div class="deduction-controls">
               <div class="ctrl-group">
-                <span class="ctrl-label">Qty (Ton):</span>
+                <span class="ctrl-label">Qty (MT):</span>
                 <input type="number" class="ctrl-input-sm text-end bg-light fw-bold" [value]="labourQtyTon"
                   [readonly]="true" title="Auto-filled from Sauda (Read-only)">
               </div>
@@ -283,7 +283,7 @@
 
             <div class="deduction-controls">
               <div class="ctrl-group">
-                <span class="ctrl-label">Qty (Ton):</span>
+                <span class="ctrl-label">Qty (MT):</span>
                 <input type="number" class="ctrl-input-sm text-end bg-light fw-bold" [value]="brokerageQtyTon"
                   [readonly]="true" title="Auto-filled from Sauda (Read-only)">
               </div>
@@ -587,17 +587,17 @@
             <tbody>
               <tr>
                 <td>1. DHARAM KANTA</td>
-                <td class="text-muted small">Qty (Ton) &times; 500gm tare &times; Rate</td>
+                <td class="text-muted small">Qty (MT) &times; 500gm tare &times; Rate</td>
                 <td class="text-end fw-semibold">₹{{ selectedEntryForView.dharamKanta | number: '1.2-2' }}</td>
               </tr>
               <tr>
                 <td>2. MUDAT</td>
-                <td class="text-muted small">Qty (Ton) &times; 5% &times; Rate</td>
+                <td class="text-muted small">Qty (MT) &times; 5% &times; Rate</td>
                 <td class="text-end fw-semibold">₹{{ selectedEntryForView.mudat | number: '1.2-2' }}</td>
               </tr>
               <tr>
                 <td>3. LABOUR (Hamali)</td>
-                <td class="text-muted small">Qty (Ton) &times; Rate (₹12 or ₹15)</td>
+                <td class="text-muted small">Qty (MT) &times; Rate (₹12 or ₹15)</td>
                 <td class="text-end fw-semibold">₹{{ selectedEntryForView.labour | number: '1.2-2' }}</td>
               </tr>
               <tr>
@@ -607,7 +607,7 @@
               </tr>
               <tr>
                 <td>5. BROKRAGE</td>
-                <td class="text-muted small">Qty (Ton) &times; Rate (₹7 or ₹10)</td>
+                <td class="text-muted small">Qty (MT) &times; Rate (₹7 or ₹10)</td>
                 <td class="text-end fw-semibold">₹{{ selectedEntryForView.brokerage | number: '1.2-2' }}</td>
               </tr>
               <tr>
