@@ -495,6 +495,7 @@ export interface JournalEntryRecord {
   id: string;
   voucherNo: string;
   entryDate: string;
+  saudaNo?: string;
   buyerName: string;
   sellerName: string;
   invoiceNo: string;
@@ -509,6 +510,7 @@ export interface JournalEntryRecord {
   warehouseRent: number;
   tds: number;
   other: number;
+  otherDetails?: string;
   totalAdjustments: number;
   netPendingAmountAfter: number;
   narration: string;
