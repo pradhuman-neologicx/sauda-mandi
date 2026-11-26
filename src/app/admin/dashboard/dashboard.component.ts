@@ -312,7 +312,7 @@ export class DashboardComponent implements OnInit {
       type: 'Sales',
       party: 'M/s Raj Traders',
       commodity: 'Ground Nut',
-      qty: '200 Bags',
+      qty: '20 MT',
       value: '₹4.00 L',
     },
     {
@@ -321,7 +321,7 @@ export class DashboardComponent implements OnInit {
       type: 'Purchase',
       party: 'M/s Shree Agri',
       commodity: 'Chana',
-      qty: '150 Bags',
+      qty: '15 MT',
       value: '₹2.25 L',
     },
     {
@@ -330,7 +330,7 @@ export class DashboardComponent implements OnInit {
       type: 'Direct Sale',
       party: 'M/s Omni Exports',
       commodity: 'Guar',
-      qty: '300 Bags',
+      qty: '30 MT',
       value: '₹0.60 L',
     },
   ];
