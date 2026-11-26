@@ -22,9 +22,8 @@
 
 
 
-      <button type="button" class="btn-erp-primary" (click)="showCreateForm = !showCreateForm">
-        <i class="fa-solid" [class.fa-plus]="!showCreateForm" [class.fa-xmark]="showCreateForm"></i>
-        {{ showCreateForm ? 'Close Entry Form' : '+ New Payment Entry' }}
+      <button type="button" class="btn-erp-primary" (click)="openCreateModal()">
+        <i class="fa-solid fa-plus me-1"></i>New Payment Entry
       </button>
     </div>
   </div>
@@ -39,7 +38,6 @@
       <div class="sauda-kpi-val text-success">
         ₹{{ totalReceivedSum | number: '1.2-2' }}
       </div>
-      <div class="kpi-sub">Total credit amounts collected</div>
     </div>
 
     <!-- Total Payment -->
@@ -50,7 +48,7 @@
       <div class="sauda-kpi-val text-danger">
         ₹{{ totalPaymentSum | number: '1.2-2' }}
       </div>
-      <div class="kpi-sub">Total debit amounts disbursed</div>
+
     </div>
 
     <!-- Automatic Balance -->
@@ -62,132 +60,32 @@
         [class.text-danger]="currentClosingBalance < 0">
         ₹{{ currentClosingBalance | number: '1.2-2' }}
       </div>
-      <div class="kpi-sub">Live running balance of all vouchers</div>
+
     </div>
   </div>
-
-  <!-- ==================================================================== -->
-  <!-- 1. MANUAL ENTRY FORM (PAYMENT ENTERY from Client Image)             -->
-  <!-- ==================================================================== -->
-  @if (showCreateForm) {
-  <div class="erp-card payment-form-card mb-4">
-    <div class="card-header-erp d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <span class="card-header-title">PAYMENT ENTERY</span>
-        <span class="status-badge badge-green">Manual Voucher</span>
-      </div>
-      <button type="button" class="close-btn" (click)="showCreateForm = false">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="card-body-erp p-4">
-      <div class="row g-3 mb-3">
-        <!-- DATE -->
-        <div class="col-md-2">
-          <label class="erp-field-label">DATE <span class="text-danger">*</span></label>
-          <input type="date" class="erp-input" [(ngModel)]="entryForm.date">
-        </div>
-
-        <!-- VOUCHER DETAILAS -->
-        <div class="col-md-3">
-          <label class="erp-field-label">
-            VOUCHER DETAILAS <span class="text-danger">*</span>
-          </label>
-          <input type="text" class="erp-input" [(ngModel)]="entryForm.voucherDetails"
-            placeholder="e.g. UTR-881902 / CHQ-10023">
-          <span class="field-hint">Voucher No, Cheque #, or UTR ref</span>
-        </div>
-
-        <!-- A/C (ACCOUNT) -->
-        <div class="col-md-3">
-          <label class="erp-field-label">
-            A/C (ACCOUNT) <span class="text-danger">*</span>
-          </label>
-          <input type="text" class="erp-input" [(ngModel)]="entryForm.account" list="accountsList"
-            placeholder="Select or enter Account...">
-          <datalist id="accountsList">
-            @for (acct of allAccounts; track acct) {
-            <option [value]="acct"></option>
-            }
-          </datalist>
-          <span class="field-hint">Bank A/c, Cash A/c, or Party ledger</span>
-        </div>
-
-        <!-- RECEIVED -->
-        <div class="col-md-2">
-          <label class="erp-field-label text-success">RECEIVED (₹)</label>
-          <input type="number" min="0" class="erp-input text-success fw-bold" [(ngModel)]="entryForm.received"
-            placeholder="0.00">
-          <span class="field-hint">Credit / Amount received</span>
-        </div>
-
-        <!-- PAYMENT -->
-        <div class="col-md-2">
-          <label class="erp-field-label text-danger">PAYMENT (₹)</label>
-          <input type="number" min="0" class="erp-input text-danger fw-bold" [(ngModel)]="entryForm.payment"
-            placeholder="0.00">
-          <span class="field-hint">Debit / Amount paid</span>
-        </div>
-      </div>
-
-      <!-- NARRATION & AUTOMATIC BALANCE -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-8">
-          <label class="erp-field-label">NARRATION</label>
-          <input type="text" class="erp-input" [(ngModel)]="entryForm.narration"
-            placeholder="Enter payment description, party remarks, or deal settlement reference...">
-        </div>
-
-        <div class="col-md-4">
-          <label class="erp-field-label text-primary">
-            <i class="fa-solid fa-calculator me-1"></i> AUTOMATIC BALANCE (AFTER ENTRY)
-          </label>
-          <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center">
-            <span class="text-muted small">Projected:</span>
-            <span class="fs-5 fw-bold" [class.text-primary]="projectedNewBalance >= 0"
-              [class.text-danger]="projectedNewBalance < 0">
-              ₹{{ projectedNewBalance | number: '1.2-2' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="d-flex justify-content-end align-items-center gap-2">
-        <button type="button" class="btn-erp-ghost px-3" (click)="resetEntryForm()">
-          <i class="fa-solid fa-rotate-left me-1"></i> Clear
-        </button>
-        <button type="button" class="btn-erp-success px-4" (click)="savePaymentEntry()">
-          <i class="fa-solid fa-floppy-disk me-1"></i> Save Payment Entry
-        </button>
-      </div>
-    </div>
-  </div>
-  }
 
   <!-- ==================================================================== -->
   <!-- 2. FILTER & SEARCH BAR                                               -->
   <!-- ==================================================================== -->
   <div class="erp-card mb-3 p-3">
     <div class="row g-2 align-items-end">
-      <!-- Search -->
-      <div class="col-md-4">
+      <!-- Search (User Request: Search on button click) -->
+      <div class="col-md-3">
         <label class="erp-field-label mb-1">Search Vouchers</label>
         <div class="input-group-search">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input type="text" class="erp-input search-input" [(ngModel)]="searchTerm" (input)="applyFilters()"
-            placeholder="Search by Voucher Details, A/C, Narration...">
+          <input type="text" class="erp-input search-input" [(ngModel)]="searchTerm" (keyup.enter)="onSearch()"
+            placeholder="Search by Voucher, Party, Narration...">
         </div>
       </div>
 
-      <!-- A/C Filter -->
+      <!-- Party Filter (User Request 1: Filter by A/C ki jgh p Party ayga) -->
       <div class="col-md-3">
-        <label class="erp-field-label mb-1">Filter by A/C</label>
-        <select class="erp-input" [(ngModel)]="selectedAccountFilter" (change)="applyFilters()">
-          <option value="All">All Accounts &amp; Ledgers</option>
-          @for (acct of allAccounts; track acct) {
-          <option [value]="acct">{{ acct }}</option>
+        <label class="erp-field-label mb-1">Party</label>
+        <select class="erp-input" [(ngModel)]="selectedPartyFilter">
+          <option value="All">All Parties</option>
+          @for (party of allParties; track party) {
+          <option [value]="party">{{ party }}</option>
           }
         </select>
       </div>
@@ -195,20 +93,25 @@
       <!-- From Date -->
       <div class="col-md-2">
         <label class="erp-field-label mb-1">From Date</label>
-        <input type="date" class="erp-input" [(ngModel)]="startDateFilter" (change)="applyFilters()">
+        <input type="date" class="erp-input" [(ngModel)]="startDateFilter">
       </div>
 
       <!-- To Date -->
       <div class="col-md-2">
         <label class="erp-field-label mb-1">To Date</label>
-        <input type="date" class="erp-input" [(ngModel)]="endDateFilter" (change)="applyFilters()">
+        <input type="date" class="erp-input" [(ngModel)]="endDateFilter">
       </div>
 
-      <!-- Reset -->
-      <div class="col-md-1">
-        <button type="button" class="btn-erp-outline w-100 py-2" (click)="resetFilters()" title="Reset Filters">
-          <i class="fa-solid fa-rotate-left"></i>
+      <!-- Search on Button click & Reset (User Request 3) -->
+      <div class="col-md-2 d-flex gap-2">
+        <button type="button" class="btn-erp-primary flex-grow-1" (click)="onSearch()">
+          <i class="fa-solid fa-magnifying-glass me-1"></i> Search
         </button>
+        @if (showReset) {
+        <button type="button" class="btn-erp-outline px-3" (click)="resetFilters()" title="Reset Filters">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </button>
+        }
       </div>
     </div>
   </div>
@@ -222,8 +125,8 @@
         <thead>
           <tr>
             <th style="width: 110px;">DATE</th>
-            <th>VOUCHER DETAILAS</th>
-            <th>A/C (ACCOUNT)</th>
+            <th>VOUCHER DETAILS</th>
+            <th>PARTY</th>
             <th class="text-end text-success" style="width: 140px;">RECEIVED (₹)</th>
             <th class="text-end text-danger" style="width: 140px;">PAYMENT (₹)</th>
             <th class="text-end text-primary" style="width: 160px;">AUTOMATIC BALANCE (₹)</th>
@@ -236,7 +139,9 @@
             <td class="text-muted small">{{ e.entryDate }}</td>
             <td class="fw-bold font-monospace text-dark">{{ e.voucherDetails }}</td>
             <td>
-              <span class="acct-pill">{{ e.accountName }}</span>
+              <span class="fw-semibold text-dark">
+                <i class="fa-solid fa-user-group me-1 text-primary"></i>{{ e.partyName || e.accountName }}
+              </span>
             </td>
             <td class="text-end fw-bold text-success">
               {{ e.receivedAmount > 0 ? (e.receivedAmount | number: '1.2-2') : '—' }}
@@ -364,6 +269,126 @@
         <button type="button" class="btn-erp-success px-4" [disabled]="excelParsedRows.length === 0"
           (click)="confirmExcelImport()">
           <i class="fa-solid fa-file-import me-1"></i> Import {{ excelParsedRows.length }} Entries
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: CREATE PAYMENT ENTRY (User Request 4, 5, 6)                  -->
+  <!-- ==================================================================== -->
+  @if (showCreateModal) {
+  <div class="modal-backdrop-erp" (click)="closeCreateModal()">
+    <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header-erp">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-wrap bg-primary-subtle">
+            <i class="fa-solid fa-receipt text-primary fs-5"></i>
+          </div>
+          <div>
+            <h3 class="modal-title-erp">Create Payment Entry</h3>
+            <p class="modal-sub-erp">Select Journal Adjustment Voucher &amp; Party to record payment</p>
+          </div>
+        </div>
+        <button type="button" class="close-btn" (click)="closeCreateModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-erp p-4">
+        <div class="row g-3 mb-3">
+          <!-- DATE -->
+          <div class="col-md-3">
+            <label class="erp-field-label">DATE <span class="text-danger">*</span></label>
+            <input type="date" class="erp-input" [(ngModel)]="entryForm.date">
+          </div>
+
+          <!-- VOUCHER DETAILS: Dropdown of Journal Adjustment Vouchers (User Request 4) -->
+          <div class="col-md-5">
+            <label class="erp-field-label">
+              VOUCHER DETAILS <span class="text-danger">*</span>
+            </label>
+            <select class="erp-input fw-semibold font-monospace" [(ngModel)]="entryForm.voucherDetails"
+              (ngModelChange)="onJournalVoucherChange()">
+              <option value="">-- Select Journal Voucher --</option>
+              @for (jrn of journalVouchers; track jrn.id) {
+              <option [value]="jrn.voucherNo">
+                {{ jrn.voucherNo }} &bull; Inv #{{ jrn.invoiceNo }} ({{ jrn.buyerName || jrn.sellerName }})
+              </option>
+              }
+            </select>
+            <span class="field-hint">Select from Journal Adjustment Vouchers</span>
+          </div>
+
+          <!-- PARTY (User Request 5: A/C ki jagah Party select) -->
+          <div class="col-md-4">
+            <label class="erp-field-label">
+              PARTY <span class="text-danger">*</span>
+            </label>
+            <select class="erp-input fw-semibold" [(ngModel)]="entryForm.party">
+              <option value="">-- Select Party --</option>
+              @for (party of allParties; track party) {
+              <option [value]="party">{{ party }}</option>
+              }
+            </select>
+            <span class="field-hint">Party name / ledger</span>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- RECEIVED -->
+          <div class="col-md-6">
+            <label class="erp-field-label text-success">
+              <i class="fa-solid fa-circle-arrow-down me-1"></i> RECEIVED (₹)
+            </label>
+            <input type="number" min="0" class="erp-input text-success fw-bold" [(ngModel)]="entryForm.received"
+              placeholder="0.00">
+            <span class="field-hint">Credit / Amount received</span>
+          </div>
+
+          <!-- PAYMENT -->
+          <div class="col-md-6">
+            <label class="erp-field-label text-danger">
+              <i class="fa-solid fa-circle-arrow-up me-1"></i> PAYMENT (₹)
+            </label>
+            <input type="number" min="0" class="erp-input text-danger fw-bold" [(ngModel)]="entryForm.payment"
+              placeholder="0.00">
+            <span class="field-hint">Debit / Amount paid</span>
+          </div>
+        </div>
+
+        <!-- NARRATION & AUTOMATIC BALANCE -->
+        <div class="row g-3 mb-2">
+          <div class="col-md-7">
+            <label class="erp-field-label">NARRATION</label>
+            <input type="text" class="erp-input" [(ngModel)]="entryForm.narration"
+              placeholder="Enter payment description, party remarks, or deal settlement reference...">
+          </div>
+
+          <div class="col-md-5">
+            <label class="erp-field-label text-primary">
+              <i class="fa-solid fa-calculator me-1"></i> AUTOMATIC BALANCE (AFTER ENTRY)
+            </label>
+            <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center"
+              style="height: 42px;">
+              <span class="text-muted small">Projected:</span>
+              <span class="fs-5 fw-bold" [class.text-primary]="projectedNewBalance >= 0"
+                [class.text-danger]="projectedNewBalance < 0">
+                ₹{{ projectedNewBalance | number: '1.2-2' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-erp">
+        <button type="button" class="btn-erp-ghost" (click)="closeCreateModal()">Cancel</button>
+        <button type="button" class="btn-erp-outline px-3" (click)="resetEntryForm()">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear
+        </button>
+        <button type="button" class="btn-erp-success px-4" (click)="savePaymentEntry()">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save Payment Entry
         </button>
       </div>
     </div>

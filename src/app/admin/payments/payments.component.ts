@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { combineLatest } from 'rxjs';
 import {
   SaudaErpMockService,
   PaymentEntryRecord,
+  JournalEntryRecord,
 } from '../../core/services/sauda-erp-mock.service';
 import { NotificationService } from '../../core/services/notificationnew.service';
 
@@ -22,7 +24,7 @@ export class PaymentsComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   // View state
-  showCreateForm = false;
+  showCreateModal = false;
   showExcelUploadModal = false;
   showReportFilterModal = false;
 
@@ -30,34 +32,31 @@ export class PaymentsComponent implements OnInit {
   paymentEntries: PaymentEntryRecord[] = [];
   filteredEntries: PaymentEntryRecord[] = [];
 
-  // Standard Bank & Cash Accounts
-  allAccounts: string[] = [
-    'State Bank of India (Mandi Main Branch)',
-    'HDFC Bank (Current A/c - 502000)',
-    'ICICI Bank (Grain Trading A/c)',
-    'Punjab National Bank (Mandi Branch)',
-    'Cash in Hand (Mandi Petty Cash)',
-    'City Wholesale Market (Customer Ledger)',
-    'Sharma Grain Traders (Supplier Ledger)',
-    'Om Traders (Supplier Ledger)',
-    'Marwar Agro Retailers (Customer Ledger)',
-  ];
+  // Journal Vouchers & Parties
+  journalVouchers: JournalEntryRecord[] = [];
+  allParties: string[] = [];
 
-  // Manual Entry Form matching client sheet: PAYMENT ENTERY
+  // Manual Entry Form matching client sheet: PAYMENT ENTRY
   entryForm = {
     date: new Date().toISOString().slice(0, 10),
     voucherDetails: '',
     received: null as number | null,
     payment: null as number | null,
-    account: '',
+    party: '',
     narration: '',
   };
 
   // Filters & Search
   searchTerm = '';
-  selectedAccountFilter = 'All';
+  selectedPartyFilter = 'All';
   startDateFilter = '';
   endDateFilter = '';
+
+  appliedSearchTerm = '';
+  appliedPartyFilter = 'All';
+  appliedStartDate = '';
+  appliedEndDate = '';
+  showReset = false;
 
   // Pagination
   page = 1;
@@ -96,33 +95,91 @@ export class PaymentsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.erpService.paymentEntries$
+    combineLatest([
+      this.erpService.sellers$,
+      this.erpService.buyers$,
+      this.erpService.journalEntries$,
+      this.erpService.paymentEntries$,
+    ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((entries) => {
-        this.paymentEntries = entries;
+      .subscribe(([sellers, buyers, journals, payments]) => {
+        this.paymentEntries = payments;
+        this.journalVouchers = journals;
+
+        const partySet = new Set<string>();
+        sellers.filter((s) => s.isActive).forEach((s) => partySet.add(s.name));
+        buyers.filter((b) => b.isActive).forEach((b) => partySet.add(b.name));
+        journals.forEach((j) => {
+          if (j.buyerName) partySet.add(j.buyerName);
+          if (j.sellerName) partySet.add(j.sellerName);
+        });
+        payments.forEach((e) => {
+          if (e.partyName) partySet.add(e.partyName);
+          if (e.accountName && !e.accountName.includes('Bank') && !e.accountName.includes('Cash')) {
+            partySet.add(e.accountName);
+          }
+        });
+
+        if (partySet.size === 0) {
+          partySet.add('Sharma Grain Traders');
+          partySet.add('City Wholesale Market');
+          partySet.add('Om Traders');
+          partySet.add('Marwar Agro Retailers');
+          partySet.add('Desert Fresh Traders');
+        }
+
+        this.allParties = Array.from(partySet).filter(Boolean).sort();
         this.applyFilters();
       });
   }
 
+  onJournalVoucherChange(): void {
+    const selected = this.journalVouchers.find((j) => j.voucherNo === this.entryForm.voucherDetails);
+    if (selected) {
+      if (!this.entryForm.party) {
+        this.entryForm.party = selected.buyerName || selected.sellerName || '';
+      }
+      if (!this.entryForm.narration) {
+        this.entryForm.narration = `Settlement against Journal Voucher ${selected.voucherNo} (Invoice #${selected.invoiceNo})`;
+      }
+    }
+  }
+
+  onSearch(): void {
+    this.appliedSearchTerm = this.searchTerm.trim().toLowerCase();
+    this.appliedPartyFilter = this.selectedPartyFilter;
+    this.appliedStartDate = this.startDateFilter;
+    this.appliedEndDate = this.endDateFilter;
+
+    this.showReset =
+      !!this.appliedSearchTerm ||
+      this.appliedPartyFilter !== 'All' ||
+      !!this.appliedStartDate ||
+      !!this.appliedEndDate;
+
+    this.page = 1;
+    this.applyFilters();
+  }
+
   applyFilters(): void {
-    const term = this.searchTerm.trim().toLowerCase();
-    const acct = this.selectedAccountFilter;
-    const start = this.startDateFilter;
-    const end = this.endDateFilter;
+    const term = this.appliedSearchTerm;
+    const party = this.appliedPartyFilter;
+    const start = this.appliedStartDate;
+    const end = this.appliedEndDate;
 
     this.filteredEntries = this.paymentEntries.filter((e) => {
+      const partyVal = (e.partyName || e.accountName || '').toLowerCase();
       const matchSearch =
         !term ||
         e.voucherDetails.toLowerCase().includes(term) ||
-        e.accountName.toLowerCase().includes(term) ||
-        e.narration.toLowerCase().includes(term) ||
-        (e.partyName && e.partyName.toLowerCase().includes(term));
+        partyVal.includes(term) ||
+        e.narration.toLowerCase().includes(term);
 
-      const matchAccount = acct === 'All' || e.accountName === acct;
+      const matchParty = party === 'All' || partyVal === party.toLowerCase();
       const matchStart = !start || e.entryDate >= start;
       const matchEnd = !end || e.entryDate <= end;
 
-      return matchSearch && matchAccount && matchStart && matchEnd;
+      return matchSearch && matchParty && matchStart && matchEnd;
     });
 
     this.page = 1;
@@ -130,20 +187,36 @@ export class PaymentsComponent implements OnInit {
 
   resetFilters(): void {
     this.searchTerm = '';
-    this.selectedAccountFilter = 'All';
+    this.selectedPartyFilter = 'All';
     this.startDateFilter = '';
     this.endDateFilter = '';
+
+    this.appliedSearchTerm = '';
+    this.appliedPartyFilter = 'All';
+    this.appliedStartDate = '';
+    this.appliedEndDate = '';
+    this.showReset = false;
+
     this.applyFilters();
+  }
+
+  openCreateModal(): void {
+    this.resetEntryForm();
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
   }
 
   savePaymentEntry(): void {
     if (!this.entryForm.voucherDetails.trim()) {
-      this.notificationService.show('Voucher Details (Ref # / Cheque # / UTR #) is required.', 'error', 3500);
+      this.notificationService.show('Please select Voucher Details.', 'error', 3500);
       return;
     }
 
-    if (!this.entryForm.account) {
-      this.notificationService.show('Please select or enter the A/C (Account).', 'error', 3500);
+    if (!this.entryForm.party) {
+      this.notificationService.show('Please select a Party.', 'error', 3500);
       return;
     }
 
@@ -160,7 +233,8 @@ export class PaymentsComponent implements OnInit {
       voucherDetails: this.entryForm.voucherDetails.trim().toUpperCase(),
       receivedAmount: recv,
       paymentAmount: pay,
-      accountName: this.entryForm.account,
+      accountName: this.entryForm.party,
+      partyName: this.entryForm.party,
       narration: this.entryForm.narration.trim() || 'Payment Entry',
       recordedBy: 'Sauda Admin',
     });
@@ -168,21 +242,25 @@ export class PaymentsComponent implements OnInit {
     if (res.ok) {
       this.notificationService.show(res.message, 'success', 3500);
       this.resetEntryForm();
-      this.showCreateForm = false;
+      this.closeCreateModal();
     } else {
       this.notificationService.show(res.message, 'error', 3500);
     }
   }
 
   resetEntryForm(): void {
+    const defaultVoucher = this.journalVouchers.length > 0 ? this.journalVouchers[0].voucherNo : '';
     this.entryForm = {
       date: new Date().toISOString().slice(0, 10),
-      voucherDetails: '',
+      voucherDetails: defaultVoucher,
       received: null,
       payment: null,
-      account: '',
+      party: '',
       narration: '',
     };
+    if (defaultVoucher) {
+      this.onJournalVoucherChange();
+    }
   }
 
   // ==========================================
