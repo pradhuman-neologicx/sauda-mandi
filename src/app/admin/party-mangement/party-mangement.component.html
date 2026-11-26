@@ -5,7 +5,7 @@
       <div class="erp-breadcrumb">JP-BROCKERS ERP &bull; Party</div>
       <h1 class="erp-title">Party Management</h1>
       <div class="erp-header-desc">
-        <p class="desc-main">External trading counterparties registered for commercial transactions.</p>
+        <!-- <p class="desc-main">External trading counterparties registered for commercial transactions.</p> -->
         <p class="desc-sub">Mapped to Purchase and Sales Saudas to automate credit periods, outstanding ledger balances,
           and payment tracking.</p>
       </div>
@@ -413,7 +413,8 @@
           <div class="view-item">
             <span class="view-label">Default Credit Terms</span>
             <span class="view-val fw-bold text-primary">
-              {{ selectedParty.defaultCreditDays !== null && selectedParty.defaultCreditDays > 0 ? selectedParty.defaultCreditDays + ' Days' : '0 Days (Immediate)' }}
+              {{ selectedParty.defaultCreditDays !== null && selectedParty.defaultCreditDays > 0 ?
+              selectedParty.defaultCreditDays + ' Days' : '0 Days (Immediate)' }}
             </span>
           </div>
 
@@ -428,14 +429,16 @@
       <div class="row g-3">
         <div class="col-md-6">
           <div class="p-3 bg-light rounded border text-center cursor-pointer" (click)="setActiveDetailTab('saudas')">
-            <div class="text-muted small text-uppercase fw-bold mb-1"><i class="fa-solid fa-handshake text-primary me-1"></i> Total Saudas</div>
+            <div class="text-muted small text-uppercase fw-bold mb-1"><i
+                class="fa-solid fa-handshake text-primary me-1"></i> Total Saudas</div>
             <div class="fs-4 fw-bold text-dark">{{ partySaudas.length }} Deals</div>
             <div class="small text-primary mt-1">Click to view all deals &rarr;</div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="p-3 bg-light rounded border text-center cursor-pointer" (click)="setActiveDetailTab('payments')">
-            <div class="text-muted small text-uppercase fw-bold mb-1"><i class="fa-solid fa-money-bill-transfer text-success me-1"></i> Payments Recorded</div>
+            <div class="text-muted small text-uppercase fw-bold mb-1"><i
+                class="fa-solid fa-money-bill-transfer text-success me-1"></i> Payments Recorded</div>
             <div class="fs-4 fw-bold text-dark">{{ partySettlements.length }} Vouchers</div>
             <div class="small text-primary mt-1">Click to view payments &rarr;</div>
           </div>
@@ -489,7 +492,8 @@
                 <td class="small">{{ sauda.clientFirm }}</td>
                 <td>{{ sauda.commodity }}</td>
                 <td class="text-end fw-semibold text-dark">{{ sauda.quantityMt | number: '1.2-3' }} MT</td>
-                <td class="text-end fw-bold text-dark">{{ sauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+                <td class="text-end fw-bold text-dark">{{ sauda.totalAmountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </td>
                 <td>
                   @if (sauda.dueDate) {
                   <span class="small">{{ sauda.dueDate }}</span>
@@ -559,7 +563,8 @@
                   </span>
                 </td>
                 <td class="small">{{ st.clientFirm }}</td>
-                <td class="text-end fw-bold" [ngClass]="st.entryKind === 'Payment Received' ? 'text-success' : 'text-danger'">
+                <td class="text-end fw-bold"
+                  [ngClass]="st.entryKind === 'Payment Received' ? 'text-success' : 'text-danger'">
                   {{ st.amountInr | currency: 'INR' : 'symbol' : '1.0-0' }}
                 </td>
                 <td>
