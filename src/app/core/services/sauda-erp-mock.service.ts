@@ -770,7 +770,7 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: null,
       buyerCreditStartDate: '',
       buyerDueDate: '',
-      remarks: 'Yellow Field Maize purchase lot (5 Ton booked)',
+      remarks: 'Yellow Field Maize purchase lot (5 MT booked)',
       status: 'Partial',
       currentVersion: 1,
       amendmentStatus: 'None',
@@ -1085,7 +1085,7 @@ export class SaudaErpMockService {
       buyerCreditPeriodDays: 10,
       buyerCreditStartDate: '2026-11-10',
       buyerDueDate: '2026-11-20',
-      remarks: 'Sales wholesale contract (5 Ton total, multiple outward trucks scheduled)',
+      remarks: 'Sales wholesale contract (5 MT total, multiple outward trucks scheduled)',
       status: 'Partial',
       currentVersion: 1,
       amendmentStatus: 'None',
@@ -1100,7 +1100,7 @@ export class SaudaErpMockService {
           action: 'Created',
           reason: 'Sales deal booked with Marwar Agro Retailers',
           changes: [
-            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (5 Ton)' },
+            { field: 'Commodities', oldValue: '-', newValue: 'Wheat (5 MT)' },
             { field: 'Total Amount', oldValue: '-', newValue: '₹1,30,000' },
           ],
         },
@@ -1139,7 +1139,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-04',
       expectedArrivalDate: '2026-11-04',
       status: 'Delivered',
-      remarks: '1st inward truck lot (1 Ton received)',
+      remarks: '1st inward truck lot (1 MT received)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-04 14:00',
@@ -1187,7 +1187,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-06',
       expectedArrivalDate: '2026-11-06',
       status: 'Delivered',
-      remarks: '2nd inward truck lot (3 Ton received)',
+      remarks: '2nd inward truck lot (3 MT received)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-06 11:30',
@@ -1236,7 +1236,7 @@ export class SaudaErpMockService {
       expectedArrivalDate: '2026-11-08',
       status: 'Delivered',
       isFinalSubmit: true,
-      remarks: '3rd and final inward truck (1 Ton received, deal completed 5/5 Ton)',
+      remarks: '3rd and final inward truck (1 MT received, deal completed 5/5 MT)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-08 16:00',
@@ -1286,7 +1286,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-09',
       expectedArrivalDate: '2026-11-09',
       status: 'Delivered',
-      remarks: '1st inward maize truck (1.5 Ton received)',
+      remarks: '1st inward maize truck (1.5 MT received)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-09 10:30',
@@ -1334,7 +1334,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-11',
       expectedArrivalDate: '2026-11-11',
       status: 'Delivered',
-      remarks: '2nd inward maize truck (1.5 Ton received, 2 Ton still pending)',
+      remarks: '2nd inward maize truck (1.5 MT received, 2 MT still pending)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-11 15:45',
@@ -1384,7 +1384,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-05',
       expectedArrivalDate: '2026-11-05',
       status: 'Delivered',
-      remarks: '1st outward wheat dispatch (1 Ton)',
+      remarks: '1st outward wheat dispatch (1 MT)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-05 16:30',
@@ -1432,7 +1432,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-07',
       expectedArrivalDate: '2026-11-07',
       status: 'Delivered',
-      remarks: '2nd outward wheat dispatch (3 Ton)',
+      remarks: '2nd outward wheat dispatch (3 MT)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-07 14:15',
@@ -1481,7 +1481,7 @@ export class SaudaErpMockService {
       expectedArrivalDate: '2026-11-09',
       status: 'Delivered',
       isFinalSubmit: true,
-      remarks: '3rd and final outward wheat dispatch (1 Ton, deal completed 5/5 Ton)',
+      remarks: '3rd and final outward wheat dispatch (1 MT, deal completed 5/5 MT)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-09 17:00',
@@ -1531,7 +1531,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-10',
       expectedArrivalDate: '2026-11-10',
       status: 'Delivered',
-      remarks: '1st outward wheat dispatch to Marwar Agro Retailers (1.5 Ton)',
+      remarks: '1st outward wheat dispatch to Marwar Agro Retailers (1.5 MT)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-10 11:00',
@@ -1579,7 +1579,7 @@ export class SaudaErpMockService {
       dispatchDate: '2026-11-12',
       expectedArrivalDate: '2026-11-12',
       status: 'Delivered',
-      remarks: '2nd outward wheat dispatch (1.5 Ton, 2 Ton still pending)',
+      remarks: '2nd outward wheat dispatch (1.5 MT, 2 MT still pending)',
       currentVersion: 1,
       createdBy: 'Sauda Admin',
       createdAt: '2026-11-12 16:30',
@@ -3234,7 +3234,7 @@ export class SaudaErpMockService {
       if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Quantity in Ton must be greater than zero.',
+          message: 'Quantity in MT must be greater than zero.',
         };
       }
     }
@@ -3412,7 +3412,7 @@ export class SaudaErpMockService {
       if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Quantity in Ton must be greater than zero.',
+          message: 'Quantity in MT must be greater than zero.',
         };
       }
     }
@@ -3557,7 +3557,7 @@ export class SaudaErpMockService {
       if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Quantity in Ton must be greater than zero.',
+          message: 'Quantity in MT must be greater than zero.',
         };
       }
     }
@@ -3979,7 +3979,7 @@ export class SaudaErpMockService {
       if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Quantity in Ton must be greater than zero.',
+          message: 'Quantity in MT must be greater than zero.',
         };
       }
     }
@@ -4210,7 +4210,7 @@ export class SaudaErpMockService {
       if (Number(item.actualWeight) <= 0) {
         return {
           ok: false,
-          message: 'Quantity in Ton must be greater than zero.',
+          message: 'Quantity in MT must be greater than zero.',
         };
       }
     }
