@@ -39,28 +39,33 @@
 
   <!-- 5 KPI Cards: Total, Brokerage, Purchase, Sales, Forward (On Hold) -->
   <div class="sauda-kpi-grid">
-    <div class="sauda-kpi-card">
+    <div class="sauda-kpi-card cursor-pointer" [class.kpi-active]="appliedTypeFilter === 'All'"
+      (click)="filterByType('All')" title="View All Standard Saudas">
       <div class="sauda-kpi-label">Total Saudas</div>
       <div class="sauda-kpi-val">{{ activeSaudasList.length }}</div>
     </div>
 
-    <div class="sauda-kpi-card">
+    <div class="sauda-kpi-card cursor-pointer" [class.kpi-active]="appliedTypeFilter === 'Brokerage'"
+      (click)="filterByType('Brokerage')" title="Filter by Brokerage">
       <div class="sauda-kpi-label">Brokerage Deals</div>
       <div class="sauda-kpi-val">{{ brokerageCount }}</div>
     </div>
 
-    <div class="sauda-kpi-card">
+    <div class="sauda-kpi-card cursor-pointer" [class.kpi-active]="appliedTypeFilter === 'Purchase'"
+      (click)="filterByType('Purchase')" title="Filter by Purchase">
       <div class="sauda-kpi-label">Purchase</div>
       <div class="sauda-kpi-val">{{ purchaseCount }}</div>
     </div>
 
-    <div class="sauda-kpi-card">
+    <div class="sauda-kpi-card cursor-pointer" [class.kpi-active]="appliedTypeFilter === 'Sales'"
+      (click)="filterByType('Sales')" title="Filter by Sales">
       <div class="sauda-kpi-label">Sales</div>
       <div class="sauda-kpi-val">{{ salesCount }}</div>
     </div>
 
-    <div class="sauda-kpi-card">
-      <div class="sauda-kpi-label">Forward (On Hold)</div>
+    <div class="sauda-kpi-card cursor-pointer" [class.kpi-active]="appliedTypeFilter === 'Forward'"
+      (click)="filterByType('Forward')" title="Click to view Forward Saudas">
+      <div class="sauda-kpi-label">Forward</div>
       <div class="sauda-kpi-val text-purple">{{ forwardCount }}</div>
     </div>
   </div>
@@ -83,14 +88,24 @@
 
       <form (ngSubmit)="onSearch()" class="sauda-filter-grid">
         <div class="filter-field">
-          <label>Search Sauda Number / Party</label>
+          <label>Search Sauda Number</label>
           <input type="text" name="searchTerm" [(ngModel)]="searchTerm" class="erp-input"
-            placeholder="Search records..." />
+            placeholder="Search by Sauda No (e.g. SAU-2026-0001)..." />
+        </div>
+
+        <div class="filter-field">
+          <label>Party</label>
+          <select name="partyFilter" [(ngModel)]="partyFilter" (ngModelChange)="onSearch()" class="erp-input">
+            <option value="All">All Parties</option>
+            @for (p of partyFilterOptions; track p) {
+            <option [value]="p">{{ p }}</option>
+            }
+          </select>
         </div>
 
         <div class="filter-field">
           <label>Sauda Type</label>
-          <select name="typeFilter" [(ngModel)]="typeFilter" class="erp-input">
+          <select name="typeFilter" [(ngModel)]="typeFilter" (ngModelChange)="onSearch()" class="erp-input">
             <option value="All">All Types</option>
             <option value="Brokerage">Brokerage</option>
             <option value="Purchase">Purchase</option>
@@ -101,7 +116,7 @@
 
         <div class="filter-field">
           <label>Firm</label>
-          <select name="firmFilter" [(ngModel)]="firmFilter" class="erp-input">
+          <select name="firmFilter" [(ngModel)]="firmFilter" (ngModelChange)="onSearch()" class="erp-input">
             <option value="All">All Firms</option>
             @for (firmName of firmFilterOptions; track firmName) {
             <option [value]="firmName">{{ firmName }}</option>
@@ -109,14 +124,7 @@
           </select>
         </div>
 
-        <div class="filter-field">
-          <label>Voided records</label>
-          <select name="voidFilter" [(ngModel)]="voidFilter" class="erp-input">
-            <option value="exclude">Exclude Voided</option>
-            <option value="all">All Records</option>
-            <option value="only">Voided Only</option>
-          </select>
-        </div>
+
 
         <div class="filter-btn-col">
           <button type="submit" class="btn-erp-primary">
@@ -226,12 +234,6 @@
                 <button type="button" class="view-link-btn" (click)="openDetailsModal(sauda)">
                   View
                 </button>
-                @if (sauda.saudaType === 'Forward' && sauda.status === 'On Hold') {
-                <button type="button" class="btn-erp-primary-sm" (click)="executeForwardSauda(sauda)"
-                  title="Execute Forward Sauda to convert it into an Active Deal">
-                  <i class="fa-solid fa-play me-1"></i>Execute
-                </button>
-                }
                 @if (sauda.amendmentStatus === 'Pending Approval' && isChecker) {
                 <button type="button" class="btn-erp-amber-sm" (click)="openReviewModal(sauda)"
                   title="Review amendment as Checker (AF-05)">
@@ -342,42 +344,6 @@
         </div>
       </div>
 
-      <!-- If Sales: Linked Purchase Sauda Selector -->
-      @if (saudaForm.get('saudaType')?.value === 'Sales') {
-      <div class="linked-purchase-box p-3 mt-3 mb-2 rounded border border-primary bg-white">
-        <div class="field-group">
-          <label class="fw-semibold text-primary">
-            <i class="fa-solid fa-link me-1"></i>Linked Purchase Sauda (Held Goods) <span class="req">*</span>
-          </label>
-          <select formControlName="linkedPurchaseSaudaId" class="erp-input" (change)="onLinkedPurchaseSaudaSelected()">
-            <option value="">-- Select Unsold Held Stock from Prior Purchase Sauda --</option>
-            @for (ps of heldPurchaseSaudas; track ps.id) {
-            <option [value]="ps.id">
-              {{ ps.saudaNo }} &bull; {{ ps.sellerName }} &bull; {{ ps.commodity }} (Held: {{ (ps.heldQuantityMt !==
-              undefined ? ps.heldQuantityMt : ps.quantityMt) | number: '1.0-2' }} MT) &bull; {{ ps.warehouseName }}
-            </option>
-            }
-          </select>
-          @if (saudaForm.get('linkedPurchaseSaudaId')?.touched && saudaForm.get('linkedPurchaseSaudaId')?.invalid) {
-          <span class="field-err">A linked Purchase Sauda with unsold held quantity is mandatory (BR-SA-05,
-            EX-09).</span>
-          }
-          <div class="text-muted small mt-1">
-            Linking draws down the seller's held stock and auto-populates original seller.
-          </div>
-        </div>
-
-        @if (getLinkedPurchaseSauda(saudaForm.get('linkedPurchaseSaudaId')?.value); as linkedPs) {
-        <div class="p-2 mt-2 rounded bg-light border small text-dark d-flex gap-4">
-          <div><strong>Original Seller:</strong> {{ linkedPs.sellerName }}</div>
-          <div><strong>Commodities:</strong> {{ linkedPs.commodity }}</div>
-          <div><strong>Available Held Stock:</strong> <span class="badge badge-amber">{{ (linkedPs.heldQuantityMt !==
-              undefined ? linkedPs.heldQuantityMt : linkedPs.quantityMt) | number: '1.0-2' }} MT</span></div>
-        </div>
-        }
-      </div>
-      }
-
       <!-- Party Selection Grid -->
       <div class="form-grid-2 mt-3">
         <!-- Seller Field: shown for Brokerage, Purchase, and Forward -->
@@ -397,15 +363,6 @@
           @if (saudaForm.get('sellerName')?.touched && saudaForm.get('sellerName')?.invalid) {
           <span class="field-err">Seller party is required.</span>
           }
-        </div>
-        }
-
-        <!-- Seller Field (Read-only display for Sales from linked purchase sauda) -->
-        @if (saudaForm.get('saudaType')?.value === 'Sales') {
-        <div class="field-group">
-          <label>Seller (Held Stock Owner)</label>
-          <input type="text" formControlName="sellerName" class="erp-input readonly-input"
-            placeholder="Auto-populated from linked Purchase Sauda" readonly />
         </div>
         }
 
@@ -585,6 +542,21 @@
           <i class="fa-solid fa-clipboard-check me-1"></i> Review Amendment
         </button>
         }
+      </div>
+      }
+
+      @if (selectedSauda.saudaType === 'Forward' && selectedSauda.status === 'On Hold') {
+      <div class="alert-erp alert-purple-erp mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <strong class="text-purple"><i class="fa-solid fa-clock me-2"></i>Forward Sauda</strong>
+          <div class="small mt-1 text-dark">
+            This forward agreement is on hold until due date (<strong>{{ selectedSauda.dueDate || '—' }}</strong>). You
+            can execute it to convert it into an active deal.
+          </div>
+        </div>
+        <button type="button" class="btn-erp-primary text-nowrap" (click)="executeForwardSauda(selectedSauda)">
+          <i class="fa-solid fa-play me-1"></i> Execute Forward Sauda
+        </button>
       </div>
       }
 
@@ -809,6 +781,12 @@
         <button type="button" class="btn-erp-danger" (click)="openVoidModal(selectedSauda)">
           <i class="fa-solid fa-ban me-1"></i> Void Sauda
         </button>
+        @if (selectedSauda.saudaType === 'Forward' && selectedSauda.status === 'On Hold') {
+        <button type="button" class="btn-erp-primary" (click)="executeForwardSauda(selectedSauda)"
+          title="Execute Forward Sauda to convert it into an Active Deal">
+          <i class="fa-solid fa-play me-1"></i> Execute Forward Sauda
+        </button>
+        }
         @if (selectedSauda.amendmentStatus === 'Pending Approval') {
         <button type="button" class="btn-erp-primary" disabled
           title="An amendment is currently pending Checker approval. Further edits are locked (AF-07).">

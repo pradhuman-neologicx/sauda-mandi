@@ -77,13 +77,16 @@ export class SaudaManagementComponent implements OnInit {
   searchTerm = '';
   typeFilter: 'All' | SaudaType = 'All';
   firmFilter = 'All';
+  partyFilter = 'All';
   voidFilter: 'exclude' | 'all' | 'only' = 'exclude';
 
   appliedSearchTerm = '';
   appliedTypeFilter: 'All' | SaudaType = 'All';
   appliedFirmFilter = 'All';
+  appliedPartyFilter = 'All';
   appliedVoidFilter: 'exclude' | 'all' | 'only' = 'exclude';
   showReset = false;
+  partyFilterOptions: string[] = [];
 
   // Pagination
   page = 1;
@@ -832,15 +835,22 @@ export class SaudaManagementComponent implements OnInit {
   }
 
   // ── Listing Search, Filter & Pagination ──
+  filterByType(type: 'All' | SaudaType): void {
+    this.typeFilter = type;
+    this.onSearch();
+  }
+
   onSearch(): void {
     this.appliedSearchTerm = this.searchTerm.trim();
     this.appliedTypeFilter = this.typeFilter;
     this.appliedFirmFilter = this.firmFilter;
+    this.appliedPartyFilter = this.partyFilter;
     this.appliedVoidFilter = this.voidFilter;
     this.showReset =
       this.appliedSearchTerm.length > 0 ||
       this.appliedTypeFilter !== 'All' ||
       this.appliedFirmFilter !== 'All' ||
+      this.appliedPartyFilter !== 'All' ||
       this.appliedVoidFilter !== 'exclude';
     this.page = 1;
     this.applyFilters();
@@ -849,27 +859,38 @@ export class SaudaManagementComponent implements OnInit {
   applyFilters(): void {
     const q = this.appliedSearchTerm.toLowerCase();
     this.filteredSaudas = this.allSaudas.filter((s) => {
-      const matchesQuery =
-        !q ||
-        s.saudaNo.toLowerCase().includes(q) ||
-        s.partyName.toLowerCase().includes(q) ||
-        s.clientFirm.toLowerCase().includes(q) ||
-        s.commodity.toLowerCase().includes(q);
-      const matchesType =
-        this.appliedTypeFilter === 'All' ||
-        s.saudaType === this.appliedTypeFilter ||
-        (this.appliedTypeFilter === 'Direct Sale' && s.saudaType === 'Brokerage') ||
-        (this.appliedTypeFilter === 'Brokerage' && s.saudaType === 'Direct Sale');
+      // User request: search filter only by Sauda Number
+      const matchesQuery = !q || s.saudaNo.toLowerCase().includes(q);
+
+      // Forward sauda listing me tbhi show hoga jab filter se select krnge Sauda Type = forward
+      let matchesType = false;
+      if (this.appliedTypeFilter === 'Forward') {
+        matchesType = s.saudaType === 'Forward';
+      } else if (this.appliedTypeFilter === 'All') {
+        matchesType = s.saudaType !== 'Forward';
+      } else if (this.appliedTypeFilter === 'Brokerage' || this.appliedTypeFilter === 'Direct Sale') {
+        matchesType = s.saudaType === 'Brokerage' || s.saudaType === 'Direct Sale';
+      } else {
+        matchesType = s.saudaType === this.appliedTypeFilter;
+      }
+
       const matchesFirm =
         this.appliedFirmFilter === 'All' ||
         s.clientFirm === this.appliedFirmFilter;
+
+      const matchesParty =
+        this.appliedPartyFilter === 'All' ||
+        (s.partyName && s.partyName.toLowerCase() === this.appliedPartyFilter.toLowerCase()) ||
+        (s.sellerName && s.sellerName.toLowerCase() === this.appliedPartyFilter.toLowerCase()) ||
+        (s.buyerName && s.buyerName.toLowerCase() === this.appliedPartyFilter.toLowerCase());
+
       const matchesVoid =
         this.appliedVoidFilter === 'all'
           ? true
           : this.appliedVoidFilter === 'exclude'
             ? s.status !== 'Voided'
             : s.status === 'Voided';
-      return matchesQuery && matchesType && matchesFirm && matchesVoid;
+      return matchesQuery && matchesType && matchesFirm && matchesParty && matchesVoid;
     });
     this.updateSummaryAndPagination();
   }
@@ -878,10 +899,12 @@ export class SaudaManagementComponent implements OnInit {
     this.searchTerm = '';
     this.typeFilter = 'All';
     this.firmFilter = 'All';
+    this.partyFilter = 'All';
     this.voidFilter = 'exclude';
     this.appliedSearchTerm = '';
     this.appliedTypeFilter = 'All';
     this.appliedFirmFilter = 'All';
+    this.appliedPartyFilter = 'All';
     this.appliedVoidFilter = 'exclude';
     this.showReset = false;
     this.page = 1;
@@ -909,6 +932,15 @@ export class SaudaManagementComponent implements OnInit {
       if (s.clientFirm) names.add(s.clientFirm);
     });
     this.firmFilterOptions = Array.from(names);
+
+    const partyNames = new Set<string>();
+    this.allPartyOptions.forEach((p) => partyNames.add(p));
+    this.allSaudas.forEach((s) => {
+      if (s.partyName) partyNames.add(s.partyName);
+      if (s.sellerName) partyNames.add(s.sellerName);
+      if (s.buyerName) partyNames.add(s.buyerName);
+    });
+    this.partyFilterOptions = Array.from(partyNames).filter(Boolean).sort();
 
     this.itemsPerPageCount =
       this.tableSize === 'all'
@@ -1225,6 +1257,9 @@ export class SaudaManagementComponent implements OnInit {
     }
     this.notificationService.show(res.message, 'success', 3500);
     this.applyFilters();
+    if (this.selectedSauda && this.selectedSauda.id === sauda.id) {
+      this.selectedSauda = this.allSaudas.find((s) => s.id === sauda.id) || null;
+    }
   }
 
   get totalCommodityQuantityTon(): number {

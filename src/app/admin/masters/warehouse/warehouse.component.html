@@ -127,7 +127,7 @@
               <i class="fa-solid ms-1" [ngClass]="sortAsc ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
               }
             </th>
-            <th>Supervisor / Contact</th>
+
 
             <th class="text-center sortable-th" style="width: 140px" (click)="setSort('status')">
               <span>Status</span>
@@ -179,20 +179,7 @@
                 <i class="fa-solid fa-map-pin me-1"></i>{{ w.city }}
               </span>
             </td>
-            <td>
-              @if (w.contactPerson || w.contactPhone) {
-              <div class="contact-cell">
-                @if (w.contactPerson) {
-                <span class="contact-name"><i class="fa-regular fa-user me-1"></i>{{ w.contactPerson }}</span>
-                }
-                @if (w.contactPhone) {
-                <span class="contact-phone"><i class="fa-solid fa-phone me-1"></i>{{ w.contactPhone }}</span>
-                }
-              </div>
-              } @else {
-              <span class="text-muted small">-</span>
-              }
-            </td>
+
 
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="w.isActive ? 'is-active' : 'is-inactive'"

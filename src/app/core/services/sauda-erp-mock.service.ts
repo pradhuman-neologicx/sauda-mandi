@@ -2923,7 +2923,7 @@ export class SaudaErpMockService {
       id: 'GD-001',
       warehouseId: 'WH-001',
       warehouseName: 'Desert Mandi Yard A',
-      name: 'Godown 1 (Grain & Pulses)',
+      name: 'Godown 1',
       supervisor: 'Rameshwar Lal',
       supervisorPhone: '9829011122',
       capacityMt: 350,
@@ -2931,13 +2931,13 @@ export class SaudaErpMockService {
       chambers: [
         {
           id: 'CH-01',
-          name: 'Chamber A (Moong & Chana)',
+          name: 'Chamber A',
           capacityMt: 180,
           stackNumbers: ['Stack No. 101', 'Stack No. 102', 'Stack No. 103', 'Stack No. 104'],
         },
         {
           id: 'CH-02',
-          name: 'Chamber B (Wheat & Barley)',
+          name: 'Chamber B',
           capacityMt: 170,
           stackNumbers: ['Stack No. 105', 'Stack No. 106', 'Stack No. 110'],
         },
@@ -2952,7 +2952,7 @@ export class SaudaErpMockService {
       id: 'GD-002',
       warehouseId: 'WH-001',
       warehouseName: 'Desert Mandi Yard A',
-      name: 'Godown 2 (Oilseeds Shed)',
+      name: 'Godown 2',
       supervisor: 'Suraj Mal',
       supervisorPhone: '9829033344',
       capacityMt: 250,
@@ -2960,13 +2960,13 @@ export class SaudaErpMockService {
       chambers: [
         {
           id: 'CH-01',
-          name: 'Chamber 1 (Mustard Seed)',
+          name: 'Chamber 1',
           capacityMt: 130,
           stackNumbers: ['Stack No. 201', 'Stack No. 202', 'Stack No. 203'],
         },
         {
           id: 'CH-02',
-          name: 'Chamber 2 (Guar & Til)',
+          name: 'Chamber 2',
           capacityMt: 120,
           stackNumbers: ['Stack No. 204', 'Stack No. 205', 'Stack No. 208'],
         },
@@ -2989,19 +2989,19 @@ export class SaudaErpMockService {
       chambers: [
         {
           id: 'CH-01',
-          name: 'Chamber 1 (Chill 4°C)',
+          name: 'Chamber 1',
           capacityMt: 200,
           stackNumbers: ['Stack No. 301', 'Stack No. 302', 'Stack No. 303', 'Stack No. 304'],
         },
         {
           id: 'CH-02',
-          name: 'Chamber 2 (Deep Chill 0°C)',
+          name: 'Chamber 2',
           capacityMt: 150,
           stackNumbers: ['Stack No. 305', 'Stack No. 306', 'Stack No. 310'],
         },
         {
           id: 'CH-03',
-          name: 'Chamber 3 (Dehumidified)',
+          name: 'Chamber 3',
           capacityMt: 150,
           stackNumbers: ['Stack No. 311', 'Stack No. 312', 'Stack No. 315'],
         },

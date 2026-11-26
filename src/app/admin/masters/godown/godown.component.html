@@ -190,9 +190,7 @@
             <td>
               <div class="godown-name-cell">
                 <span class="godown-title-text">{{ godown.name }}</span>
-                <span class="sub-cell">
-                  <i class="fa-solid fa-user-group me-1 text-primary"></i>{{ getWarehouseParty(godown.warehouseId) }}
-                </span>
+
               </div>
             </td>
 
@@ -203,7 +201,7 @@
                 <span class="chamber-preview-pill" title="{{ c.stackNumbers.join(', ') }}">
                   <i class="fa-solid fa-door-open me-1 text-purple"></i>
                   {{ c.name }}
-                  <span class="chamber-stack-badge">({{ c.stackNumbers.length }} Stacks)</span>
+
                 </span>
                 } @empty {
                 <span class="text-muted small">No chambers</span>

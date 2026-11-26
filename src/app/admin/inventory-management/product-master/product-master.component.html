@@ -60,7 +60,7 @@
             <th>Product Name</th>
             <th>Category</th>
             <th>Sub Category</th>
-            <th>Packaging UOM</th>
+
             <th class="text-center" style="width: 130px">Status</th>
             <th class="text-center" style="width: 170px">Actions</th>
           </tr>
@@ -91,13 +91,7 @@
             <td class="fw-semibold text-dark">{{ prod.name }}</td>
             <td>{{ getCategoryNameForSub(prod.subCategoryId) }}</td>
             <td>{{ getSubCategoryName(prod.subCategoryId) }}</td>
-            <td>
-              <div class="d-flex flex-wrap gap-1">
-                @for (u of getProductUoms(prod); track u) {
-                <span class="badge-uom">{{ u }}</span>
-                }
-              </div>
-            </td>
+
             <td class="text-center">
               <button type="button" class="status-toggle-btn" [ngClass]="prod.isActive ? 'is-active' : 'is-inactive'"
                 (click)="toggleStatus(prod)">
@@ -180,37 +174,20 @@
           <label class="mb-0">Packaging UOM <span class="req">*</span></label>
           <span class="text-xs text-muted">Select one or multiple</span>
         </div>
-        <ng-select
-          [items]="dynamicPackagingUoms"
-          bindLabel="displayLabel"
-          bindValue="name"
-          [multiple]="true"
-          [closeOnSelect]="false"
-          [clearable]="true"
-          [searchable]="true"
-          placeholder="Select Packaging UOM(s)"
-          formControlName="packagingUoms"
-          class="erp-ng-select"
-        >
+        <ng-select [items]="dynamicPackagingUoms" bindLabel="displayLabel" bindValue="name" [multiple]="true"
+          [closeOnSelect]="false" [clearable]="true" [searchable]="true" placeholder="Select Packaging UOM(s)"
+          formControlName="packagingUoms" class="erp-ng-select">
           <ng-template ng-header-tmp>
             <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom bg-light">
               <small class="text-muted fw-semibold">Available Packaging UOMs</small>
               <div class="d-flex gap-2">
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold"
-                  style="font-size: 11px;"
-                  (click)="selectAllUoms()"
-                >
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold"
+                  style="font-size: 11px;" (click)="selectAllUoms()">
                   Select All
                 </button>
                 <span class="text-muted" style="font-size: 11px;">|</span>
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm p-0 text-decoration-none text-secondary fw-semibold"
-                  style="font-size: 11px;"
-                  (click)="clearAllUoms()"
-                >
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-secondary fw-semibold"
+                  style="font-size: 11px;" (click)="clearAllUoms()">
                   Clear
                 </button>
               </div>
@@ -218,12 +195,8 @@
           </ng-template>
           <ng-template ng-option-tmp let-item="item" let-item$="item$">
             <div class="d-flex align-items-center gap-2">
-              <input
-                type="checkbox"
-                [checked]="item$.selected"
-                class="form-check-input m-0 cursor-pointer"
-                tabindex="-1"
-              />
+              <input type="checkbox" [checked]="item$.selected" class="form-check-input m-0 cursor-pointer"
+                tabindex="-1" />
               <span>{{ item.displayLabel }}</span>
             </div>
           </ng-template>

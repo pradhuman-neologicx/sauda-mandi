@@ -573,6 +573,12 @@
     border: 1px solid #fde68a;
     color: #92400e;
   }
+
+  &.alert-purple-erp {
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+    color: #581c87;
+  }
 }
 
 .detail-grid {
@@ -785,6 +791,27 @@
   border-radius: 10px;
   padding: 16px 18px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: all 0.15s ease-in-out;
+
+  &.cursor-pointer {
+    cursor: pointer;
+
+    &:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06);
+      transform: translateY(-1px);
+    }
+  }
+
+  &.kpi-active {
+    border-color: #2563eb;
+    background: #eff6ff;
+
+    .sauda-kpi-label {
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+  }
 }
 
 .sauda-kpi-label {
