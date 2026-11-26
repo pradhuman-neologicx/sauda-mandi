@@ -126,7 +126,7 @@
             <th>Sauda Number</th>
             <th>Sauda Type</th>
             <th>Commodities</th>
-            <th class="text-end">Weight (Ton)</th>
+            <th class="text-end">Weight (MT)</th>
             <th class="text-center">Record</th>
             <th class="text-center">Action</th>
           </tr>
@@ -167,7 +167,7 @@
               </span>
             </td>
             <td>{{ truck.commodities }}</td>
-            <td class="text-end fw-bold text-dark">{{ truck.loadedQtyMt | number: '1.2-3' }} Ton</td>
+            <td class="text-end fw-bold text-dark">{{ truck.loadedQtyMt | number: '1.2-3' }} MT</td>
             <td class="text-center">
               <span class="status-badge" [ngClass]="getRecordBadgeClass(truck.status)">
                 {{ truck.status === 'Removed' ? 'Removed' : 'Active' }}
@@ -275,11 +275,13 @@
     <div class="live-tracker-panel mt-3">
       <div class="tracker-header">
         <span class="tracker-title">
-          <i class="fa-solid fa-chart-line text-primary me-2"></i>Linked Sauda Quantity Tracking ({{ selectedTruckSauda.saudaNo }})
+          <i class="fa-solid fa-chart-line text-primary me-2"></i>Linked Sauda Quantity Tracking ({{
+          selectedTruckSauda.saudaNo }})
         </span>
         <div class="d-flex align-items-center gap-2">
           <span class="tracker-sub">{{ selectedTruckSauda.commodity }}</span>
-          <span class="status-badge" [ngClass]="selectedTruckSauda.status === 'Completed' ? 'badge-green' : 'badge-amber'">
+          <span class="status-badge"
+            [ngClass]="selectedTruckSauda.status === 'Completed' ? 'badge-green' : 'badge-amber'">
             Sauda Status: {{ selectedTruckSauda.status }}
           </span>
         </div>
@@ -287,24 +289,30 @@
       <div class="tracker-grid tracker-grid-4">
         <div class="tracker-card">
           <div class="tracker-card-label">Total Deal Qty</div>
-          <div class="tracker-card-val text-dark">{{ selectedTruckSauda.quantityMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-val text-dark">{{ selectedTruckSauda.quantityMt | number: '1.2-3' }} <span
+              class="unit">MT</span></div>
           <div class="tracker-card-sub">Contracted Deal</div>
         </div>
         <div class="tracker-card">
           <div class="tracker-card-label">Fulfilled In/Out</div>
-          <div class="tracker-card-val text-info">{{ getSaudaFulfilledQty(selectedTruckSauda.id) | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-val text-info">{{ getSaudaFulfilledQty(selectedTruckSauda.id) | number: '1.2-3' }}
+            <span class="unit">MT</span>
+          </div>
           <div class="tracker-card-sub">All Trucks to date</div>
         </div>
         <div class="tracker-card">
           <div class="tracker-card-label">Remaining Balance</div>
-          <div class="tracker-card-val" [class.text-warning]="getSaudaRemainingQty(selectedTruckSauda.id) > 0" [class.text-success]="getSaudaRemainingQty(selectedTruckSauda.id) === 0">
-            {{ getSaudaRemainingQty(selectedTruckSauda.id) | number: '1.2-3' }} <span class="unit">Ton</span>
+          <div class="tracker-card-val" [class.text-warning]="getSaudaRemainingQty(selectedTruckSauda.id) > 0"
+            [class.text-success]="getSaudaRemainingQty(selectedTruckSauda.id) === 0">
+            {{ getSaudaRemainingQty(selectedTruckSauda.id) | number: '1.2-3' }} <span class="unit">MT</span>
           </div>
-          <div class="tracker-card-sub">{{ getSaudaRemainingQty(selectedTruckSauda.id) === 0 ? 'Fulfilled (0 MT left)' : 'Pending Delivery' }}</div>
+          <div class="tracker-card-sub">{{ getSaudaRemainingQty(selectedTruckSauda.id) === 0 ? 'Fulfilled (0 MT left)' :
+            'Pending Delivery' }}</div>
         </div>
         <div class="tracker-card current-load-card">
           <div class="tracker-card-label">This Truck Load</div>
-          <div class="tracker-card-val text-primary">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="tracker-card-val text-primary">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} <span
+              class="unit">MT</span></div>
           <div class="tracker-card-sub">Recorded in this entry</div>
         </div>
       </div>
@@ -386,7 +394,7 @@
           </tr>
           <tr>
             <td>Total Loaded Weight</td>
-            <td class="fw-semibold">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} Ton</td>
+            <td class="fw-semibold">{{ selectedTruck.loadedQtyMt | number: '1.2-3' }} MT</td>
           </tr>
           <tr>
             <td>Remarks</td>
@@ -404,14 +412,14 @@
         <thead>
           <tr>
             <th>Commodity</th>
-            <th class="text-end">Quantity (Ton)</th>
+            <th class="text-end">Quantity (MT)</th>
           </tr>
         </thead>
         <tbody>
           @for (item of selectedTruck.commodityItems; track item.commodity) {
           <tr>
             <td class="fw-semibold text-dark">{{ item.commodity }}</td>
-            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} Ton</td>
+            <td class="text-end num fw-semibold">{{ item.actualWeight | number: '1.2-3' }} MT</td>
           </tr>
           }
         </tbody>
@@ -427,7 +435,7 @@
         <div class="timeline-card">
           <div class="timeline-head">
             <div class="d-flex align-items-center gap-2">
-              <span class="rev-chip">v{{ rev.version }}</span>
+
               <span class="fw-bold text-dark">{{ rev.action }}</span>
             </div>
             <span class="text-muted small">
@@ -521,7 +529,8 @@
         <!-- Step 1: Select Party -->
         <div class="field-group">
           <label>Select Party</label>
-          <select class="erp-input" [(ngModel)]="selectedParty" (ngModelChange)="onPartyChanged()" [ngModelOptions]="{standalone: true}">
+          <select class="erp-input" [(ngModel)]="selectedParty" (ngModelChange)="onPartyChanged()"
+            [ngModelOptions]="{standalone: true}">
             <option value="">All Parties (Select to filter saudas)</option>
             @for (p of allPartyOptions; track p) {
             <option [value]="p">{{ p }}</option>
@@ -536,13 +545,14 @@
         <div class="field-group">
           <label>Linked Sauda <span class="req">*</span></label>
           <div class="sauda-picker-container">
-            <input type="text" class="erp-input mb-1 search-filter-sm" [(ngModel)]="saudaSearchTerm" [ngModelOptions]="{standalone: true}"
-              placeholder="🔍 Search Sauda by No., Commodity or Party..." />
+            <input type="text" class="erp-input mb-1 search-filter-sm" [(ngModel)]="saudaSearchTerm"
+              [ngModelOptions]="{standalone: true}" placeholder="🔍 Search Sauda by No., Commodity or Party..." />
             <select formControlName="saudaId" class="erp-input select-highlight">
               <option value="">Select Linked Sauda...</option>
               @for (s of filteredSaudasForParty; track s.id) {
               <option [value]="s.id">
-                {{ s.saudaNo }} &bull; {{ s.saudaType }} &bull; {{ s.commodity }} &bull; {{ s.quantityMt }} Ton ({{ s.partyName }})
+                {{ s.saudaNo }} &bull; {{ s.saudaType }} &bull; {{ s.commodity }} &bull; {{ s.quantityMt }} MT ({{
+                s.partyName }})
               </option>
               }
             </select>
@@ -557,36 +567,43 @@
       @if (selectedLinkedSauda) {
       <div class="live-tracker-panel mt-3">
         <div class="tracker-header">
-          <span class="tracker-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Live Sauda Quantity Tracking</span>
-          <span class="tracker-sub">Sauda {{ selectedLinkedSauda.saudaNo }} &bull; {{ selectedLinkedSauda.commodity }}</span>
+          <span class="tracker-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Live Sauda Quantity
+            Tracking</span>
+          <span class="tracker-sub">Sauda {{ selectedLinkedSauda.saudaNo }} &bull; {{ selectedLinkedSauda.commodity
+            }}</span>
         </div>
         <div class="tracker-grid">
           <div class="tracker-card">
             <div class="tracker-card-label">Total Sauda Qty</div>
-            <div class="tracker-card-val text-dark">{{ totalSaudaQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-val text-dark">{{ totalSaudaQtyMt | number: '1.2-3' }} <span class="unit">MT</span>
+            </div>
             <div class="tracker-card-sub">Contracted Deal</div>
           </div>
           <div class="tracker-card">
             <div class="tracker-card-label">Fulfilled So Far</div>
-            <div class="tracker-card-val text-info">{{ dispatchedSoFarMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-val text-info">{{ dispatchedSoFarMt | number: '1.2-3' }} <span
+                class="unit">MT</span></div>
             <div class="tracker-card-sub">Previous Trucks</div>
           </div>
           <div class="tracker-card">
             <div class="tracker-card-label">Remaining Balance</div>
-            <div class="tracker-card-val" [class.text-warning]="remainingBalanceMt > 0" [class.text-success]="remainingBalanceMt === 0">
-              {{ remainingBalanceMt | number: '1.2-3' }} <span class="unit">Ton</span>
+            <div class="tracker-card-val" [class.text-warning]="remainingBalanceMt > 0"
+              [class.text-success]="remainingBalanceMt === 0">
+              {{ remainingBalanceMt | number: '1.2-3' }} <span class="unit">MT</span>
             </div>
             <div class="tracker-card-sub">Pending to deliver</div>
           </div>
           <div class="tracker-card current-load-card">
             <div class="tracker-card-label">This Truck Load</div>
-            <div class="tracker-card-val text-primary">{{ currentTruckWeightMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+            <div class="tracker-card-val text-primary">{{ currentTruckWeightMt | number: '1.2-3' }} <span
+                class="unit">MT</span></div>
             <div class="tracker-card-sub">Current Entry</div>
           </div>
           <div class="tracker-card projected-card">
             <div class="tracker-card-label">Projected Total</div>
-            <div class="tracker-card-val" [ngClass]="projectedTotalMt > totalSaudaQtyMt ? 'text-danger' : 'text-success'">
-              {{ projectedTotalMt | number: '1.2-3' }} <span class="unit">Ton</span>
+            <div class="tracker-card-val"
+              [ngClass]="projectedTotalMt > totalSaudaQtyMt ? 'text-danger' : 'text-success'">
+              {{ projectedTotalMt | number: '1.2-3' }} <span class="unit">MT</span>
             </div>
             <div class="tracker-card-sub">After this truck</div>
           </div>
@@ -646,7 +663,8 @@
         <!-- Level 2: Godown -->
         <div class="field-group">
           <label>Godown</label>
-          <select formControlName="godownName" class="erp-input" (change)="onGodownChanged()" [disabled]="availableGodowns.length === 0">
+          <select formControlName="godownName" class="erp-input" (change)="onGodownChanged()"
+            [disabled]="availableGodowns.length === 0">
             <option value="">Select Godown (Optional)</option>
             @for (gd of availableGodowns; track gd.id) {
             <option [value]="gd.name">{{ gd.name }}</option>
@@ -657,7 +675,8 @@
         <!-- Level 3: Chamber -->
         <div class="field-group">
           <label>Chamber</label>
-          <select formControlName="chamberName" class="erp-input" (change)="onChamberChanged()" [disabled]="availableChambers.length === 0">
+          <select formControlName="chamberName" class="erp-input" (change)="onChamberChanged()"
+            [disabled]="availableChambers.length === 0">
             <option value="">Select Chamber (Optional)</option>
             @for (ch of availableChambers; track ch.id) {
             <option [value]="ch.name">{{ ch.name }}</option>
@@ -682,10 +701,10 @@
         [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'stock-ok' : 'stock-warn'">
         <i class="fa-solid"
           [ngClass]="availableWarehouseStockMt >= formTotalWeightMt ? 'fa-circle-check text-success' : 'fa-triangle-exclamation text-danger'"></i>
-        <span>Warehouse Stock: <strong>{{ availableWarehouseStockMt | number: '1.2-3' }} Ton</strong></span>
-        @if (availableWarehouseStockMt < formTotalWeightMt) {
-        <span class="text-danger fw-bold ms-1">(Insufficient for dispatch)</span>
-        }
+        <span>Warehouse Stock: <strong>{{ availableWarehouseStockMt | number: '1.2-3' }} MT</strong></span>
+        @if (availableWarehouseStockMt < formTotalWeightMt) { <span class="text-danger fw-bold ms-1">(Insufficient for
+          dispatch)</span>
+          }
       </div>
       }
     </div>
@@ -697,7 +716,7 @@
           <h2 class="section-card-title mb-0">
             <i class="fa-solid fa-boxes-stacked me-2 text-primary"></i>Commodity Details
           </h2>
-          <span class="text-muted small">Enter loaded quantity directly in Ton.</span>
+          <span class="text-muted small">Enter loaded quantity directly in MT.</span>
         </div>
         <button type="button" class="btn-erp-outline btn-sm-erp" (click)="addCommodityRow()">
           <i class="fa-solid fa-plus me-1"></i> Add Commodity
@@ -721,7 +740,7 @@
           </div>
 
           <div class="field-group flex-1">
-            <label>Quantity (Ton) <span class="req">*</span></label>
+            <label>Quantity (MT) <span class="req">*</span></label>
             <input type="number" step="0.001" min="0.001" formControlName="actualWeight" class="erp-input fw-semibold"
               placeholder="e.g. 20.000" />
           </div>
@@ -741,15 +760,18 @@
           Total weight for this truck:
         </span>
         <strong class="text-primary fs-6">
-          This Truck: {{ currentTruckWeightMt | number: '1.2-3' }} Ton &bull; Projected Total: {{ projectedTotalMt | number: '1.2-3' }} Ton / {{ totalSaudaQtyMt | number: '1.2-3' }} Ton
+          This Truck: {{ currentTruckWeightMt | number: '1.2-3' }} MT &bull; Projected Total: {{ projectedTotalMt |
+          number: '1.2-3' }} MT / {{ totalSaudaQtyMt | number: '1.2-3' }} MT
         </strong>
       </div>
 
       @if (selectedLinkedSauda && currentTruckWeightMt > remainingBalanceMt && !isEditMode) {
       <div class="alert-erp alert-warning-erp mt-2">
         <i class="fa-solid fa-circle-info me-1"></i>
-        This truck load ({{ currentTruckWeightMt | number: '1.2-3' }} Ton) exceeds the remaining balance ({{ remainingBalanceMt | number: '1.2-3' }} Ton).
-        If this is the final delivery, use <strong>"Final Submit &amp; Complete Sauda"</strong> below to adjust the contract.
+        This truck load ({{ currentTruckWeightMt | number: '1.2-3' }} MT) exceeds the remaining balance ({{
+        remainingBalanceMt | number: '1.2-3' }} MT).
+        If this is the final delivery, use <strong>"Final Submit &amp; Complete Sauda"</strong> below to adjust the
+        contract.
       </div>
       }
     </div>
@@ -758,7 +780,8 @@
     <div class="erp-card section-card">
       <div class="field-group">
         <label>Remarks (Optional)</label>
-        <textarea rows="2" formControlName="remarks" class="erp-input" placeholder="e.g. Driver notes, quality grade remarks..."></textarea>
+        <textarea rows="2" formControlName="remarks" class="erp-input"
+          placeholder="e.g. Driver notes, quality grade remarks..."></textarea>
       </div>
 
       @if (isEditMode) {
@@ -777,15 +800,13 @@
       <div class="form-actions-split mt-4">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <!-- Button 1: Normal Submit (more trucks coming) -->
-          <button type="button" class="btn-erp-outline" (click)="submitTruckForm(false)"
-            [disabled]="truckForm.invalid">
+          <button type="button" class="btn-erp-outline" (click)="submitTruckForm(false)" [disabled]="truckForm.invalid">
             <i class="fa-solid fa-floppy-disk me-1"></i>
             <span>Save Truck Entry (More Trucks Pending)</span>
           </button>
 
           <!-- Button 2: Final Submit (deal completed) -->
-          <button type="button" class="btn-erp-primary" (click)="submitTruckForm(true)"
-            [disabled]="truckForm.invalid">
+          <button type="button" class="btn-erp-primary" (click)="submitTruckForm(true)" [disabled]="truckForm.invalid">
             <i class="fa-solid fa-circle-check me-1"></i>
             <span>Final Submit &amp; Complete Sauda</span>
           </button>
@@ -883,7 +904,9 @@
             {{ saveSuccessData.isFinal ? 'Sauda Completed & Finalized!' : 'Truck Entry Saved Successfully!' }}
           </h3>
           <p class="modal-sub-erp mb-0 text-muted">
-            Entry No: <strong class="text-dark">{{ saveSuccessData.entryNo }}</strong> &bull; Truck: <strong class="text-dark">{{ saveSuccessData.vehicleNo }}</strong> ({{ saveSuccessData.loadedQtyMt | number: '1.2-3' }} Ton)
+            Entry No: <strong class="text-dark">{{ saveSuccessData.entryNo }}</strong> &bull; Truck: <strong
+              class="text-dark">{{ saveSuccessData.vehicleNo }}</strong> ({{ saveSuccessData.loadedQtyMt | number:
+            '1.2-3' }} MT)
           </p>
         </div>
       </div>
@@ -894,13 +917,15 @@
 
     <div class="modal-body-erp p-3">
       <!-- Deal Header -->
-      <div class="deal-summary-strip mb-3 p-2 rounded bg-light border d-flex justify-content-between align-items-center">
+      <div
+        class="deal-summary-strip mb-3 p-2 rounded bg-light border d-flex justify-content-between align-items-center">
         <div>
           <span class="text-xs text-muted">Linked Deal:</span>
           <div class="fw-bold text-dark">{{ saveSuccessData.saudaNo }} &bull; {{ saveSuccessData.partyName }}</div>
         </div>
         <div>
-          <span class="status-badge" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'badge-green' : 'badge-amber'">
+          <span class="status-badge"
+            [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'badge-green' : 'badge-amber'">
             {{ saveSuccessData.saudaStatus }}
           </span>
         </div>
@@ -910,20 +935,24 @@
       <div class="visibility-stat-grid mb-3">
         <div class="vis-stat-card">
           <div class="vis-stat-label">Total Sauda Qty</div>
-          <div class="vis-stat-val text-dark">{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="vis-stat-val text-dark">{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }} <span
+              class="unit">MT</span></div>
           <div class="vis-stat-sub">Original Deal</div>
         </div>
 
         <div class="vis-stat-card highlight-fulfilled">
           <div class="vis-stat-label">Fulfilled So Far</div>
-          <div class="vis-stat-val text-primary">{{ saveSuccessData.dispatchedSoFarMt | number: '1.2-3' }} <span class="unit">Ton</span></div>
+          <div class="vis-stat-val text-primary">{{ saveSuccessData.dispatchedSoFarMt | number: '1.2-3' }} <span
+              class="unit">MT</span></div>
           <div class="vis-stat-sub">Delivered Total</div>
         </div>
 
-        <div class="vis-stat-card" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'highlight-zero' : 'highlight-remain'">
+        <div class="vis-stat-card"
+          [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'highlight-zero' : 'highlight-remain'">
           <div class="vis-stat-label">Remaining Balance</div>
-          <div class="vis-stat-val" [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'text-success' : 'text-warning'">
-            {{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }} <span class="unit">Ton</span>
+          <div class="vis-stat-val"
+            [ngClass]="saveSuccessData.remainingBalanceMt === 0 ? 'text-success' : 'text-warning'">
+            {{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }} <span class="unit">MT</span>
           </div>
           <div class="vis-stat-sub">
             {{ saveSuccessData.remainingBalanceMt === 0 ? 'Fully Fulfilled' : 'Pending to deliver' }}
@@ -934,12 +963,14 @@
       @if (saveSuccessData.remainingBalanceMt > 0 && !saveSuccessData.isFinal) {
       <div class="alert-erp alert-info-erp mb-0 text-sm">
         <i class="fa-solid fa-circle-info me-2"></i>
-        Abhi is saude mein <strong>{{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }} Ton</strong> maal aana/jaana baaki hai. Aap agla truck turant add kar sakte hain ya listing par ja sakte hain.
+        Remaining balance for this Sauda is <strong>{{ saveSuccessData.remainingBalanceMt | number: '1.2-3' }}
+          MT</strong>.
       </div>
       } @else {
       <div class="alert-erp alert-success-erp mb-0 text-sm">
         <i class="fa-solid fa-circle-check me-2"></i>
-        Yeh sauda <strong>{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }} Ton</strong> par poori tarah fulfill aur complete ho chuka hai!
+        This Sauda is fully fulfilled and completed for <strong>{{ saveSuccessData.totalSaudaQtyMt | number: '1.2-3' }}
+          MT</strong>!
       </div>
       }
     </div>
